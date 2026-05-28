@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #0b0f1a;
-  --panel: #111827;
-  --panel-alt: #0f1724;
-  --line: #1e293b;
-  --line-light: #273449;
-  --text: #e2e6ea;
-  --muted: #8896a9;
-  --muted-2: #5c6a7d;
-  --accent: #6366f1;
-  --accent-2: #f59e0b;
-  --accent-green: #22c55e;
+  --bg: #061527;
+  --panel: #0b1b31;
+  --panel-alt: #071426;
+  --line: #15314a;
+  --line-light: #1f4a66;
+  --text: #f4f7fb;
+  --muted: #9fb3c8;
+  --muted-2: #6f86a3;
+  --accent: #14b8a6;
+  --accent-2: #f5b21a;
+  --accent-green: #00d1b2;
   --accent-red: #ef4444;
-  --accent-blue: #3b82f6;
+  --accent-blue: #1f9cf0;
   --radius: 10px;
   --radius-sm: 6px;
 }
@@ -38,7 +38,7 @@ body { min-height: 100vh; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(ellipse at 30% 20%, #1a1445 0%, var(--bg) 70%);
+  background: radial-gradient(ellipse at 30% 20%, #0d3b52 0%, var(--bg) 68%);
   padding: 24px;
 }
 
@@ -53,7 +53,7 @@ body { min-height: 100vh; }
   flex-direction: column;
   align-items: center;
   gap: 28px;
-  box-shadow: 0 0 60px rgba(99, 102, 241, 0.08);
+  box-shadow: 0 0 60px rgba(0, 209, 178, 0.10);
 }
 
 .login-logo { height: 36px; width: auto; }
@@ -115,7 +115,7 @@ body { min-height: 100vh; }
 
 .login-form input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 0 3px rgba(0, 209, 178, 0.18);
 }
 
 .primary-button {
@@ -134,7 +134,7 @@ body { min-height: 100vh; }
   transition: background 0.15s, opacity 0.15s;
 }
 
-.primary-button:hover { background: #5558e6; }
+.primary-button:hover { background: #0f9f92; }
 .primary-button:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .ghost-button {
@@ -397,7 +397,7 @@ body { min-height: 100vh; }
 
 .chip.active {
   color: var(--accent-2);
-  border-color: rgba(245, 158, 11, 0.38);
+  border-color: rgba(245, 178, 26, 0.48);
 }
 
 .chip:hover {
@@ -441,7 +441,7 @@ body { min-height: 100vh; }
 }
 
 .table-frame tbody tr:hover td {
-  background: rgba(99, 102, 241, 0.04);
+  background: rgba(0, 209, 178, 0.06);
 }
 
 .table-frame td.strong {
