@@ -738,4 +738,76 @@
   setInterval(function(){ if(isBay3()){ fetchBay3(); render(); } },1000);
   document.addEventListener('click',function(){ setTimeout(function(){ if(isBay3()) fetchBay3(); },300);},true);
 })();
-</script></body></html>
+</script>
+<style id="ruben-live-dashboard-color-fix">
+  :root { color-scheme: dark; }
+  body, .dashboard-shell, main { background: linear-gradient(135deg,#071126 0%,#12183a 55%,#090f24 100%) !important; color:#f4f7ff !important; }
+  .brand-bar,.tab-bar,.report-section,.stat-card,.kpi-card,.section-heading,.table-frame thead,.search-box,.facility-select select {
+    background: linear-gradient(180deg,rgba(26,34,73,.94),rgba(13,21,48,.94)) !important;
+    border-color: rgba(124,92,255,.28) !important;
+  }
+  .report-section,.stat-card,.kpi-card { box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 18px 50px rgba(0,0,0,.22) !important; }
+  .report-tab.active { color:#ffffff !important; border-bottom-color:#8b5cf6 !important; box-shadow:0 4px 18px rgba(139,92,246,.35) !important; }
+  .report-tab { color:#aab6d3 !important; }
+  .chip { background:rgba(12,20,44,.86) !important; border-color:rgba(124,92,255,.30) !important; color:#d8b4fe !important; }
+  .chip.active { color:#fbbf24 !important; border-color:rgba(251,191,36,.55) !important; }
+  .table-frame th,.data-table th { color:#aab6d3 !important; }
+  .table-frame td,.data-table td { color:#f4f7ff !important; border-color:rgba(39,52,95,.75) !important; }
+  .customer-order-count,.chip-count { color:#fbbf24 !important; font-weight:800 !important; margin-left:4px !important; }
+</style>
+<script id="ruben-live-dashboard-counts-fix">
+(function(){
+  if (window.__rubenCountsFixApplied) return;
+  window.__rubenCountsFixApplied = true;
+  var latestCounts = {};
+  function norm(v){ return String(v||'').toUpperCase().replace(/&/g,'AND').replace(/[^A-Z0-9]+/g,' ').trim(); }
+  function clean(v){ return String(v||'').replace(/\s*\(\d+\)\s*$/,'').trim(); }
+  function activeTab(){ var a=document.querySelector('.report-tab.active'); return a && a.textContent ? a.textContent.trim() : 'default'; }
+  function buildCounts(payload){
+    var rows=[];
+    if(payload && payload.plannedOrders && Array.isArray(payload.plannedOrders.rows)) rows=payload.plannedOrders.rows;
+    if(payload && payload.bay2 && Array.isArray(payload.bay2.detailRows)) rows=payload.bay2.detailRows;
+    var counts={};
+    rows.forEach(function(r){ var name=r.customer||r.customerName||r.label; if(!name) return; var k=norm(name); counts[k]=(counts[k]||0)+1; });
+    return counts;
+  }
+  function labelWithCount(text, counts){
+    var base=clean(text); if(!base) return text;
+    var count=counts[norm(base)];
+    if(count==null){
+      Object.keys(counts).some(function(k){ var b=norm(base); if(k===b || k.indexOf(b)>=0 || b.indexOf(k)>=0){ count=counts[k]; return true;} return false; });
+    }
+    return count!=null ? base+' ('+count+')' : base;
+  }
+  function applyCounts(){
+    var counts=latestCounts[activeTab()]||latestCounts.default;
+    if(!counts || !Object.keys(counts).length) return;
+    document.querySelectorAll('.chips button,.chip').forEach(function(chip){ chip.textContent=labelWithCount(chip.textContent, counts); });
+    document.querySelectorAll('table').forEach(function(table){
+      var ths=Array.from(table.querySelectorAll('thead th'));
+      var idx=ths.findIndex(function(th){ return /customer/i.test(th.textContent||''); });
+      if(idx<0) return;
+      table.querySelectorAll('tbody tr').forEach(function(tr){
+        var tds=tr.querySelectorAll('td'); if(!tds[idx]) return;
+        tds[idx].textContent=labelWithCount(tds[idx].textContent, counts);
+      });
+    });
+  }
+  window.__setRubenDashboardCounts=function(payload){ var c=buildCounts(payload); latestCounts[activeTab()]=c; latestCounts.default=c; setTimeout(applyCounts,50); setTimeout(applyCounts,500); setTimeout(applyCounts,1500); };
+  var oldFetch=window.fetch;
+  window.fetch=function(){
+    return oldFetch.apply(this,arguments).then(function(res){
+      try{
+        var url=String(arguments[0]&&arguments[0].url||arguments[0]||'');
+        if(url.indexOf('/api/dashboard')>=0){
+          res.clone().json().then(function(json){ window.__setRubenDashboardCounts(json); }).catch(function(){});
+        }
+      }catch(e){}
+      return res;
+    }.bind(arguments));
+  };
+  document.addEventListener('click',function(){ setTimeout(applyCounts,300); },true);
+  setInterval(applyCounts,1000);
+})();
+</script>
+</body></html>
