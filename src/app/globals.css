@@ -536,3 +536,15 @@ body { min-height: 100vh; }
   color: inherit;
   opacity: 0.95;
 }
+
+.section1-scroll-wrap {
+  max-height: 336px;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+.section1-scroll-wrap thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--panel-alt);
+}

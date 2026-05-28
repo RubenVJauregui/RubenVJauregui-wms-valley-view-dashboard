@@ -590,7 +590,7 @@ export function Dashboard({
                 </div>
               )
             ) : (
-              <div className="table-frame">
+              <div className="table-frame section1-scroll-wrap">
                 <table>
                   <thead>
                     <tr>

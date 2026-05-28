@@ -810,4 +810,47 @@
   setInterval(applyCounts,1000);
 })();
 </script>
+
+<style id="ruben-section1-scroll-style">
+  .section1-scroll-wrap {
+    max-height: 336px !important;
+    overflow-y: auto !important;
+    overflow-x: auto !important;
+    border-top: 1px solid rgba(39,52,95,.75);
+  }
+  .section1-scroll-wrap thead th {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 3 !important;
+    background: rgba(12,20,44,.96) !important;
+  }
+</style>
+<script id="ruben-section1-top7-scroll">
+(function(){
+  function isSection1Title(text){
+    text = String(text || '').toUpperCase();
+    return text.indexOf('SECTION 1') >= 0 && text.indexOf('IN-YARD FULL EQUIPMENT') >= 0;
+  }
+  function applySection1Scroll(){
+    document.querySelectorAll('section, article, div').forEach(function(section){
+      var h = section.querySelector && section.querySelector('h2,h3');
+      if (!h || !isSection1Title(h.textContent)) return;
+      var wrap = section.querySelector('.table-frame, .data-table-wrap, div:has(> table)');
+      if (!wrap || wrap.dataset.section1ScrollApplied === '1') return;
+      wrap.dataset.section1ScrollApplied = '1';
+      wrap.classList.add('section1-scroll-wrap');
+      // Height for roughly 7 data rows plus header. If row height changes, scrolling still works.
+      wrap.style.maxHeight = '336px';
+      wrap.style.overflowY = 'auto';
+      wrap.style.overflowX = 'auto';
+      var thead = wrap.querySelector('thead');
+      if (thead) { thead.style.position = 'sticky'; thead.style.top = '0'; thead.style.zIndex = '3'; }
+    });
+  }
+  applySection1Scroll();
+  document.addEventListener('click', function(){ setTimeout(applySection1Scroll, 250); }, true);
+  var timer = setInterval(applySection1Scroll, 1000);
+  setTimeout(function(){ clearInterval(timer); }, 60000);
+})();
+</script>
 </body></html>
