@@ -82,6 +82,14 @@ function fmtNum(v: number): string {
   return new Intl.NumberFormat("en-US").format(Math.round(v));
 }
 
+function normalizeCustomerNameForCount(value: string): string {
+  return String(value || "")
+    .toUpperCase()
+    .replace(/&/g, "AND")
+    .replace(/[^A-Z0-9]+/g, " ")
+    .trim();
+}
+
 function fmtTimeAgo(iso: string): string {
   if (!iso) return "";
   const d = new Date(iso);
@@ -383,18 +391,23 @@ export function Dashboard({
     return set.map((c) => ({
       name: c.name,
       count:
-        plannedRows.filter((r) => r.customer === c.name).length,
+        plannedRows.filter((r) => normalizeCustomerNameForCount(r.customer) === normalizeCustomerNameForCount(c.name)).length,
     }));
   }, [data, plannedRows, facility.name]);
 
   const customerOrderCountMap = useMemo(() => {
     const counts = new Map<string, number>();
     for (const row of plannedRows) {
-      const key = row.customer || "Pending";
+      const key = normalizeCustomerNameForCount(row.customer || "Pending");
       counts.set(key, (counts.get(key) ?? 0) + 1);
     }
     return counts;
   }, [plannedRows]);
+
+  const getCustomerOrderCount = useCallback(
+    (customerName: string) => customerOrderCountMap.get(normalizeCustomerNameForCount(customerName || "Pending")) ?? 0,
+    [customerOrderCountMap]
+  );
 
   const inYardRows = data?.inYardFullEquipment?.rows ?? [];
   const yardSupported = data?.inYardFullEquipment?.supported ?? false;
@@ -632,8 +645,7 @@ export function Dashboard({
                   className="chip active"
                   type="button"
                 >
-                  {c.name}
-                  {c.count > 0 ? ` (${c.count})` : c.count === 0 ? " (0)" : ""}
+                  {c.name} <span className="chip-count">({c.count})</span>
                 </button>
               ))}
             </div>
@@ -699,7 +711,7 @@ export function Dashboard({
                       {filteredPlanned.map((r) => (
                         <tr key={r.orderNumber}>
                           <td className="strong">{r.orderNumber}</td>
-                          <td>{r.customer}{customerOrderCountMap.has(r.customer) ? ` (${customerOrderCountMap.get(r.customer)})` : ""}</td>
+                          <td>{r.customer} <span className="customer-order-count">({getCustomerOrderCount(r.customer)})</span></td>
                           <td>{r.status}</td>
                           <td>{r.reference}</td>
                           <td>{fmtDate(r.created)}</td>

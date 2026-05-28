@@ -525,3 +525,14 @@ body { min-height: 100vh; }
 .table-frame thead { background: rgba(12, 20, 44, 0.86); }
 .table-frame tbody tr:hover td { background: rgba(79, 70, 229, 0.10); }
 .search-box, .facility-select select { background: rgba(10, 16, 35, 0.86); }
+
+.customer-order-count,
+.chip-count {
+  color: #fbbf24;
+  font-weight: 800;
+  margin-left: 4px;
+}
+.chip .chip-count {
+  color: inherit;
+  opacity: 0.95;
+}
