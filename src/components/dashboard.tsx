@@ -104,18 +104,18 @@ function fmtTimeAgo(iso: string): string {
 }
 
 const TABS = [
-  { key: "bay1", label: "Bay 1" },
-  { key: "bay2", label: "Bay 2" },
-  { key: "bay3", label: "Bay 3" },
-  { key: "bay4", label: "Bay 4" },
-  { key: "bay5", label: "Bay 5" },
-  { key: "evelyn", label: "Bay 2 LTL" },
+  { key: "bay1", label: "Team 1" },
+  { key: "bay2", label: "Team 2" },
+  { key: "bay3", label: "Team 3" },
+  { key: "bay4", label: "Team 4" },
+  { key: "bay5", label: "Team 5" },
+  { key: "evelyn", label: "Team 2 LTL" },
   { key: "crateBarrel", label: "Crate & Barrel" },
   { key: "bpWorkload", label: "B.P. Workload" },
   { key: "nightShift", label: "Night Shift" },
   { key: "bay4AutoAssign", label: "Rear Guard Shack" },
   { key: "frontGuardShack", label: "Front Guard Shack" },
-  { key: "bay2AutoAssign", label: "Bay 2 Auto Assign" },
+  { key: "bay2AutoAssign", label: "Team 2 Auto Assign" },
 ];
 
 const SPEAK_TABS = new Set(["bay1", "bay4", "bay5"]);

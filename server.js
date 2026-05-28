@@ -205,28 +205,28 @@ async function resolveOrgNames(orgIds, accessToken, tenantId) {
  * Special tab shapes:
  *  - bpWorkload       → bpWorkload.rows (B.P. Workload pivot)
  *  - crateBarrel      → crateEquipment.rows + planned orders
- *  - nightShift       → same shape as Bay 4 but bay = "nightShift"
+ *  - nightShift       → same shape as Team 4 but bay = "nightShift"
  *  - frontGuardShack  → assignment-based view (Front Guard Shack)
- *  - bay2AutoAssign   → assignment-based view (Bay 2 Auto Assign)
+ *  - bay2AutoAssign   → assignment-based view (Team 2 Auto Assign)
  *  - bay4AutoAssign   → assignment-based view (Rear Guard Shack)
  *  - evelyn           → bay2Ecomm / evelynPivot / evelynGreenPivot
  */
 const TAB_CONFIG = {
-  bay1: { bay: 'bay1', reportType: 'bay1', title: 'Bay 1', customerIds: ['ORG-655338','ORG-739504','ORG-536926','ORG-55783','ORG-625907','ORG-625900','ORG-629731','ORG-625904','ORG-729253','ORG-672896','ORG-646997','ORG-616507','ORG-740120','ORG-614850','ORG-674362','ORG-714892','ORG-601372','ORG-647815','ORG-625905','ORG-723580'] },
-  bay2: { bay: 'bay2', reportType: 'bay2Ecomm', title: 'Bay 2', customerNames: [
+  bay1: { bay: 'bay1', reportType: 'bay1', title: 'Team 1', customerIds: ['ORG-655338','ORG-739504','ORG-536926','ORG-55783','ORG-625907','ORG-625900','ORG-629731','ORG-625904','ORG-729253','ORG-672896','ORG-646997','ORG-616507','ORG-740120','ORG-614850','ORG-674362','ORG-714892','ORG-601372','ORG-647815','ORG-625905','ORG-723580'] },
+  bay2: { bay: 'bay2', reportType: 'bay2Ecomm', title: 'Team 2', customerNames: [
     'AMZN PREP - MATTRESSES','AMZN PREP - RGS','AS EVER ENTERPRISES, LLC','BABYARK INC','BOUNDLESS EC US LLC','DELTA ELECTRONICS','DUPRAY USA LLC','ELEVATE BRANDS OPCO LLC','NET HEALTH SHOPS LLC','NZXT','PRISMA INTERNATIONAL LLC','RIO ROUTER INC','ROAR BEVERAGES INC','SIMPLE MODERN','SLINGER BAG AMERICAS INC.','STRETTON ONLINE LTD','SUN NINJA LLC','THE MURRIETA RHINO HOLDCO LLC','TINYYO LIMITED','TORQUAY ETRADING LLC','TRIPLELITE, LLC','UNIVERA BRANDS',
     'MAMMA CHIA','THE FEELIST','OPAL CAMERA','BIRD OF CONDOR','BUMP','FLAG AND ANTHEM','VAONIS','EMBER','VITA COCO DTC','COME READY','PUNK BUNNY','THE OUAI','BYTE DANCE - TIKTOK','ZEN','RECOVERY','MUSE','RISEANDSHINE','WATERPLUS','UPTIME ENERGY','FHIRST','KACE TEA','SPLENDOR WATER'
   ], mezzanineCustomerNames: ['MAMMA CHIA','THE FEELIST','OPAL CAMERA','BIRD OF CONDOR','BUMP','FLAG AND ANTHEM','VAONIS','EMBER','VITA COCO DTC','COME READY','PUNK BUNNY','THE OUAI','BYTE DANCE - TIKTOK','ZEN','RECOVERY','MUSE','RISEANDSHINE','WATERPLUS','UPTIME ENERGY','FHIRST','KACE TEA','SPLENDOR WATER'] },
-  bay3: { bay: 'bay3', reportType: 'bay3', title: 'Bay 3', customerNames: ['TCL NORTH AMERICA','LENNOX INDUSTRIES INC.','AMIEE LYNN, LNC.','KARAKA, LLC','NZXT','CMPC USA (Cut Paper and Rolls)','WOODY FLAW CREST INC','North Star','CMPC USA','La Jolla','ESI','TPV USA','Gurunanda','the only bean'] },
-  bay4: { bay: 'bay4', reportType: 'bay4', title: 'Bay 4', customerIds: ['ORG-655875'], customerNames: ['GURUNANDA'] },
-  bay5: { bay: 'bay5', reportType: 'bay5', title: 'Bay 5', customerIds: ['ORG-34557','ORG-614850','ORG-755323','ORG-582188','ORG-646997','ORG-616507'] },
-  evelyn: { bay: 'evelyn', reportType: 'evelynGreenPivot', title: 'Bay 2 LTL', customerNames: ['BOUNDLESS EC US LLC','DIVERGENT LLC DBA BRUVI','EMBER TECHNOLOGIES, INC.','KARAKA, LLC','PM&J','PRISMA INTERNATIONAL LLC','SELLERX COMMERCE GMBH','SIMPLE MODERN','THOROGOOD SPORTS LTD c/o MXP PRIME PLATFORM','TORQUAY ETRADING LLC'] },
+  bay3: { bay: 'bay3', reportType: 'bay3', title: 'Team 3', customerNames: ['TCL NORTH AMERICA','LENNOX INDUSTRIES INC.','AMIEE LYNN, LNC.','KARAKA, LLC','NZXT','CMPC USA (Cut Paper and Rolls)','WOODY FLAW CREST INC','North Star','CMPC USA','La Jolla','ESI','TPV USA','Gurunanda','the only bean'] },
+  bay4: { bay: 'bay4', reportType: 'bay4', title: 'Team 4', customerIds: ['ORG-655875'], customerNames: ['GURUNANDA'] },
+  bay5: { bay: 'bay5', reportType: 'bay5', title: 'Team 5', customerIds: ['ORG-34557','ORG-614850','ORG-755323','ORG-582188','ORG-646997','ORG-616507'] },
+  evelyn: { bay: 'evelyn', reportType: 'evelynGreenPivot', title: 'Team 2 LTL', customerNames: ['BOUNDLESS EC US LLC','DIVERGENT LLC DBA BRUVI','EMBER TECHNOLOGIES, INC.','KARAKA, LLC','PM&J','PRISMA INTERNATIONAL LLC','SELLERX COMMERCE GMBH','SIMPLE MODERN','THOROGOOD SPORTS LTD c/o MXP PRIME PLATFORM','TORQUAY ETRADING LLC'] },
   crateBarrel: { bay: 'crateBarrel', reportType: 'crateEquipment', title: 'Crate & Barrel', customerIds: ['ORG-359565'] },
   bpWorkload: { bay: 'bpWorkload', reportType: 'bpWorkload', title: 'B.P. Workload' },
   nightShift: { bay: 'nightShift', reportType: 'nightShift', title: 'Night Shift' },
   bay4AutoAssign: { bay: 'bay4AutoAssign', reportType: 'bay4AutoAssign', title: 'Rear Guard Shack' },
   frontGuardShack: { bay: 'frontGuardShack', reportType: 'frontGuardPaused', title: 'Front Guard Shack' },
-  bay2AutoAssign: { bay: 'bay2AutoAssign', reportType: 'bay2AutoAssign', title: 'Bay 2 Auto Assign' },
+  bay2AutoAssign: { bay: 'bay2AutoAssign', reportType: 'bay2AutoAssign', title: 'Team 2 Auto Assign' },
 };
 
 const BAY2_PATRICIA_SHEET3_METRICS = {
@@ -399,7 +399,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
   if (tab === 'bay4AutoAssign' || tab === 'bay2AutoAssign') {
     result.plannedOrders = { supported: true, rows: [] };
     result.inYardFullEquipment = { supported: true, rows: [] };
-    result.title = tab === 'bay4AutoAssign' ? 'Rear Guard Shack' : 'Bay 2 Auto Assign';
+    result.title = tab === 'bay4AutoAssign' ? 'Rear Guard Shack' : 'Team 2 Auto Assign';
     result.customer = { name: siteLabel };
 
     if (tab === 'bay2AutoAssign') {
@@ -561,7 +561,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           }
         }
       } catch (err) {
-        console.error('Bay 2 Auto Assign fetch error:', err.message);
+        console.error('Team 2 Auto Assign fetch error:', err.message);
       }
 
       result.bay2AutoAssign = b2a;
@@ -675,8 +675,8 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
       const workbookPivot = JSON.parse(fs.readFileSync(path.join(__dirname, 'evelyn-pivot.json'), 'utf8'));
       result.bay = 'evelyn';
       result.reportType = 'evelynGreenPivot';
-      result.title = 'Bay 2 LTL';
-      result.customer = { name: 'Bay 2 LTL' };
+      result.title = 'Team 2 LTL';
+      result.customer = { name: 'Team 2 LTL' };
       result.customerSet = (workbookPivot.evelynGreen?.rows || [])
         .filter(r => r.level === 0)
         .map(r => ({ name: r.label }));
@@ -689,10 +689,10 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
       result.generatedAt = workbookPivot.generatedAt || now;
       return res.json(result);
     } catch (err) {
-      console.error('Bay 2 LTL workbook parse error:', err.message);
+      console.error('Team 2 LTL workbook parse error:', err.message);
       result.reportType = 'evelynGreenPivot';
-      result.customer = { name: 'Bay 2 LTL' };
-      result.evelynGreen = { supported: false, rows: [], total: { orderCount: 0, baseQty: 0 }, aged72Rows: [], unavailableReason: 'Bay 2 LTL pivot data is unavailable.' };
+      result.customer = { name: 'Team 2 LTL' };
+      result.evelynGreen = { supported: false, rows: [], total: { orderCount: 0, baseQty: 0 }, aged72Rows: [], unavailableReason: 'Team 2 LTL pivot data is unavailable.' };
       result.metrics = [];
       return res.json(result);
     }
@@ -743,7 +743,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
 
         let rows = allRows.filter(row => rowMatchesTab(row, cfg));
 
-        // Safety guard: Bay 4 must be Gurunanda only. Never let the generic LT_F1
+        // Safety guard: Team 4 must be Gurunanda only. Never let the generic LT_F1
         // planned-order page leak other customers into this tab if WISE ignores a
         // customer filter parameter.
         if (tab === 'bay4') {
@@ -822,7 +822,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             detailRows: rows,
             aged24Rows,
             aged48Rows,
-            // Bottom Bay 2 sections in the original screen.
+            // Bottom Team 2 sections in the original screen.
             // Dropship Amazon FBA is derived from rows with Amazon/FBA signals in
             // retailer/source/reference/order fields. Delta LTL is derived from
             // LTL ship method or Delta customer rows.
@@ -855,7 +855,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             { label: 'Count of Order #', value: String(grandTotal.orderCount), sub: 'WISE planned orders' },
             { label: 'Sum of BASE QTY', value: String(grandTotal.baseQty), sub: 'WISE base quantity' },
             { label: 'Past SLA', value: String(aged24Rows.length), sub: 'Orders older than 24 hours' },
-            { label: 'Customers', value: String(customerSet.length), sub: 'Bay 2 customer set' },
+            { label: 'Customers', value: String(customerSet.length), sub: 'Team 2 customer set' },
           ];
         }
     } else {
