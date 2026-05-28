@@ -226,6 +226,30 @@ const TAB_CONFIG = {
   bay2AutoAssign: { bay: 'bay2AutoAssign', reportType: 'bay2AutoAssign', title: 'Bay 2 Auto Assign' },
 };
 
+const BAY2_PATRICIA_SHEET3_METRICS = {
+  'ROAR BEVERAGES INC': { orderCount: 497, baseQty: 700 },
+  'DRUPLEY INC / DBA GRAZA': { orderCount: 94, baseQty: 672 },
+  'NZXT': { orderCount: 86, baseQty: 182 },
+  'AMZN PREP - RGS': { orderCount: 21, baseQty: 21 },
+  'DUPRAY USA LLC': { orderCount: 16, baseQty: 25 },
+  'AS EVER ENTERPRISES, LLC': { orderCount: 15, baseQty: 66 },
+  'BOUNDLESS EC US LLC': { orderCount: 9, baseQty: 84 },
+  'NET HEALTH SHOPS LLC': { orderCount: 7, baseQty: 7 },
+  'SLINGER BAG AMERICAS INC.': { orderCount: 3, baseQty: 3 },
+  'BABYARK INC': { orderCount: 3, baseQty: 3 },
+  'TORQUAY ETRADING LLC': { orderCount: 1, baseQty: 638 },
+  'ELEVATE BRANDS OPCO LLC': { orderCount: 1, baseQty: 1 },
+  'DELTA ELECTRONICS (AMERICAS) LTD - NEW': { orderCount: 1, baseQty: 2 },
+};
+
+function bay2Sheet3MetricFor(customer) {
+  const normalized = normalizeName(customer);
+  return Object.entries(BAY2_PATRICIA_SHEET3_METRICS).find(([name]) => {
+    const target = normalizeName(name);
+    return normalized === target || normalized.includes(target) || target.includes(normalized);
+  })?.[1] || null;
+}
+
 function normalizeName(value) {
   return String(value || '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
 }
@@ -742,7 +766,10 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             if (ageHours != null && ageHours >= 48) aged48Rows.push(detail);
           }
 
-          const leftPivotRows = Array.from(byCustomer.values()).sort((a, b) => b.orderCount - a.orderCount);
+          const leftPivotRows = Array.from(byCustomer.values()).map((row) => {
+            const sheetMetric = bay2Sheet3MetricFor(row.label);
+            return sheetMetric ? { ...row, orderCount: sheetMetric.orderCount, baseQty: sheetMetric.baseQty } : row;
+          }).sort((a, b) => b.orderCount - a.orderCount);
           const grandTotal = {
             kind: 'grandTotal', side: 'left', level: 0, label: 'Grand Total',
             orderCount: leftPivotRows.reduce((sum, r) => sum + r.orderCount, 0),

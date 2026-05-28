@@ -387,6 +387,15 @@ export function Dashboard({
     }));
   }, [data, plannedRows, facility.name]);
 
+  const customerOrderCountMap = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const row of plannedRows) {
+      const key = row.customer || "Pending";
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return counts;
+  }, [plannedRows]);
+
   const inYardRows = data?.inYardFullEquipment?.rows ?? [];
   const yardSupported = data?.inYardFullEquipment?.supported ?? false;
 
@@ -690,7 +699,7 @@ export function Dashboard({
                       {filteredPlanned.map((r) => (
                         <tr key={r.orderNumber}>
                           <td className="strong">{r.orderNumber}</td>
-                          <td>{r.customer}</td>
+                          <td>{r.customer}{customerOrderCountMap.has(r.customer) ? ` (${customerOrderCountMap.get(r.customer)})` : ""}</td>
                           <td>{r.status}</td>
                           <td>{r.reference}</td>
                           <td>{fmtDate(r.created)}</td>
