@@ -213,7 +213,10 @@ async function resolveOrgNames(orgIds, accessToken, tenantId) {
  */
 const TAB_CONFIG = {
   bay1: { bay: 'bay1', reportType: 'bay1', title: 'Bay 1', customerIds: ['ORG-655338','ORG-739504','ORG-536926','ORG-55783','ORG-625907','ORG-625900','ORG-629731','ORG-625904','ORG-729253','ORG-672896','ORG-646997','ORG-616507','ORG-740120','ORG-614850','ORG-674362','ORG-714892','ORG-601372','ORG-647815','ORG-625905','ORG-723580'] },
-  bay2: { bay: 'bay2', reportType: 'bay2Ecomm', title: 'Bay 2', customerNames: ['ROAR BEVERAGES INC','AS EVER ENTERPRISES, LLC','DRUPLEY INC / DBA GRAZA','NET HEALTH SHOPS LLC','NZXT','DUPRAY USA LLC','AMZN PREP - RGS','SLINGER BAG AMERICAS INC.','SUN NINJA LLC','TORQUAY ETRADING LLC','ELEVATE BRANDS OPCO LLC','BABYARK INC','TRIPLELITE, LLC','UNIVERA BRANDS'], mezzanineCustomerNames: ['ROAR BEVERAGES INC','AS EVER ENTERPRISES, LLC','DRUPLEY INC / DBA GRAZA','NET HEALTH SHOPS LLC','NZXT','DUPRAY USA LLC','AMZN PREP - RGS','SLINGER BAG AMERICAS INC.','SUN NINJA LLC','TORQUAY ETRADING LLC','ELEVATE BRANDS OPCO LLC','BABYARK INC','TRIPLELITE, LLC','UNIVERA BRANDS'] },
+  bay2: { bay: 'bay2', reportType: 'bay2Ecomm', title: 'Bay 2', customerNames: [
+    'AMZN PREP - MATTRESSES','AMZN PREP - RGS','AS EVER ENTERPRISES, LLC','BABYARK INC','BOUNDLESS EC US LLC','DELTA ELECTRONICS','DUPRAY USA LLC','ELEVATE BRANDS OPCO LLC','NET HEALTH SHOPS LLC','NZXT','PRISMA INTERNATIONAL LLC','RIO ROUTER INC','ROAR BEVERAGES INC','SIMPLE MODERN','SLINGER BAG AMERICAS INC.','STRETTON ONLINE LTD','SUN NINJA LLC','THE MURRIETA RHINO HOLDCO LLC','TINYYO LIMITED','TORQUAY ETRADING LLC','TRIPLELITE, LLC','UNIVERA BRANDS',
+    'MAMMA CHIA','THE FEELIST','OPAL CAMERA','BIRD OF CONDOR','BUMP','FLAG AND ANTHEM','VAONIS','EMBER','VITA COCO DTC','COME READY','PUNK BUNNY','THE OUAI','BYTE DANCE - TIKTOK','ZEN','RECOVERY','MUSE','RISEANDSHINE','WATERPLUS','UPTIME ENERGY','FHIRST','KACE TEA','SPLENDOR WATER'
+  ], mezzanineCustomerNames: ['MAMMA CHIA','THE FEELIST','OPAL CAMERA','BIRD OF CONDOR','BUMP','FLAG AND ANTHEM','VAONIS','EMBER','VITA COCO DTC','COME READY','PUNK BUNNY','THE OUAI','BYTE DANCE - TIKTOK','ZEN','RECOVERY','MUSE','RISEANDSHINE','WATERPLUS','UPTIME ENERGY','FHIRST','KACE TEA','SPLENDOR WATER'] },
   bay3: { bay: 'bay3', reportType: 'bay3', title: 'Bay 3', customerNames: ['TCL NORTH AMERICA','LENNOX INDUSTRIES INC.','AMIEE LYNN, LNC.','KARAKA, LLC','NZXT','CMPC USA (Cut Paper and Rolls)','WOODY FLAW CREST INC','North Star','CMPC USA','La Jolla','ESI','TPV USA','Gurunanda','the only bean'] },
   bay4: { bay: 'bay4', reportType: 'bay4', title: 'Bay 4', customerIds: ['ORG-655875'], customerNames: ['GURUNANDA'] },
   bay5: { bay: 'bay5', reportType: 'bay5', title: 'Bay 5', customerIds: ['ORG-34557','ORG-614850','ORG-755323','ORG-582188','ORG-646997','ORG-616507'] },
@@ -241,6 +244,28 @@ const BAY2_PATRICIA_SHEET3_METRICS = {
   'ELEVATE BRANDS OPCO LLC': { orderCount: 1, baseQty: 1 },
   'DELTA ELECTRONICS (AMERICAS) LTD - NEW': { orderCount: 1, baseQty: 2 },
 };
+
+
+const BAY2_LEFT_DROPSHIP_CUSTOMERS = [
+  'AMZN PREP - MATTRESSES','AMZN PREP - RGS','AS EVER ENTERPRISES, LLC','BABYARK INC','BOUNDLESS EC US LLC','DELTA ELECTRONICS','DUPRAY USA LLC','ELEVATE BRANDS OPCO LLC','NET HEALTH SHOPS LLC','NZXT','PRISMA INTERNATIONAL LLC','RIO ROUTER INC','ROAR BEVERAGES INC','SIMPLE MODERN','SLINGER BAG AMERICAS INC.','STRETTON ONLINE LTD','SUN NINJA LLC','THE MURRIETA RHINO HOLDCO LLC','TINYYO LIMITED','TORQUAY ETRADING LLC','TRIPLELITE, LLC','UNIVERA BRANDS'
+];
+
+const BAY2_MEZZANINE_DROPSHIP_CUSTOMERS = [
+  'MAMMA CHIA','THE FEELIST','OPAL CAMERA','BIRD OF CONDOR','BUMP','FLAG AND ANTHEM','VAONIS','EMBER','VITA COCO DTC','COME READY','PUNK BUNNY','THE OUAI','BYTE DANCE - TIKTOK','ZEN','RECOVERY','MUSE','RISEANDSHINE','WATERPLUS','UPTIME ENERGY','FHIRST','KACE TEA','SPLENDOR WATER'
+];
+
+function customerMatchesAny(customer, names) {
+  const normalized = normalizeName(customer);
+  return names.some((name) => {
+    const target = normalizeName(name);
+    return normalized === target || normalized.includes(target) || target.includes(normalized);
+  });
+}
+
+function isDropshipOrder(row) {
+  const type = normalizeName(row.orderType || row.order_type || row.orderTypeName || '');
+  return type === 'DS' || type.includes('DROP SHIP') || type.includes('DROPSHIP');
+}
 
 function bay2Sheet3MetricFor(customer) {
   const normalized = normalizeName(customer);
@@ -745,20 +770,11 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
         ];
 
         if (tab === 'bay2') {
-          const byCustomer = new Map();
           const aged24Rows = [];
           const aged48Rows = [];
           const nowMs = Date.now();
 
           for (const row of rows) {
-            const customer = row.customer || 'Unknown';
-            if (!byCustomer.has(customer)) {
-              byCustomer.set(customer, { kind: 'customer', side: 'left', level: 0, label: customer, orderCount: 0, baseQty: 0 });
-            }
-            const pivot = byCustomer.get(customer);
-            pivot.orderCount += 1;
-            pivot.baseQty += Number(row.baseQty || 0);
-
             const createdMs = row.created ? new Date(row.created).getTime() : NaN;
             const ageHours = Number.isNaN(createdMs) ? null : Math.floor((nowMs - createdMs) / 36e5);
             const detail = { ...row, ageHours };
@@ -766,10 +782,23 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             if (ageHours != null && ageHours >= 48) aged48Rows.push(detail);
           }
 
-          const leftPivotRows = Array.from(byCustomer.values()).map((row) => {
-            const sheetMetric = bay2Sheet3MetricFor(row.label);
-            return sheetMetric ? { ...row, orderCount: sheetMetric.orderCount, baseQty: sheetMetric.baseQty } : row;
-          }).sort((a, b) => b.orderCount - a.orderCount);
+          const dropshipRows = rows.filter(isDropshipOrder);
+          function buildPivot(sourceRows, customerNames, side) {
+            const byCustomer = new Map();
+            for (const row of sourceRows) {
+              if (!customerMatchesAny(row.customer, customerNames)) continue;
+              const customer = row.customer || 'Unknown';
+              if (!byCustomer.has(customer)) {
+                byCustomer.set(customer, { kind: 'customer', side, level: 0, label: customer, orderCount: 0, baseQty: 0 });
+              }
+              const pivot = byCustomer.get(customer);
+              pivot.orderCount += 1;
+              pivot.baseQty += Number(row.baseQty || 0);
+            }
+            return Array.from(byCustomer.values()).sort((a, b) => b.orderCount - a.orderCount);
+          }
+
+          const leftPivotRows = buildPivot(dropshipRows, BAY2_LEFT_DROPSHIP_CUSTOMERS, 'left');
           const grandTotal = {
             kind: 'grandTotal', side: 'left', level: 0, label: 'Grand Total',
             orderCount: leftPivotRows.reduce((sum, r) => sum + r.orderCount, 0),
@@ -777,15 +806,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           };
           if (leftPivotRows.length) leftPivotRows.push(grandTotal);
 
-          // The original Bay 2 screen renders the right-hand "Mezzanine" table
-          // from pivotRows where side !== 'left'. Build a second customer pivot
-          // with side:'right' so the Mezzanine section is populated instead of blank.
-          const mezzanineNames = (cfg.mezzanineCustomerNames || []).map(normalizeName);
-          const mezzanineRows = Array.from(byCustomer.values())
-            .filter(r => r.kind === 'customer')
-            .filter(r => !mezzanineNames.length || mezzanineNames.some(name => normalizeName(r.label).includes(name)))
-            .map(r => ({ ...r, side: 'right' }))
-            .sort((a, b) => b.orderCount - a.orderCount);
+          const mezzanineRows = buildPivot(dropshipRows, BAY2_MEZZANINE_DROPSHIP_CUSTOMERS, 'right');
           const mezzanineTotal = {
             kind: 'grandTotal', side: 'right', level: 0, label: 'Grand Total',
             orderCount: mezzanineRows.reduce((sum, r) => sum + r.orderCount, 0),
