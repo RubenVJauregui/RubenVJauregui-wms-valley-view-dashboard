@@ -879,7 +879,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
 
 // ── Static file serving ────────────────────────────────────────────────────
 
-const staticDir = path.join(__dirname, '..', 'website-source');
+const staticDir = path.join(__dirname, 'website-source');
 app.use(express.static(staticDir, {
   setHeaders(res, filePath) {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
