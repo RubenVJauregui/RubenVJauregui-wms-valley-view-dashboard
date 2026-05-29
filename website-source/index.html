@@ -1018,4 +1018,61 @@
   document.addEventListener('click',function(){ setTimeout(function(){ if(isTeam4()) fetchRows(); },250);},true);
 })();
 </script>
+
+<style id="bay2-auto-assign-orders-today-style">
+  .orders-assigned-today-wrap {
+    max-height: 620px !important;
+    overflow-y: auto !important;
+    overflow-x: auto !important;
+    border-radius: 14px !important;
+  }
+  .orders-assigned-today-wrap thead th {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 4 !important;
+    background: rgba(12,20,44,.97) !important;
+  }
+</style>
+<script id="bay2-auto-assign-orders-today">
+(function(){
+  if (window.__bay2OrdersAssignedTodayApplied) return;
+  window.__bay2OrdersAssignedTodayApplied = true;
+  function activeTab(){ var a=document.querySelector('.report-tab.active'); return a && a.textContent ? a.textContent.trim() : ''; }
+  function isBay2AutoAssign(){ var t=activeTab(); return t === 'Team 2 Auto Assign' || t === 'Bay 2 Auto Assign'; }
+  function isHistoryTitle(text){
+    text=String(text||'').trim();
+    return text === "Assignment History Today" || text === "Today's Assignment History" || /^Today\'s Assignment History/.test(text) || text === 'Orders Assigned Today';
+  }
+  function applyOrdersAssignedToday(){
+    if(!isBay2AutoAssign()) return;
+    document.querySelectorAll('section, article, div').forEach(function(node){
+      var h=node.querySelector && node.querySelector('h3,h2');
+      if(!h || !isHistoryTitle(h.textContent)) return;
+      h.textContent='Orders Assigned Today';
+      var subtitle=node.querySelector('p, span');
+      if(subtitle && /DN|Customer|Pieces|Assignee|Assignment/i.test(subtitle.textContent||'')){
+        subtitle.textContent='All orders assigned today: DN / Customer / Pieces / Assignee';
+      }
+      var wrap=node.querySelector('.table-frame, .bay4-history-scroll, .bay4-assigned-table-wrap, div:has(> table)');
+      if(wrap){
+        wrap.classList.add('orders-assigned-today-wrap');
+        wrap.style.maxHeight='620px';
+        wrap.style.overflowY='auto';
+        wrap.style.overflowX='auto';
+      }
+      var ths=node.querySelectorAll('table thead th');
+      if(ths.length>=4){
+        ths[0].textContent='DN';
+        ths[1].textContent='Customer';
+        ths[2].textContent='Pieces';
+        ths[3].textContent='Assignee';
+      }
+    });
+  }
+  applyOrdersAssignedToday();
+  document.addEventListener('click', function(){ setTimeout(applyOrdersAssignedToday,250); }, true);
+  var timer=setInterval(applyOrdersAssignedToday,1000);
+  setTimeout(function(){ clearInterval(timer); }, 60000);
+})();
+</script>
 </body></html>
