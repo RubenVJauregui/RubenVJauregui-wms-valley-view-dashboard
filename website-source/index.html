@@ -1193,14 +1193,20 @@
 
 <script id="nightshift-sort-oldest-newest">
 (function(){
-  if (window.__nightShiftSortOldestNewest) return;
-  window.__nightShiftSortOldestNewest = true;
+  if (window.__nightShiftSortOldestNewestV2) return;
+  window.__nightShiftSortOldestNewestV2 = true;
   function isNightShift(){ var a=document.querySelector('.report-tab.active'); return a && /Night Shift/i.test(a.textContent||''); }
   function parseTime(v){
     v=String(v||'').trim();
-    if(!v || v==='Pending') return 0;
-    var d=new Date(v);
-    return isNaN(d.getTime()) ? 0 : d.getTime();
+    if(!v || v==='Pending') return Number.MAX_SAFE_INTEGER;
+    // Handles: 05/28/2026, 02:55:17 or 05/28/2026 02:55:17 PDT
+    var cleaned=v.replace(/\s*PDT\s*$/i,'').replace(',', '');
+    var m=cleaned.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+    if(m){
+      return new Date(Number(m[3]), Number(m[1])-1, Number(m[2]), Number(m[4]), Number(m[5]), Number(m[6]||0)).getTime();
+    }
+    var d=new Date(cleaned);
+    return isNaN(d.getTime()) ? Number.MAX_SAFE_INTEGER : d.getTime();
   }
   function sortNightShiftOldestFirst(){
     if(!isNightShift()) return;
@@ -1212,10 +1218,9 @@
     var table=section.querySelector('table'); if(!table) return;
     var headers=Array.from(table.querySelectorAll('thead th'));
     var idx=headers.findIndex(function(th){ return /GATE CHECK-IN TIME|CHECK-IN|CHECK IN/i.test(th.textContent||''); });
-    if(idx<0) idx=headers.findIndex(function(th){ return /IN YARD TIME/i.test(th.textContent||''); });
     if(idx<0) return;
     var tbody=table.querySelector('tbody'); if(!tbody) return;
-    var rows=Array.from(tbody.querySelectorAll('tr')).filter(function(tr){ return tr.style.display !== 'none'; });
+    var rows=Array.from(tbody.querySelectorAll('tr'));
     rows.sort(function(a,b){
       var av=a.querySelectorAll('td')[idx]?.textContent || '';
       var bv=b.querySelectorAll('td')[idx]?.textContent || '';
@@ -1225,7 +1230,7 @@
   }
   sortNightShiftOldestFirst();
   document.addEventListener('click', function(){ setTimeout(sortNightShiftOldestFirst,350); }, true);
-  setInterval(sortNightShiftOldestFirst,1200);
+  setInterval(sortNightShiftOldestFirst,1000);
 })();
 </script>
 </body></html>
