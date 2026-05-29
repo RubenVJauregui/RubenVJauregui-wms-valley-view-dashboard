@@ -904,6 +904,11 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             const fullMatch = status === 'FULL';
             const opMatch = ['FULL_TO_OFFLOAD', 'OFFLOAD_WAITING'].includes(opStatus);
             const typeMatch = type === 'CONTAINER';
+            if (tab === 'nightShift') {
+              // Night Shift uses the same Section 1 in-yard FULL equipment metric,
+              // but across all customers instead of tab/pivot customer restrictions.
+              return fullMatch && opMatch && typeMatch;
+            }
             return pivotCustomerMatch && tabCustomerMatch && fullMatch && opMatch && typeMatch;
           })
           .map(e => ({
@@ -918,6 +923,27 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             details: e.equipmentOperationStatus || e.details || '',
           }));
         result.inYardFullEquipment.candidateCount = result.inYardFullEquipment.rows.length;
+        if (tab === 'nightShift') {
+          result.nightShift = {
+            supported: true,
+            rows: result.inYardFullEquipment.rows.map(e => ({
+              equipmentNo: e.equipmentNumber || '',
+              equipmentType: e.equipmentType || '',
+              customerName: e.customer || '',
+              equipmentStatus: e.status || 'FULL',
+              equipmentOperationStatus: e.details || 'FULL_TO_OFFLOAD',
+              locationName: e.location || '',
+              checkInEntry: e.entryTicket || '',
+              gateCheckInTime: e.checkIn || '',
+              inYardTime: e.timeInYard || '',
+              loadId: '',
+              receiptId: '',
+              orderId: '',
+              carrierName: ''
+            })),
+            totalCount: result.inYardFullEquipment.rows.length
+          };
+        }
       }
     }
   } catch {}
