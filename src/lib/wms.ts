@@ -56,6 +56,14 @@ function authHeaders(token: string, tenantId: string, facilityId?: string) {
   return h;
 }
 
+function normalizeName(value: string): string {
+  return String(value || "")
+    .toUpperCase()
+    .replace(/&/g, "AND")
+    .replace(/[^A-Z0-9]+/g, " ")
+    .trim();
+}
+
 async function wmsGet<T>(
   path: string,
   token: string,
@@ -290,7 +298,7 @@ export async function loadDashboard(
   tenantId: string,
   facilityId: string,
   facilityName: string,
-  _tab?: string
+  tab?: string
 ): Promise<WmsDashboardData> {
   const now = new Date().toISOString();
 
@@ -303,8 +311,13 @@ export async function loadDashboard(
     searchInYardEquipment(token, tenantId, facilityId),
   ]);
 
+  const excludedNightShiftCustomers = new Set([normalizeName("Euromarket designs")]);
+  const plannedRows = tab === "nightShift"
+    ? plannedOrders.rows.filter((r) => !excludedNightShiftCustomers.has(normalizeName(r.customer)))
+    : plannedOrders.rows;
+
   const customerNames = new Set(
-    plannedOrders.rows.map((r) => r.customer).filter(Boolean)
+    plannedRows.map((r) => r.customer).filter(Boolean)
   );
   const customerSet = Array.from(customerNames).map((name) => ({ name }));
 
@@ -318,7 +331,7 @@ export async function loadDashboard(
     customerSet,
     plannedOrders: {
       supported: plannedOrders.supported,
-      rows: plannedOrders.rows,
+      rows: plannedRows,
     },
     inYardFullEquipment: {
       supported: inYard.supported,
