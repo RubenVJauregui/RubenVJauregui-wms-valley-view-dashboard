@@ -1114,4 +1114,80 @@
   setInterval(applyNightShiftTitleAndFilter,1000);
 })();
 </script>
+
+<style id="nightshift-customer-summary-style">
+  .nightshift-customer-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 18px 12px;
+    border-bottom: 1px solid rgba(39,52,95,.75);
+  }
+  .nightshift-customer-summary .customer-count-chip {
+    border: 1px solid rgba(168,85,247,.45);
+    color: #d8b4fe;
+    background: rgba(12,20,44,.86);
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .01em;
+  }
+  .nightshift-customer-summary .customer-count-chip b {
+    color: #fbbf24;
+    margin-left: 4px;
+  }
+</style>
+<script id="nightshift-customer-summary">
+(function(){
+  if (window.__nightShiftCustomerSummaryApplied) return;
+  window.__nightShiftCustomerSummaryApplied = true;
+  function norm(v){ return String(v||'').toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim(); }
+  function isNightShift(){ var a=document.querySelector('.report-tab.active'); return a && /Night Shift/i.test(a.textContent||''); }
+  function applyNightShiftCustomerSummary(){
+    if(!isNightShift()) return;
+    var titleText='Night Shift — All FULL Trailers & Containers';
+    var title=Array.from(document.querySelectorAll('h2,h3')).find(function(h){ return norm(h.textContent).indexOf(norm(titleText))>=0; });
+    if(!title) return;
+    var section=title;
+    while(section && section!==document.body){ if(section.querySelector && section.querySelector('table')) break; section=section.parentElement; }
+    if(!section || section===document.body) return;
+    var table=section.querySelector('table');
+    if(!table) return;
+    var headers=Array.from(table.querySelectorAll('thead th'));
+    var customerIdx=headers.findIndex(function(th){ return /customer/i.test(th.textContent||''); });
+    if(customerIdx<0) return;
+    var counts={};
+    var visible=0;
+    table.querySelectorAll('tbody tr').forEach(function(tr){
+      var cells=tr.querySelectorAll('td');
+      var customer=cells[customerIdx] ? cells[customerIdx].textContent.trim() : '';
+      if(norm(customer)===norm(titleText)){
+        tr.style.display='none';
+        return;
+      }
+      tr.style.display='';
+      if(customer){ counts[customer]=(counts[customer]||0)+1; visible++; }
+    });
+    title.textContent = titleText + ' (' + visible + ')';
+    var old=section.querySelector('.nightshift-customer-summary');
+    if(old) old.remove();
+    var summary=document.createElement('div');
+    summary.className='nightshift-customer-summary';
+    Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a] || a.localeCompare(b); }).forEach(function(name){
+      var chip=document.createElement('span');
+      chip.className='customer-count-chip';
+      chip.innerHTML = name + ' <b>(' + counts[name] + ')</b>';
+      summary.appendChild(chip);
+    });
+    var heading=section.querySelector('.section-heading') || title.parentElement;
+    if(heading && heading.parentNode){ heading.parentNode.insertBefore(summary, heading.nextSibling); }
+    var caption=section.querySelector('.summary-caption');
+    if(caption) caption.textContent=visible + ' equipment';
+  }
+  applyNightShiftCustomerSummary();
+  document.addEventListener('click', function(){ setTimeout(applyNightShiftCustomerSummary,300); }, true);
+  setInterval(applyNightShiftCustomerSummary,1000);
+})();
+</script>
 </body></html>
