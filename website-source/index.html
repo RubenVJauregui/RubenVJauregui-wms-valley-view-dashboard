@@ -1075,4 +1075,43 @@
   setTimeout(function(){ clearInterval(timer); }, 60000);
 })();
 </script>
+
+<script id="nightshift-title-count-and-filter">
+(function(){
+  if (window.__nightShiftTitleCountAndFilter) return;
+  window.__nightShiftTitleCountAndFilter = true;
+  function norm(v){ return String(v||'').toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim(); }
+  function isNightShift(){ var a=document.querySelector('.report-tab.active'); return a && /Night Shift/i.test(a.textContent||''); }
+  function applyNightShiftTitleAndFilter(){
+    if(!isNightShift()) return;
+    var titleText='Night Shift — All FULL Trailers & Containers';
+    var title=Array.from(document.querySelectorAll('h2,h3')).find(function(h){ return norm(h.textContent).indexOf(norm(titleText))>=0; });
+    if(!title) return;
+    var section=title;
+    while(section && section!==document.body){ if(section.querySelector && section.querySelector('table')) break; section=section.parentElement; }
+    if(!section || section===document.body) return;
+    var table=section.querySelector('table');
+    if(!table) return;
+    var headers=Array.from(table.querySelectorAll('thead th'));
+    var customerIdx=headers.findIndex(function(th){ return /customer/i.test(th.textContent||''); });
+    var visible=0;
+    table.querySelectorAll('tbody tr').forEach(function(tr){
+      var cells=tr.querySelectorAll('td');
+      var customer=customerIdx>=0 && cells[customerIdx] ? cells[customerIdx].textContent : '';
+      if(norm(customer)===norm(titleText)){
+        tr.style.display='none';
+      } else {
+        tr.style.display='';
+        visible++;
+      }
+    });
+    title.textContent=titleText + ' (' + visible + ')';
+    var caption=section.querySelector('.summary-caption');
+    if(caption) caption.textContent=visible + ' equipment';
+  }
+  applyNightShiftTitleAndFilter();
+  document.addEventListener('click', function(){ setTimeout(applyNightShiftTitleAndFilter,300); }, true);
+  setInterval(applyNightShiftTitleAndFilter,1000);
+})();
+</script>
 </body></html>

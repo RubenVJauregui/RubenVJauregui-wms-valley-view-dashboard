@@ -924,9 +924,12 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           }));
         result.inYardFullEquipment.candidateCount = result.inYardFullEquipment.rows.length;
         if (tab === 'nightShift') {
+          const nightShiftRows = result.inYardFullEquipment.rows.filter(e => normalizeName(e.customer) !== normalizeName('Night Shift — All FULL Trailers & Containers'));
+          result.inYardFullEquipment.rows = nightShiftRows;
+          result.inYardFullEquipment.candidateCount = nightShiftRows.length;
           result.nightShift = {
             supported: true,
-            rows: result.inYardFullEquipment.rows.map(e => ({
+            rows: nightShiftRows.map(e => ({
               equipmentNo: e.equipmentNumber || '',
               equipmentType: e.equipmentType || '',
               customerName: e.customer || '',
@@ -941,7 +944,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
               orderId: '',
               carrierName: ''
             })),
-            totalCount: result.inYardFullEquipment.rows.length
+            totalCount: nightShiftRows.length
           };
         }
       }
