@@ -1190,4 +1190,42 @@
   setInterval(applyNightShiftCustomerSummary,1000);
 })();
 </script>
+
+<script id="nightshift-sort-oldest-newest">
+(function(){
+  if (window.__nightShiftSortOldestNewest) return;
+  window.__nightShiftSortOldestNewest = true;
+  function isNightShift(){ var a=document.querySelector('.report-tab.active'); return a && /Night Shift/i.test(a.textContent||''); }
+  function parseTime(v){
+    v=String(v||'').trim();
+    if(!v || v==='Pending') return 0;
+    var d=new Date(v);
+    return isNaN(d.getTime()) ? 0 : d.getTime();
+  }
+  function sortNightShiftOldestFirst(){
+    if(!isNightShift()) return;
+    var title=Array.from(document.querySelectorAll('h2,h3')).find(function(h){ return /Night Shift.*FULL Trailers.*Containers/i.test(h.textContent||''); });
+    if(!title) return;
+    var section=title;
+    while(section && section!==document.body){ if(section.querySelector && section.querySelector('table')) break; section=section.parentElement; }
+    if(!section || section===document.body) return;
+    var table=section.querySelector('table'); if(!table) return;
+    var headers=Array.from(table.querySelectorAll('thead th'));
+    var idx=headers.findIndex(function(th){ return /GATE CHECK-IN TIME|CHECK-IN|CHECK IN/i.test(th.textContent||''); });
+    if(idx<0) idx=headers.findIndex(function(th){ return /IN YARD TIME/i.test(th.textContent||''); });
+    if(idx<0) return;
+    var tbody=table.querySelector('tbody'); if(!tbody) return;
+    var rows=Array.from(tbody.querySelectorAll('tr')).filter(function(tr){ return tr.style.display !== 'none'; });
+    rows.sort(function(a,b){
+      var av=a.querySelectorAll('td')[idx]?.textContent || '';
+      var bv=b.querySelectorAll('td')[idx]?.textContent || '';
+      return parseTime(av)-parseTime(bv);
+    });
+    rows.forEach(function(tr){ tbody.appendChild(tr); });
+  }
+  sortNightShiftOldestFirst();
+  document.addEventListener('click', function(){ setTimeout(sortNightShiftOldestFirst,350); }, true);
+  setInterval(sortNightShiftOldestFirst,1200);
+})();
+</script>
 </body></html>
