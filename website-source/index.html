@@ -961,4 +961,61 @@
   document.addEventListener('click', function(){ setTimeout(function(){ if(isBay3()) fetchBay3(); }, 250); }, true);
 })();
 </script>
+
+<script id="team4-exact-excel-layout-v2">
+(function(){
+  if (window.__team4ExactExcelLayoutV2) return;
+  window.__team4ExactExcelLayoutV2 = true;
+  var rows = null, fetching = false, lastFetchAt = 0;
+  function isTeam4(){ var a=document.querySelector('.report-tab.active'); var t=a&&a.textContent?a.textContent.trim():''; return t==='Team 4' || t==='Bay 4'; }
+  function esc(v){ return String(v==null?'':v).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
+  function findSection2(){
+    var heads=Array.from(document.querySelectorAll('h2,h3'));
+    var h=heads.find(function(x){ var t=(x.textContent||'').toUpperCase(); return t.indexOf('SECTION 2')>=0 && t.indexOf('PLANNED OUTBOUND ORDERS')>=0; });
+    if(!h) return null; var n=h;
+    while(n&&n!==document.body){ if(n.querySelector&&n.querySelector('table')) return n; n=n.parentElement; }
+    return null;
+  }
+  function value(r, keys){ for(var i=0;i<keys.length;i++){ var v=r[keys[i]]; if(v!==undefined&&v!==null&&String(v)!=='') return v; } return ''; }
+  function render(){
+    if(!isTeam4() || !rows) return;
+    var section=findSection2(); if(!section) return;
+    var table=section.querySelector('table'); if(!table) return;
+    var thead=table.querySelector('thead'), tbody=table.querySelector('tbody'); if(!thead||!tbody) return;
+    var headers=['Order #','Status','BASE QTY','Order Type','PO #','ORDER PLAN ID','Appointment Time','Retailer Name','Ship To Name'];
+    thead.innerHTML='<tr>'+headers.map(function(h){return '<th data-team4-exact="1">'+h+'</th>';}).join('')+'</tr>';
+    tbody.innerHTML=rows.map(function(r){
+      var vals=[
+        value(r,['orderNumber','orderNo','orderId']),
+        value(r,['status','orderStatus']),
+        value(r,['baseQty','totalBaseQty','totalBaseQTY']),
+        value(r,['orderType','type']),
+        value(r,['po','reference','poNumber']),
+        value(r,['orderPlanId','orderPlanID','planId']),
+        value(r,['appointmentTime','appointmentDate','appointment']),
+        value(r,['retailerName','retailer']),
+        value(r,['shipToName','shipTo'])
+      ];
+      return '<tr data-team4-exact-row="1">'+vals.map(function(v){return '<td>'+esc(v)+'</td>';}).join('')+'</tr>';
+    }).join('');
+  }
+  async function fetchRows(){
+    if(!isTeam4()||fetching) return;
+    if(Date.now()-lastFetchAt<8000&&rows){ render(); return; }
+    var raw=localStorage.getItem('bay4-wms-session'); if(!raw) return;
+    var session; try{session=JSON.parse(raw);}catch(e){return;}
+    var facilityId=localStorage.getItem('bay4-wms-facility')||(session.defaultFacility&&session.defaultFacility.id)||'LT_F1';
+    var facility=(session.facilities||[]).find(function(f){return f.id===facilityId;})||{id:facilityId,timeZone:'America/Los_Angeles'};
+    fetching=true;
+    try{
+      var res=await fetch('/api/dashboard',{method:'POST',cache:'no-store',headers:{'content-type':'application/json','authorization':'Bearer '+session.accessToken,'x-tenant-id':(session.identity&&(session.identity.tenantId||session.identity.tenant_id))||'LT'},body:JSON.stringify({facilityId:facility.id,timeZone:facility.timeZone||'America/Los_Angeles',tab:'bay4'})});
+      var json=await res.json();
+      if(json&&json.plannedOrders&&Array.isArray(json.plannedOrders.rows)){ rows=json.plannedOrders.rows; lastFetchAt=Date.now(); render(); }
+    }catch(e){ console.warn('Team 4 exact layout refresh failed',e); }
+    fetching=false;
+  }
+  setInterval(function(){ if(isTeam4()){ fetchRows(); render(); } },900);
+  document.addEventListener('click',function(){ setTimeout(function(){ if(isTeam4()) fetchRows(); },250);},true);
+})();
+</script>
 </body></html>
