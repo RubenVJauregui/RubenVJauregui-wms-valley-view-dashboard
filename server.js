@@ -279,6 +279,11 @@ function normalizeName(value) {
   return String(value || '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
 }
 
+function isEuromarketCustomer(customer) {
+  const normalized = normalizeName(customer);
+  return normalized.includes('EUROMARKET') || normalized.includes('CRATE') || normalized.includes('BARREL');
+}
+
 function normalizeWiseCode(value) {
   return String(value || '').toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 }
@@ -287,20 +292,7 @@ function isFullToOffloadContainer(row) {
   const type = normalizeWiseCode(row.equipmentType || row.type || '');
   const status = normalizeWiseCode(row.equipmentStatus || row.status || '');
   const detail = normalizeWiseCode(row.equipmentOperationStatus || row.details || row.operationStatus || '');
-  const loadStatus = normalizeWiseCode(row.loadStatus || row.equipmentLoadStatus || row.containerStatus || '');
-
-  // Mirrors the "Full to offload.xlsx" pivot:
-  // Equipment Type = CONTAINER/TRAILER; Status includes FULL and blank;
-  // Details excludes EMPTY_TO_LOAD and EMPTY_AFTER_OFFLOADED.
-  const isContainerOrTrailer = !type || type.includes('CONTAINER') || type.includes('TRAILER');
-  const emptySignals = ['EMPTY_TO_LOAD', 'EMPTY_AFTER_OFFLOADED', 'EMPTY_AFTER_OFFLOAD'];
-  const hasEmptySignal = [status, detail, loadStatus].some(value => emptySignals.includes(value));
-  const hasFullSignal = [status, detail, loadStatus].some(value => value === 'FULL' || value.includes('FULL_TO_OFFLOAD'));
-
-  if (!isContainerOrTrailer) return false;
-  if (hasEmptySignal) return false;
-  if (!status && !detail && !loadStatus) return true;
-  return hasFullSignal;
+  return type === 'CONTAINER' && status === 'FULL' && detail === 'FULL_TO_OFFLOAD';
 }
 
 function buildCustomerCounts(rows, customerKey = 'customer') {
@@ -346,6 +338,29 @@ function getTaskAssignedAt(task) {
 function isWithinRange(value, start, end) {
   const time = value ? new Date(value).getTime() : NaN;
   return !Number.isNaN(time) && time >= start.getTime() && time <= end.getTime();
+}
+
+async function fetchAllYardEquipment(headers, includeAllRows = false) {
+  const rows = [];
+  for (let page = 1; page <= 30; page += 1) {
+    const body = includeAllRows
+      ? { currentPage: page, pageSize: 500 }
+      : { currentPage: page, pageSize: 500, statuses: ['FULL'] };
+    const res = await fetch(`${WMS_API_BASE_URL}/wms-bam/yard/equipment/search`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) break;
+    const json = await res.json().catch(() => ({}));
+    if (!(json.code === 0 || String(json.code) === '0')) break;
+    const list = json.data?.list || json.data || [];
+    if (!Array.isArray(list) || !list.length) break;
+    rows.push(...list);
+    const total = Number(json.data?.total || 0);
+    if (list.length < 500 || (total && rows.length >= total)) break;
+  }
+  return rows;
 }
 
 const WORKLOAD_PICKED_STATUSES = [
@@ -530,6 +545,11 @@ function usesAllCustomerFacility(facilityId, facilityName = '') {
     facilityId === 'ORG-7759'
   );
 }
+
+function usesFullToOffloadCustomerMetric(facilityId, facilityName = '', tab = '') {
+  return tab === 'nightShift' || usesAllCustomerFacility(facilityId, facilityName);
+}
+
 
 function rowMatchesTab(row, cfg) {
   if (cfg.customerIds && cfg.customerIds.length && cfg.customerIds.includes(row.customerId)) return true;
@@ -1361,23 +1381,10 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
 
   // ── Fetch in-yard equipment ──────────────────────────────────────────────
   try {
-    const yardRes = await fetch(
-      `${WMS_API_BASE_URL}/wms-bam/yard/equipment/search`,
-      {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          currentPage: 1,
-          pageSize: 500,
-          ...(tab === 'nightShift' ? {} : { statuses: ['FULL'] })
-        })
-      }
-    );
-    if (yardRes.ok) {
-      const yardJson = await yardRes.json();
-      if (yardJson.code === 0 || String(yardJson.code) === '0') {
-        const equipment = (yardJson.data?.list || yardJson.data || []);
-        result.inYardFullEquipment.rows = (Array.isArray(equipment) ? equipment : [])
+    const useFullToOffloadMetric = usesFullToOffloadCustomerMetric(facilityId, facilityName, tab);
+    const equipment = await fetchAllYardEquipment(headers, useFullToOffloadMetric);
+    if (Array.isArray(equipment)) {
+        result.inYardFullEquipment.rows = equipment
           .filter(e => {
             const customerId = e.customerId || e.customer?.id || e.customerOrgId || '';
             const customerName = e.customerName || e.customer?.name || '';
@@ -1400,9 +1407,10 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
               || (cfg.customerIds || []).includes(customerId)
               || rowMatchesTab({ customer: customerName, customerId }, cfg);
             const fullToOffloadMatch = isFullToOffloadContainer(e);
-            if (tab === 'nightShift') {
-              // Valley View Night Shift detail must match the two customer chips.
-              return fullToOffloadMatch && (isNightShiftCustomer(customerName) || isNightShiftCustomer(customerId));
+            if (useFullToOffloadMetric) {
+              // Valley View Night Shift, Fontana, and Alessandro follow the Full-to-Offload metric:
+              // CONTAINER + FULL + FULL_TO_OFFLOAD, excluding Euromarket / Crate & Barrel only.
+              return fullToOffloadMatch && !isEuromarketCustomer(customerName) && !isEuromarketCustomer(customerId);
             }
             return pivotCustomerMatch && tabCustomerMatch && fullToOffloadMatch;
           })
@@ -1412,7 +1420,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             entryTicket: e.checkInEntry || e.entryTicket || e.entryId || '',
             checkIn: e.gateCheckInTime || e.checkIn || e.checkInTime || e.createdTime || '',
             timeInYard: e.inYardTime || e.timeInYard || '',
-            customer: tab === 'nightShift'
+            customer: useFullToOffloadMetric
               ? nightShiftCustomerName(e.customerName || e.customer?.name || '', e.customerId || e.customer?.id || e.customerOrgId || '')
               : (e.customerName || e.customer?.name || e.customerId || ''),
             location: e.locationName || e.location || '',
@@ -1420,6 +1428,17 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             details: e.equipmentOperationStatus || e.details || '',
           }));
         result.inYardFullEquipment.candidateCount = result.inYardFullEquipment.rows.length;
+        if (useFullToOffloadMetric && tab !== 'nightShift') {
+          const fullToOffloadRows = result.inYardFullEquipment.rows.filter(e => normalizeName(e.customer) !== normalizeName('Night Shift — All FULL Trailers & Containers'));
+          result.inYardFullEquipment.rows = fullToOffloadRows;
+          result.inYardFullEquipment.candidateCount = fullToOffloadRows.length;
+          const fullToOffloadCustomerCounts = buildCustomerCounts(fullToOffloadRows);
+          result.customerSet = fullToOffloadCustomerCounts;
+          result.metrics = [
+            { label: 'Customers', value: String(fullToOffloadCustomerCounts.length), sub: 'Full-to-offload customer set' },
+            { label: 'FULL Containers', value: String(fullToOffloadRows.length), sub: 'Not yet devanned' },
+          ];
+        }
         if (tab === 'nightShift') {
           const nightShiftRows = result.inYardFullEquipment.rows.filter(e => normalizeName(e.customer) !== normalizeName('Night Shift — All FULL Trailers & Containers'));
           result.inYardFullEquipment.rows = nightShiftRows;
@@ -1462,7 +1481,6 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             customerCounts: nightShiftCustomerCounts
           };
         }
-      }
     }
   } catch {}
 
