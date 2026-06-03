@@ -279,6 +279,34 @@ function normalizeName(value) {
   return String(value || '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
 }
 
+function normalizeWiseCode(value) {
+  return String(value || '').toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+
+function isFullToOffloadContainer(row) {
+  const type = normalizeWiseCode(row.equipmentType || row.type || '');
+  const status = normalizeWiseCode(row.equipmentStatus || row.status || '');
+  const detail = normalizeWiseCode(row.equipmentOperationStatus || row.details || row.operationStatus || '');
+
+  // Mirrors the "Full to offload.xlsx" pivot:
+  // Equipment Type = CONTAINER; Status includes FULL and blank;
+  // Details excludes EMPTY_TO_LOAD and EMPTY_AFTER_OFFLOADED.
+  if (type !== 'CONTAINER') return false;
+  if (status && status !== 'FULL') return false;
+  return !['EMPTY_TO_LOAD', 'EMPTY_AFTER_OFFLOADED'].includes(detail);
+}
+
+function buildCustomerCounts(rows, customerKey = 'customer') {
+  const counts = new Map();
+  for (const row of rows) {
+    const customer = String(row[customerKey] || row.customerName || '').trim() || '(blank)';
+    counts.set(customer, (counts.get(customer) || 0) + 1);
+  }
+  return Array.from(counts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+}
+
 function rowMatchesTab(row, cfg) {
   if (cfg.customerIds && cfg.customerIds.length && cfg.customerIds.includes(row.customerId)) return true;
   if (cfg.customerIds && cfg.customerIds.length && !cfg.customerNames) return false;
@@ -872,7 +900,15 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
   try {
     const yardRes = await fetch(
       `${WMS_API_BASE_URL}/wms-bam/yard/equipment/search`,
-      { method: 'POST', headers, body: JSON.stringify({ currentPage: 1, pageSize: 500, statuses: ['FULL'] }) }
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          currentPage: 1,
+          pageSize: 500,
+          ...(tab === 'nightShift' ? {} : { statuses: ['FULL'] })
+        })
+      }
     );
     if (yardRes.ok) {
       const yardJson = await yardRes.json();
@@ -886,9 +922,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             const opStatus = e.equipmentOperationStatus || e.details || e.operationStatus || '';
             const type = e.equipmentType || e.type || '';
 
-            // Section 1 should follow the Full-to-Offload Sheet2 pivot criteria:
-            // Equipment Type = CONTAINER, Status = FULL, Details = FULL_TO_OFFLOAD/OFFLOAD_WAITING,
-            // grouped by the pivot customer names.
+            // Section 1 should follow the Full-to-Offload Sheet2 pivot customer set.
             const pivotCustomerNames = [
               'ALL MARKET INC / VITA COCO',
               'AMIEE LYNN, LNC.',
@@ -901,15 +935,12 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             const tabCustomerMatch = (!cfg.customerIds?.length && !cfg.customerNames?.length)
               || (cfg.customerIds || []).includes(customerId)
               || rowMatchesTab({ customer: customerName, customerId }, cfg);
-            const fullMatch = status === 'FULL';
-            const opMatch = ['FULL_TO_OFFLOAD', 'OFFLOAD_WAITING'].includes(opStatus);
-            const typeMatch = type === 'CONTAINER';
+            const fullToOffloadMatch = isFullToOffloadContainer(e);
             if (tab === 'nightShift') {
-              // Night Shift uses the same Section 1 in-yard FULL equipment metric,
-              // but across all customers instead of tab/pivot customer restrictions.
-              return fullMatch && opMatch && typeMatch;
+              // Night Shift follows the Excel Full-to-Offload metric across all customers.
+              return fullToOffloadMatch;
             }
-            return pivotCustomerMatch && tabCustomerMatch && fullMatch && opMatch && typeMatch;
+            return pivotCustomerMatch && tabCustomerMatch && fullToOffloadMatch;
           })
           .map(e => ({
             equipmentNumber: e.equipmentNo || e.equipmentNumber || e.barcode || e.id,
@@ -936,6 +967,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           result.inYardFullEquipment.candidateCount = sortedNightShiftRows.length;
           result.nightShift = {
             supported: true,
+            title: 'Night Shift - Full to Offload Containers',
             rows: sortedNightShiftRows.map(e => ({
               equipmentNo: e.equipmentNumber || '',
               equipmentType: e.equipmentType || '',
@@ -951,7 +983,8 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
               orderId: '',
               carrierName: ''
             })),
-            totalCount: sortedNightShiftRows.length
+            totalCount: sortedNightShiftRows.length,
+            customerCounts: buildCustomerCounts(sortedNightShiftRows)
           };
         }
       }

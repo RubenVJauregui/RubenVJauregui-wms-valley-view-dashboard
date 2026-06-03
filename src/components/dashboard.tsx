@@ -143,6 +143,7 @@ export function Dashboard({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(300);
   const [sortKey, setSortKey] = useState<string>("created");
   const [sortAsc, setSortAsc] = useState(false);
@@ -372,17 +373,24 @@ export function Dashboard({
   const plannedRows: PlannedOrder[] = data?.plannedOrders?.rows ?? [];
   const searchLower = search.trim().toLowerCase();
   const filteredPlanned = useMemo(() => {
-    const rows = searchLower
-      ? plannedRows.filter((r) =>
-          Object.values(r).join(" ").toLowerCase().includes(searchLower)
-        )
-      : plannedRows;
+    const selectedKey = selectedCustomer
+      ? normalizeCustomerNameForCount(selectedCustomer)
+      : null;
+    const rows = plannedRows.filter((r) => {
+      const matchesSearch =
+        !searchLower ||
+        Object.values(r).join(" ").toLowerCase().includes(searchLower);
+      const matchesCustomer =
+        !selectedKey ||
+        normalizeCustomerNameForCount(r.customer) === selectedKey;
+      return matchesSearch && matchesCustomer;
+    });
     return [...rows].sort((a, b) => {
       const av = String(a[sortKey as keyof PlannedOrder] ?? "");
       const bv = String(b[sortKey as keyof PlannedOrder] ?? "");
       return (sortAsc ? 1 : -1) * av.localeCompare(bv);
     });
-  }, [plannedRows, searchLower, sortKey, sortAsc]);
+  }, [plannedRows, searchLower, selectedCustomer, sortKey, sortAsc]);
 
   const customerSet: { name: string; count: number }[] = useMemo(() => {
     const set = data?.customerSet?.length
@@ -394,6 +402,15 @@ export function Dashboard({
         plannedRows.filter((r) => normalizeCustomerNameForCount(r.customer) === normalizeCustomerNameForCount(c.name)).length,
     }));
   }, [data, plannedRows, facility.name]);
+
+  useEffect(() => {
+    if (!selectedCustomer) return;
+    const selectedKey = normalizeCustomerNameForCount(selectedCustomer);
+    const stillExists = customerSet.some(
+      (c) => normalizeCustomerNameForCount(c.name) === selectedKey
+    );
+    if (!stillExists) setSelectedCustomer(null);
+  }, [customerSet, selectedCustomer]);
 
   const customerOrderCountMap = useMemo(() => {
     const counts = new Map<string, number>();
@@ -642,7 +659,22 @@ export function Dashboard({
               {customerSet.map((c) => (
                 <button
                   key={c.name}
-                  className="chip active"
+                  className={`chip ${
+                    selectedCustomer &&
+                    normalizeCustomerNameForCount(selectedCustomer) ===
+                      normalizeCustomerNameForCount(c.name)
+                      ? "active"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    setSelectedCustomer((current) =>
+                      current &&
+                      normalizeCustomerNameForCount(current) ===
+                        normalizeCustomerNameForCount(c.name)
+                        ? null
+                        : c.name
+                    )
+                  }
                   type="button"
                 >
                   {c.name} <span className="chip-count">({c.count})</span>
