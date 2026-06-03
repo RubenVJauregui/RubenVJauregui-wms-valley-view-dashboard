@@ -288,9 +288,12 @@ function isFullToOffloadContainer(row) {
   const status = normalizeWiseCode(row.equipmentStatus || row.status || '');
   const detail = normalizeWiseCode(row.equipmentOperationStatus || row.details || row.operationStatus || '');
 
-  // Mirrors the attached Full to offload.xlsx pivot:
-  // Equipment Type = CONTAINER; Status = FULL; Details = FULL_TO_OFFLOAD.
-  return type === 'CONTAINER' && status === 'FULL' && detail === 'FULL_TO_OFFLOAD';
+  // Mirrors the "Full to offload.xlsx" pivot:
+  // Equipment Type = CONTAINER; Status includes FULL and blank;
+  // Details excludes EMPTY_TO_LOAD and EMPTY_AFTER_OFFLOADED.
+  if (type !== 'CONTAINER') return false;
+  if (status && status !== 'FULL') return false;
+  return !['EMPTY_TO_LOAD', 'EMPTY_AFTER_OFFLOADED'].includes(detail);
 }
 
 function buildCustomerCounts(rows, customerKey = 'customer') {
@@ -304,27 +307,29 @@ function buildCustomerCounts(rows, customerKey = 'customer') {
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 }
 
-function isEuromarketCustomer(customer) {
-  const normalized = normalizeName(customer);
-  return normalized.includes('EUROMARKET') || normalized.includes('CRATE') || normalized.includes('BARREL');
-}
+const NIGHT_SHIFT_CUSTOMERS = [
+  'ALL MARKET INC / VITA COCO',
+  'SIMPLE MODERN'
+];
 
 function isNightShiftCustomer(customer) {
   const normalized = normalizeName(customer);
-  if (!normalized) return true; // Keep Excel pivot blank bucket.
-  return !isEuromarketCustomer(customer);
+  if (!normalized) return false;
+  if (normalized === 'ORG 629731') return true;
+  if (normalized.includes('ALL MARKET') || normalized.includes('VITA COCO')) return true;
+  if (normalized.includes('SIMPLE MODERN')) return true;
+  return NIGHT_SHIFT_CUSTOMERS.some((name) => {
+    const target = normalizeName(name);
+    return normalized === target || normalized.includes(target) || target.includes(normalized);
+  });
 }
 
 function nightShiftCustomerName(customer, customerId = '') {
-  const raw = String(customer || customerId || '').trim();
-  const normalized = normalizeName(raw);
-  if (!normalized) return '(blank)';
-  if (normalized.includes('ALL MARKET') || normalized.includes('VITA COCO') || normalized === 'ORG 629731') return 'ALL MARKET INC / VITA COCO';
-  if (normalized.includes('AMIEE LYNN')) return 'AMIEE LYNN, LNC.';
-  if (normalized.includes('GURUNANDA')) return 'GURUNANDA, LLC';
-  if (normalized.includes('LENNOX')) return 'LENNOX INDUSTRIES INC.';
-  if (normalized.includes('WOODY')) return 'WOODY FLAW CREST INC';
-  return raw;
+  if (isNightShiftCustomer(customerId) || normalizeName(customer).includes('ALL MARKET') || normalizeName(customer).includes('VITA COCO')) {
+    return 'ALL MARKET INC / VITA COCO';
+  }
+  if (normalizeName(customer).includes('SIMPLE MODERN')) return 'SIMPLE MODERN';
+  return String(customer || customerId || '').trim();
 }
 
 function getTaskAssignedAt(task) {
@@ -334,6 +339,106 @@ function getTaskAssignedAt(task) {
 function isWithinRange(value, start, end) {
   const time = value ? new Date(value).getTime() : NaN;
   return !Number.isNaN(time) && time >= start.getTime() && time <= end.getTime();
+}
+
+const WORKLOAD_PICKED_STATUSES = [
+  'PICKED',
+  'READY TO SHIP',
+  'PACKING',
+  'PACKED',
+  'STAGED',
+  'LOADING',
+  'LOADED',
+  'SHIPPED',
+  'PARTIAL SHIPPED',
+  'SHORT SHIPPED',
+];
+
+function normalizeStatus(value) {
+  return normalizeName(value).replace(/_/g, ' ').replace(/\s+/g, ' ');
+}
+
+function isWorkloadPickedStatus(value) {
+  const normalized = normalizeStatus(value);
+  return WORKLOAD_PICKED_STATUSES.some((status) => normalized === normalizeStatus(status));
+}
+
+function getOrderPickedTime(order) {
+  return order.pickedTime ||
+    order.pickTime ||
+    order.pickedAt ||
+    order.pickedDate ||
+    order.pickedWhen ||
+    order.lastPickedTime ||
+    order.lastPickTime ||
+    order.actualPickTime ||
+    order.actualPickedTime ||
+    order.pickCompleteTime ||
+    order.pickingCompletedTime ||
+    order.completedPickTime ||
+    order.finishPickTime ||
+    '';
+}
+
+function getTimeZoneOffsetMs(date, timeZone) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).formatToParts(date).reduce((acc, part) => {
+    if (part.type !== 'literal') acc[part.type] = part.value;
+    return acc;
+  }, {});
+  const asUtc = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(parts.hour),
+    Number(parts.minute),
+    Number(parts.second)
+  );
+  return asUtc - date.getTime();
+}
+
+function zonedTimeToUtc(year, month, day, hour, minute, second, timeZone) {
+  const guess = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+  return new Date(guess.getTime() - getTimeZoneOffsetMs(guess, timeZone));
+}
+
+function getYesterdayWindow(timeZone = 'America/Los_Angeles') {
+  const now = new Date();
+  const todayParts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(now).reduce((acc, part) => {
+    if (part.type !== 'literal') acc[part.type] = Number(part.value);
+    return acc;
+  }, {});
+  const todayNoonUtc = Date.UTC(todayParts.year, todayParts.month - 1, todayParts.day, 12);
+  const yesterday = new Date(todayNoonUtc - 24 * 60 * 60 * 1000);
+  const yParts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'UTC',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(yesterday).reduce((acc, part) => {
+    if (part.type !== 'literal') acc[part.type] = Number(part.value);
+    return acc;
+  }, {});
+  const start = zonedTimeToUtc(yParts.year, yParts.month, yParts.day, 0, 0, 0, timeZone);
+  const end = zonedTimeToUtc(yParts.year, yParts.month, yParts.day, 23, 59, 59, timeZone);
+  return {
+    start,
+    end,
+    key: `${String(yParts.year).padStart(4, '0')}-${String(yParts.month).padStart(2, '0')}-${String(yParts.day).padStart(2, '0')}`,
+  };
 }
 
 function usesAllCustomerFacility(facilityId, facilityName = '') {
@@ -418,6 +523,76 @@ async function fetchOrdersForTab(headers, cfg, includeAllCustomers = false) {
     if (merged.length) return { ok: true, orders: merged, total: merged.length };
   }
   return fetchAllOrderPages(headers, base);
+}
+
+function addCustomerMetricRow(byCustomer, customer, metric) {
+  const key = customer || 'Unknown';
+  const normalized = normalizeName(key);
+  const existingKey = [...byCustomer.keys()].find((candidate) => {
+    const candidateNorm = normalizeName(candidate);
+    if (!candidateNorm || !normalized) return false;
+    if (candidateNorm === normalized || candidateNorm.includes(normalized) || normalized.includes(candidateNorm)) return true;
+    if ((candidateNorm.includes('VITA COCO') || candidateNorm.includes('ALL MARKET')) &&
+      (normalized.includes('VITA COCO') || normalized.includes('ALL MARKET'))) return true;
+    if (candidateNorm.includes('KING') && candidateNorm.includes('HAWAIIAN') && normalized.includes('KING') && normalized.includes('HAWAIIAN')) return true;
+    return false;
+  });
+  const rowKey = existingKey || key;
+  if (!byCustomer.has(rowKey)) {
+    byCustomer.set(rowKey, {
+      customer: rowKey,
+      unloadedYesterday: metric(0),
+      containersFull: metric(0),
+      ordersPickedYesterday: metric(0),
+      newOrders: metric(0),
+      fillableOrders: metric(0),
+    });
+  }
+  return byCustomer.get(rowKey);
+}
+
+async function applyPickedYesterdayWorkloadCounts({ headers, accessToken, tenantId, timeZone, byCustomer, metric }) {
+  const window = getYesterdayWindow(timeZone || 'America/Los_Angeles');
+  const body = {
+    currentPage: 1,
+    pageSize: 500,
+    statuses: WORKLOAD_PICKED_STATUSES,
+    pickedTimeStart: window.start.toISOString(),
+    pickedTimeEnd: window.end.toISOString(),
+    pickTimeStart: window.start.toISOString(),
+    pickTimeEnd: window.end.toISOString(),
+    sortingFields: [{ field: 'pickedTime', orderBy: 'DESC' }],
+  };
+  const result = await fetchAllOrderPages(headers, body);
+  const orders = result.ok ? result.orders : [];
+  const matchingOrders = orders.filter((order) => {
+    const pickedTime = getOrderPickedTime(order);
+    return isWorkloadPickedStatus(order.status || order.orderStatus || order.prestatus || order.preStatus) &&
+      isWithinRange(pickedTime, window.start, window.end);
+  });
+
+  const orgIds = new Set();
+  for (const order of matchingOrders) {
+    if (order.customerId) orgIds.add(order.customerId);
+    if (order.customer?.id) orgIds.add(order.customer.id);
+    if (order.customer?.organizationId) orgIds.add(order.customer.organizationId);
+  }
+  const orgNames = await resolveOrgNames([...orgIds], accessToken, tenantId);
+  const seen = new Set();
+  for (const order of matchingOrders) {
+    const orderId = order.id || order.orderId || order.orderNumber || order.referenceNo || `${order.customerId || order.customerName}-${getOrderPickedTime(order)}`;
+    if (seen.has(orderId)) continue;
+    seen.add(orderId);
+    const customer =
+      orgNames[order.customerId || order.customer?.id || order.customer?.organizationId] ||
+      order.customerName ||
+      order.customer?.name ||
+      order.customerId ||
+      order.customer?.id ||
+      'Unknown';
+    addCustomerMetricRow(byCustomer, customer, metric).ordersPickedYesterday.value += 1;
+  }
+  return { windowKey: window.key, count: seen.size, fetched: orders.length };
 }
 
 // URL variant mapping: /api/dashboard/bay2-auto-assign etc.
@@ -709,6 +884,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayKey = yesterday.toISOString().slice(0, 10);
       const byCustomer = new Map();
+      let pickedYesterdayWindow = yesterdayKey;
 
       for (const o of orders) {
         const customer =
@@ -718,17 +894,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           o.customerId ||
           o.customer?.id ||
           'Unknown';
-        if (!byCustomer.has(customer)) {
-          byCustomer.set(customer, {
-            customer,
-            unloadedYesterday: metric(0),
-            containersFull: metric(0),
-            ordersPickedYesterday: metric(0),
-            newOrders: metric(0),
-            fillableOrders: metric(0),
-          });
-        }
-        const row = byCustomer.get(customer);
+        const row = addCustomerMetricRow(byCustomer, customer, metric);
         row.fillableOrders.value += 1;
         if (String(o.createdTime || '').slice(0, 10) === yesterdayKey) {
           row.newOrders.value += 1;
@@ -747,20 +913,24 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           : [];
         for (const e of Array.isArray(equipment) ? equipment : []) {
           const customer = e.customerName || e.customer?.name || e.customerId || 'Unknown';
-          if (!byCustomer.has(customer)) {
-            byCustomer.set(customer, {
-              customer,
-              unloadedYesterday: metric(0),
-              containersFull: metric(0),
-              ordersPickedYesterday: metric(0),
-              newOrders: metric(0),
-              fillableOrders: metric(0),
-            });
-          }
-          byCustomer.get(customer).containersFull.value += 1;
+          addCustomerMetricRow(byCustomer, customer, metric).containersFull.value += 1;
         }
       } catch (err) {
         console.error('All-customer workload yard fetch error:', err.message);
+      }
+
+      try {
+        const pickedResult = await applyPickedYesterdayWorkloadCounts({
+          headers,
+          accessToken: req.accessToken,
+          tenantId: req.tenantId,
+          timeZone: timeZone || 'America/Los_Angeles',
+          byCustomer,
+          metric,
+        });
+        pickedYesterdayWindow = pickedResult.windowKey;
+      } catch (err) {
+        console.error('All-customer workload picked-yesterday fetch error:', err.message);
       }
 
       const rows = Array.from(byCustomer.values()).sort((a, b) => a.customer.localeCompare(b.customer));
@@ -778,6 +948,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
         supported: true,
         facilityId,
         newOrdersWindow: yesterdayKey,
+        pickedOrdersWindow: pickedYesterdayWindow,
         rows,
         totals,
         definitions: {
@@ -785,7 +956,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           containersFull: 'Trailer/container equipment currently FULL and waiting to offload.',
           newOrders: 'Orders created yesterday.',
           fillableOrders: 'Orders currently in PLANNED status.',
-          ordersPickedYesterday: 'Unique orders represented in WISE pick history yesterday.'
+          ordersPickedYesterday: 'Orders with Picked Time yesterday and status PICKED, READY TO SHIP, PACKING, PACKED, STAGED, LOADING, LOADED, SHIPPED, PARTIAL SHIPPED, or SHORT SHIPPED.'
         }
       };
       result.metrics = [
@@ -807,6 +978,21 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
       { customer: 'Gurunanda', unloadedYesterday: metric(0), containersFull: metric(0), ordersPickedYesterday: metric(0), newOrders: metric(0), fillableOrders: metric(129) },
       { customer: 'Vita Coco', unloadedYesterday: metric(0), containersFull: metric(11), ordersPickedYesterday: metric(0), newOrders: metric(14), fillableOrders: metric(22) },
     ];
+    let pickedYesterdayWindow = '2026-06-02';
+    try {
+      const byCustomer = new Map(rows.map(row => [row.customer, row]));
+      const pickedResult = await applyPickedYesterdayWorkloadCounts({
+        headers,
+        accessToken: req.accessToken,
+        tenantId: req.tenantId,
+        timeZone: timeZone || 'America/Los_Angeles',
+        byCustomer,
+        metric,
+      });
+      pickedYesterdayWindow = pickedResult.windowKey;
+    } catch (err) {
+      console.error('Configured workload picked-yesterday fetch error:', err.message);
+    }
     const totals = ['unloadedYesterday', 'containersFull', 'ordersPickedYesterday', 'newOrders', 'fillableOrders'].reduce((acc, key) => {
       acc[key] = metric(rows.reduce((sum, row) => sum + (row[key]?.value || 0), 0));
       return acc;
@@ -819,6 +1005,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
       supported: true,
       facilityId,
       newOrdersWindow: '2026-06-02',
+      pickedOrdersWindow: pickedYesterdayWindow,
       rows,
       totals,
       definitions: {
@@ -826,7 +1013,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
         containersFull: 'Trailer/container equipment currently FULL and waiting to offload.',
         newOrders: 'Orders created yesterday.',
         fillableOrders: 'Orders currently in PLANNED status.',
-        ordersPickedYesterday: 'Unique orders represented in WISE pick history yesterday.'
+        ordersPickedYesterday: 'Orders with Picked Time yesterday and status PICKED, READY TO SHIP, PACKING, PACKED, STAGED, LOADING, LOADED, SHIPPED, PARTIAL SHIPPED, or SHORT SHIPPED.'
       }
     };
     result.metrics = [
@@ -1135,9 +1322,8 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
               || rowMatchesTab({ customer: customerName, customerId }, cfg);
             const fullToOffloadMatch = isFullToOffloadContainer(e);
             if (tab === 'nightShift') {
-              // Night Shift follows the attached Excel metric (FULL_TO_OFFLOAD containers),
-              // but shows all customers except Euromarket / Crate & Barrel.
-              return fullToOffloadMatch && !isEuromarketCustomer(customerName) && !isEuromarketCustomer(customerId);
+              // Valley View Night Shift detail must match the two customer chips.
+              return fullToOffloadMatch && (isNightShiftCustomer(customerName) || isNightShiftCustomer(customerId));
             }
             return pivotCustomerMatch && tabCustomerMatch && fullToOffloadMatch;
           })
@@ -1169,7 +1355,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           const nightShiftCustomerCounts = buildCustomerCounts(sortedNightShiftRows);
           result.customerSet = nightShiftCustomerCounts.length
             ? nightShiftCustomerCounts
-            : [];
+            : NIGHT_SHIFT_CUSTOMERS.map(name => ({ name, count: 0 }));
           result.customer = { name: 'Night Shift' };
           result.metrics = [
             { label: 'Customers', value: String(result.customerSet.length), sub: 'Valley View Night Shift set' },
