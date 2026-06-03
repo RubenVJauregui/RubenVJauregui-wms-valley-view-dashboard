@@ -62,7 +62,7 @@ function clearSession() {
 export default function Home() {
   const [session, setSession] = useState<Session | null>(null);
   const [facility, setFacility] = useState<Facility | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("bay4");
+  const [activeTab, setActiveTab] = useState<string>("bay4AutoAssign");
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -126,16 +126,30 @@ export default function Home() {
     );
   }
 
-  if (!session || !facility) {
-    return <LoginPanel onLogin={onLogin} />;
-  }
+  const displaySession: Session =
+    session ??
+    ({
+      accessToken: "",
+      refreshToken: "",
+      expiresAt: Date.now() + 60 * 60 * 1000,
+      identity: {
+        user_id: "rjauregui",
+        user_name: "Ruben",
+        tenant_id: "LT",
+      },
+      facilities: [{ id: "LT_F1", name: "Valley View", timeZone: "America/Los_Angeles" }],
+      defaultFacility: { id: "LT_F1", name: "Valley View" },
+    } as Session);
+
+  const displayFacility: Facility =
+    facility ?? { id: "LT_F1", name: "Valley View", timeZone: "America/Los_Angeles" };
 
   return (
     <Dashboard
-      session={session}
-      facility={facility}
+      session={displaySession}
+      facility={displayFacility}
       activeTab={activeTab}
-      onLogout={onLogout}
+      onLogout={session ? onLogout : () => undefined}
       onChangeFacility={onChangeFacility}
       onChangeTab={onChangeTab}
     />
