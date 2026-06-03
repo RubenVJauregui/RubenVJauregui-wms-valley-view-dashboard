@@ -1,3 +1,18 @@
+export interface Session {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number;
+  identity: { user_id: string; user_name: string; tenant_id: string };
+  facilities: { id: string; name: string; timeZone: string }[];
+  defaultFacility: { id: string; name: string } | null;
+}
+
+export interface Facility {
+  id: string;
+  name: string;
+  timeZone: string;
+}
+
 export default function Home() {
   const assignees = ["Gterrazas", "vgutierrez", "maperez", "diasorto"];
   const tabs = [
