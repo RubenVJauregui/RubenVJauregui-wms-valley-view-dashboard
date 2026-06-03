@@ -340,6 +340,29 @@ function isWithinRange(value, start, end) {
   return !Number.isNaN(time) && time >= start.getTime() && time <= end.getTime();
 }
 
+async function fetchAllYardEquipment(headers, includeAllRows = false) {
+  const rows = [];
+  for (let page = 1; page <= 20; page += 1) {
+    const body = includeAllRows
+      ? { currentPage: page, pageSize: 500 }
+      : { currentPage: page, pageSize: 500, statuses: ['FULL'] };
+    const res = await fetch(`${WMS_API_BASE_URL}/wms-bam/yard/equipment/search`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) break;
+    const json = await res.json().catch(() => ({}));
+    if (!(json.code === 0 || String(json.code) === '0')) break;
+    const list = json.data?.list || json.data || [];
+    if (!Array.isArray(list) || list.length === 0) break;
+    rows.push(...list);
+    const total = Number(json.data?.total || 0);
+    if (list.length < 500 || (total && rows.length >= total)) break;
+  }
+  return rows;
+}
+
 const WORKLOAD_PICKED_STATUSES = [
   'PICKED',
   'READY TO SHIP',
@@ -1281,23 +1304,9 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
 
   // ── Fetch in-yard equipment ──────────────────────────────────────────────
   try {
-    const yardRes = await fetch(
-      `${WMS_API_BASE_URL}/wms-bam/yard/equipment/search`,
-      {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          currentPage: 1,
-          pageSize: 500,
-          ...(tab === 'nightShift' ? {} : { statuses: ['FULL'] })
-        })
-      }
-    );
-    if (yardRes.ok) {
-      const yardJson = await yardRes.json();
-      if (yardJson.code === 0 || String(yardJson.code) === '0') {
-        const equipment = (yardJson.data?.list || yardJson.data || []);
-        result.inYardFullEquipment.rows = (Array.isArray(equipment) ? equipment : [])
+    const equipment = await fetchAllYardEquipment(headers, tab === 'nightShift');
+    if (Array.isArray(equipment)) {
+        result.inYardFullEquipment.rows = equipment
           .filter(e => {
             const customerId = e.customerId || e.customer?.id || e.customerOrgId || '';
             const customerName = e.customerName || e.customer?.name || '';
@@ -1382,7 +1391,6 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             customerCounts: nightShiftCustomerCounts
           };
         }
-      }
     }
   } catch {}
 
