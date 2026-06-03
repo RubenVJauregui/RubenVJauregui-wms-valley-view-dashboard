@@ -327,13 +327,28 @@ async function fetchOrderPage(headers, body) {
   return { ok: true, orders: json.data?.list || [], total: json.data?.total || 0 };
 }
 
-async function fetchOrdersForTab(headers, cfg) {
+async function fetchOrdersForTab(headers, cfg, opts = {}) {
+  const { includeAllCustomers = false } = opts;
+
+  // All-customers mode: fetch all facility orders without per-customer filtering.
+  // Uses PLANNED + IMPORTED statuses as requested for Fontana / Alessandro.
+  if (includeAllCustomers) {
+    const base = {
+      currentPage: 1,
+      pageSize: 500,
+      customerId: undefined,
+      statuses: ['PLANNED', 'IMPORTED'],
+      sortingFields: [{ field: 'createdTime', orderBy: 'DESC' }],
+    };
+    return fetchOrderPage(headers, base);
+  }
+
   const base = {
     currentPage: 1,
     pageSize: 500,
     customerId: undefined,
     statuses: ['PLANNED'],
-    sortingFields: [{ field: 'createdTime', orderBy: 'DESC' }]
+    sortingFields: [{ field: 'createdTime', orderBy: 'DESC' }],
   };
   if (cfg.customerIds && cfg.customerIds.length) {
     // Query each customer explicitly so tabs are not limited by the first 500 all-facility orders.
@@ -381,7 +396,7 @@ function resolveTab(req) {
 app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req, res) => {
   const tab = resolveTab(req);
   const cfg = TAB_CONFIG[tab];
-  const { facilityId, timeZone } = req.body || {};
+  const { facilityId, timeZone, includeAllCustomers } = req.body || {};
   if (!facilityId) return res.status(400).json({ message: 'Facility is required.' });
 
   const headers = {
@@ -726,7 +741,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
 
   // ── Fetch planned outbound orders ────────────────────────────────────────
   try {
-    const orderResult = await fetchOrdersForTab(headers, cfg);
+    const orderResult = await fetchOrdersForTab(headers, cfg, { includeAllCustomers });
 
     if (orderResult.ok) {
         const orders = orderResult.orders || [];
@@ -767,12 +782,14 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           shipToName: o.shipToAddress?.name || o.shipToName || '',
         }));
 
-        let rows = allRows.filter(row => rowMatchesTab(row, cfg));
+        let rows = includeAllCustomers
+          ? allRows
+          : allRows.filter(row => rowMatchesTab(row, cfg));
 
         // Safety guard: Team 4 must be Gurunanda only. Never let the generic LT_F1
         // planned-order page leak other customers into this tab if WISE ignores a
         // customer filter parameter.
-        if (tab === 'bay4') {
+        if (tab === 'bay4' && !includeAllCustomers) {
           rows = allRows.filter(row =>
             row.customerId === 'ORG-655875' || normalizeName(row.customer).includes('GURUNANDA')
           );
@@ -1021,6 +1038,9 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             const fullMatch = status === 'FULL';
             const opMatch = ['FULL_TO_OFFLOAD', 'OFFLOAD_WAITING'].includes(opStatus);
             const typeMatch = type === 'CONTAINER';
+            if (includeAllCustomers) {
+              return fullMatch && opMatch && typeMatch;
+            }
             return pivotCustomerMatch && tabCustomerMatch && fullMatch && opMatch && typeMatch;
           })
           .map(e => ({
@@ -1189,7 +1209,7 @@ app.post('/api/dashboard/bay1', requireAuth, async (req, res) => {
   };
 
   try {
-    const orderResult = await fetchOrdersForTab(headers, cfg);
+    const orderResult = await fetchOrdersForTab(headers, cfg, { includeAllCustomers });
 
     if (orderResult.ok) {
       const orders = orderResult.orders || [];
@@ -1297,7 +1317,7 @@ app.post('/api/dashboard/bay3', requireAuth, async (req, res) => {
   };
 
   try {
-    const orderResult = await fetchOrdersForTab(headers, cfg);
+    const orderResult = await fetchOrdersForTab(headers, cfg, { includeAllCustomers });
 
     if (orderResult.ok) {
       const orders = orderResult.orders || [];
@@ -1368,6 +1388,443 @@ app.post('/api/dashboard/bay3', requireAuth, async (req, res) => {
   }
 
   return res.json(result);
+});
+
+// ── Bay 2 / E-comm dedicated route ────────────────────────────────────────
+
+app.post('/api/dashboard/bay2', requireAuth, async (req, res) => {
+  const { facilityId, timeZone, includeAllCustomers } = req.body || {};
+  if (!facilityId) {
+    return res.status(400).json({ message: 'Facility is required.' });
+  }
+
+  const headers = {
+    Authorization: `Bearer ${req.accessToken}`,
+    'x-tenant-id': req.tenantId,
+    'x-facility-id': facilityId,
+    'content-type': 'application/json',
+    'item-time-zone': timeZone || 'America/Los_Angeles',
+  };
+
+  const now = new Date().toISOString();
+  const cfg = TAB_CONFIG.bay2;
+
+  const result = {
+    bay: cfg.bay,
+    reportType: cfg.reportType,
+    title: 'E-comm',
+    siteLabel: 'Fontana',
+    source: 'WISE',
+    refreshedAt: now,
+    generatedAt: now,
+    customer: { name: 'E-comm' },
+    plannedOrders: { supported: true, rows: [], unavailableReason: null },
+    inYardFullEquipment: { supported: true, rows: [], candidateCount: 0 },
+    customerSet: [],
+    metrics: [],
+  };
+
+  try {
+    const orderResult = await fetchOrdersForTab(headers, cfg, { includeAllCustomers });
+
+    if (orderResult.ok) {
+      const orders = orderResult.orders || [];
+      const totalCount = orderResult.total || orders.length;
+
+      const orgIds = new Set();
+      for (const o of orders) {
+        if (o.customerId) orgIds.add(o.customerId);
+        if (o.carrierId) orgIds.add(o.carrierId);
+        if (o.retailerId) orgIds.add(o.retailerId);
+      }
+      const orgNames = await resolveOrgNames([...orgIds], req.accessToken, req.tenantId);
+
+      const allRows = orders.map(o => ({
+        orderNumber: o.id,
+        customer: orgNames[o.customerId || o.customer?.id || o.customer?.organizationId] || o.customerName || o.customer?.name || o.customerId || o.customer?.id || 'Unknown',
+        customerId: o.customerId || o.customer?.id || o.customer?.organizationId || '',
+        status: o.status,
+        reference: o.referenceNo || o.poNo || '',
+        created: o.createdTime,
+        shipMethod: o.shipMethod || '',
+        carrier: orgNames[o.carrierId] || o.carrierId || '',
+        scheduleDate: o.scheduleDate,
+        mabd: o.mabd,
+        appointmentTime: o.appointmentTime,
+        retailerName: orgNames[o.retailerId] || o.retailerId || '',
+        orderType: o.orderType,
+        source: o.source,
+        baseQty: Number(o.baseQty ?? o.totalQty ?? o.itemLineTotalQty ?? o.estPiecePickQty ?? o.qty ?? 0) || 0,
+        palletQty: Number(o.palletQty ?? o.estPalletPickQty ?? 0) || 0,
+        stagingLocation: o.stagingLocation || o.stagingLocationName || '',
+        prestatus: o.prestatus || o.preStatus || o.secondaryStatus || '',
+        po: o.poNo || o.referenceNo || '',
+        so: Array.isArray(o.soNos) ? o.soNos.join(', ') : (o.soNos || o.soNo || ''),
+        bolNo: o.bolNo,
+        loadNo: o.loadNo,
+        orderPlanId: o.orderPlanId || o.planId || '',
+        shipToName: o.shipToAddress?.name || o.shipToName || '',
+      }));
+
+      const rows = includeAllCustomers
+        ? allRows
+        : allRows.filter(row => rowMatchesTab(row, cfg));
+
+      const seenCustomers = new Set();
+      const customerSet = [];
+      for (const row of rows) {
+        if (row.customer && !seenCustomers.has(row.customer)) {
+          seenCustomers.add(row.customer);
+          customerSet.push({ name: row.customer });
+        }
+      }
+
+      result.plannedOrders.rows = rows;
+      result.customer = { name: customerSet[0]?.name || 'E-comm' };
+      result.customerSet = customerSet;
+
+      // ── Team 2 metrics & report logic ────────────────────────────────
+      const aged24Rows = [];
+      const aged48Rows = [];
+      const nowMs = Date.now();
+
+      for (const row of rows) {
+        const createdMs = row.created ? new Date(row.created).getTime() : NaN;
+        const ageHours = Number.isNaN(createdMs) ? null : Math.floor((nowMs - createdMs) / 36e5);
+        const detail = { ...row, ageHours };
+        if (ageHours != null && ageHours >= 24) aged24Rows.push(detail);
+        if (ageHours != null && ageHours >= 48) aged48Rows.push(detail);
+      }
+
+      const dropshipRows = rows.filter(isDropshipOrder);
+      function buildPivot(sourceRows, customerNames, side) {
+        const byCustomer = new Map();
+        for (const row of sourceRows) {
+          if (!customerMatchesAny(row.customer, customerNames)) continue;
+          const customer = row.customer || 'Unknown';
+          if (!byCustomer.has(customer)) {
+            byCustomer.set(customer, { kind: 'customer', side, level: 0, label: customer, orderCount: 0, baseQty: 0 });
+          }
+          const pivot = byCustomer.get(customer);
+          pivot.orderCount += 1;
+          pivot.baseQty += Number(row.baseQty || 0);
+        }
+        return Array.from(byCustomer.values()).sort((a, b) => b.orderCount - a.orderCount);
+      }
+
+      const leftPivotRows = buildPivot(dropshipRows, BAY2_LEFT_DROPSHIP_CUSTOMERS, 'left');
+      const grandTotal = {
+        kind: 'grandTotal', side: 'left', level: 0, label: 'Grand Total',
+        orderCount: leftPivotRows.reduce((sum, r) => sum + r.orderCount, 0),
+        baseQty: leftPivotRows.reduce((sum, r) => sum + r.baseQty, 0),
+      };
+      if (leftPivotRows.length) leftPivotRows.push(grandTotal);
+
+      const mezzanineRows = buildPivot(dropshipRows, BAY2_MEZZANINE_DROPSHIP_CUSTOMERS, 'right');
+      const mezzanineTotal = {
+        kind: 'grandTotal', side: 'right', level: 0, label: 'Grand Total',
+        orderCount: mezzanineRows.reduce((sum, r) => sum + r.orderCount, 0),
+        baseQty: mezzanineRows.reduce((sum, r) => sum + r.baseQty, 0),
+      };
+      if (mezzanineRows.length) mezzanineRows.push(mezzanineTotal);
+      const pivotRows = [...leftPivotRows, ...mezzanineRows];
+
+      result.bay2 = {
+        supported: true,
+        pivotRows,
+        mezzanineRows,
+        detailRows: rows,
+        aged24Rows,
+        aged48Rows,
+        dropShipAmazonFbaRows: rows.filter(r => {
+          const haystack = normalizeName([
+            r.customer, r.retailerName, r.reference, r.po, r.so, r.source, r.orderType, r.shipMethod
+          ].join(' '));
+          return haystack.includes('AMAZON') || haystack.includes('FBA') || haystack.includes('FBM');
+        }).map(r => ({
+          kind: 'detail', side: 'bottom', level: 0, label: r.customer || 'Amazon FBA',
+          customer: r.customer, orderNumber: r.orderNumber, status: r.status,
+          orderCount: 1, baseQty: Number(r.baseQty || 0), carrier: r.carrier,
+          created: r.created, source: r.source
+        })),
+        deltaLtlRows: rows.filter(r => {
+          const haystack = normalizeName([r.customer, r.shipMethod, r.carrier, r.retailerName].join(' '));
+          return haystack.includes('DELTA') || haystack.includes('LTL');
+        }).map(r => ({
+          facility: 'Fontana',
+          customer: r.customer,
+          orderNumber: r.orderNumber,
+          status: r.status,
+          prestatus: r.prestatus || '',
+          baseQty: Number(r.baseQty || 0),
+          appointmentTime: r.appointmentTime || r.scheduleDate || '',
+          carrier: r.carrier
+        })),
+      };
+
+      // Build expanded pivot from evelyn-pivot.json for Team 2 hierarchy view
+      try {
+        const workbookPivot = JSON.parse(fs.readFileSync(path.join(__dirname, 'evelyn-pivot.json'), 'utf8'));
+        const detailRows = workbookPivot.detailRows || [];
+
+        const byCustomer = new Map();
+        for (const row of detailRows) {
+          const customerKey = row.customer || 'Unknown';
+          const statusKey = row.status || 'Unknown';
+          const dateKey = (row.created || '').slice(0, 10) || 'No Date';
+
+          if (!byCustomer.has(customerKey)) {
+            byCustomer.set(customerKey, { orders: [], statuses: new Map() });
+          }
+          const cust = byCustomer.get(customerKey);
+          cust.orders.push(row);
+
+          if (!cust.statuses.has(statusKey)) {
+            cust.statuses.set(statusKey, { orders: [], dates: new Map() });
+          }
+          const stat = cust.statuses.get(statusKey);
+          stat.orders.push(row);
+
+          if (!stat.dates.has(dateKey)) {
+            stat.dates.set(dateKey, []);
+          }
+          stat.dates.get(dateKey).push(row);
+        }
+
+        const pivotDetailRows = [];
+        let pivotTotalOrderCount = 0;
+        let pivotTotalBaseQty = 0;
+
+        const sortedCustomers = [...byCustomer.entries()]
+          .sort(([, a], [, b]) => b.orders.length - a.orders.length);
+
+        for (const [customerName, custData] of sortedCustomers) {
+          const custOrderCount = custData.orders.length;
+          const custBaseQty = custData.orders.reduce((s, r) => s + (Number(r.baseQty) || 0), 0);
+          pivotTotalOrderCount += custOrderCount;
+          pivotTotalBaseQty += custBaseQty;
+
+          const customerRow = {
+            kind: 'customer', level: 0, label: customerName,
+            orderCount: custOrderCount, baseQty: custBaseQty, children: [],
+          };
+
+          const sortedStatuses = [...custData.statuses.entries()]
+            .sort(([, a], [, b]) => b.orders.length - a.orders.length);
+
+          for (const [statusName, statData] of sortedStatuses) {
+            const statOrderCount = statData.orders.length;
+            const statBaseQty = statData.orders.reduce((s, r) => s + (Number(r.baseQty) || 0), 0);
+
+            const statusRow = {
+              kind: 'status', level: 1, label: statusName,
+              orderCount: statOrderCount, baseQty: statBaseQty, children: [],
+            };
+
+            const sortedDates = [...statData.dates.entries()].sort(([a], [b]) => a.localeCompare(b));
+
+            for (const [dateKey, dateOrders] of sortedDates) {
+              const dateOrderCount = dateOrders.length;
+              const dateBaseQty = dateOrders.reduce((s, r) => s + (Number(r.baseQty) || 0), 0);
+
+              statusRow.children.push({
+                kind: 'date', level: 2, label: dateKey,
+                orderCount: dateOrderCount, baseQty: dateBaseQty,
+              });
+            }
+
+            customerRow.children.push(statusRow);
+          }
+
+          pivotDetailRows.push(customerRow);
+        }
+
+        result.bay2.expandedPivotRows = pivotDetailRows;
+        result.bay2.expandedPivotMetrics = workbookPivot.metrics || [];
+        result.bay2.pivotTotalOrderCount = pivotTotalOrderCount;
+        result.bay2.pivotTotalBaseQty = pivotTotalBaseQty;
+      } catch (err) {
+        console.error('E-comm expanded pivot build error:', err.message);
+        result.bay2.expandedPivotRows = [];
+        result.bay2.expandedPivotMetrics = [];
+        result.bay2.pivotTotalOrderCount = 0;
+        result.bay2.pivotTotalBaseQty = 0;
+      }
+
+      result.metrics = [
+        { label: 'Count of Order #', value: String(grandTotal.orderCount), sub: 'WISE planned orders' },
+        { label: 'Sum of BASE QTY', value: String(grandTotal.baseQty), sub: 'WISE base quantity' },
+        { label: 'Past SLA', value: String(aged24Rows.length), sub: 'Orders older than 24 hours' },
+        { label: 'Customers', value: String(customerSet.length), sub: 'E-comm customer set' },
+      ];
+    } else {
+      result.plannedOrders.supported = false;
+      result.plannedOrders.unavailableReason = 'Planned order data is temporarily unavailable from WISE.';
+    }
+  } catch (err) {
+    console.error('E-comm fetch error:', err.message);
+    result.plannedOrders.supported = false;
+    result.plannedOrders.unavailableReason = 'Planned order data is temporarily unavailable.';
+  }
+
+  return res.json(result);
+});
+
+// ── Bay 5 dedicated route ─────────────────────────────────────────────────
+
+app.post('/api/dashboard/bay5', requireAuth, async (req, res) => {
+  const { facilityId, timeZone, includeAllCustomers } = req.body || {};
+  if (!facilityId) {
+    return res.status(400).json({ message: 'Facility is required.' });
+  }
+
+  const headers = {
+    Authorization: `Bearer ${req.accessToken}`,
+    'x-tenant-id': req.tenantId,
+    'x-facility-id': facilityId,
+    'content-type': 'application/json',
+    'item-time-zone': timeZone || 'America/Los_Angeles',
+  };
+
+  const now = new Date().toISOString();
+  const cfg = TAB_CONFIG.bay5;
+
+  const result = {
+    bay: cfg.bay,
+    reportType: cfg.reportType,
+    title: 'Team 5',
+    siteLabel: 'Fontana',
+    source: 'WISE',
+    refreshedAt: now,
+    generatedAt: now,
+    customer: { name: 'Fontana' },
+    plannedOrders: { supported: true, rows: [], unavailableReason: null },
+    inYardFullEquipment: { supported: true, rows: [], candidateCount: 0 },
+    customerSet: [],
+    metrics: [],
+  };
+
+  try {
+    const orderResult = await fetchOrdersForTab(headers, cfg, { includeAllCustomers });
+
+    if (orderResult.ok) {
+      const orders = orderResult.orders || [];
+
+      const orgIds = new Set();
+      for (const o of orders) {
+        if (o.customerId) orgIds.add(o.customerId);
+        if (o.carrierId) orgIds.add(o.carrierId);
+        if (o.retailerId) orgIds.add(o.retailerId);
+      }
+      const orgNames = await resolveOrgNames([...orgIds], req.accessToken, req.tenantId);
+
+      const allRows = orders.map(o => ({
+        orderNumber: o.id,
+        customer: orgNames[o.customerId || o.customer?.id || o.customer?.organizationId] || o.customerName || o.customer?.name || o.customerId || o.customer?.id || 'Unknown',
+        customerId: o.customerId || o.customer?.id || o.customer?.organizationId || '',
+        status: o.status,
+        reference: o.referenceNo || o.poNo || '',
+        created: o.createdTime,
+        shipMethod: o.shipMethod || '',
+        carrier: orgNames[o.carrierId] || o.carrierId || '',
+        scheduleDate: o.scheduleDate,
+        mabd: o.mabd,
+        appointmentTime: o.appointmentTime,
+        retailerName: orgNames[o.retailerId] || o.retailerId || '',
+        orderType: o.orderType,
+        source: o.source,
+        baseQty: Number(o.baseQty ?? o.totalQty ?? o.itemLineTotalQty ?? o.estPiecePickQty ?? o.qty ?? 0) || 0,
+        palletQty: Number(o.palletQty ?? o.estPalletPickQty ?? 0) || 0,
+        stagingLocation: o.stagingLocation || o.stagingLocationName || '',
+        prestatus: o.prestatus || o.preStatus || o.secondaryStatus || '',
+        po: o.poNo || o.referenceNo || '',
+        so: Array.isArray(o.soNos) ? o.soNos.join(', ') : (o.soNos || o.soNo || ''),
+        bolNo: o.bolNo,
+        loadNo: o.loadNo,
+        orderPlanId: o.orderPlanId || o.planId || '',
+        shipToName: o.shipToAddress?.name || o.shipToName || '',
+      }));
+
+      const rows = includeAllCustomers
+        ? allRows
+        : allRows.filter(row => rowMatchesTab(row, cfg));
+
+      const seenCustomers = new Set();
+      const customerSet = [];
+      for (const row of rows) {
+        if (row.customer && !seenCustomers.has(row.customer)) {
+          seenCustomers.add(row.customer);
+          customerSet.push({ name: row.customer });
+        }
+      }
+
+      result.plannedOrders.rows = rows;
+      result.customer = { name: customerSet[0]?.name || 'Fontana' };
+      result.customerSet = customerSet;
+      result.metrics = [
+        { label: 'Total Planned', value: rows.length },
+        { label: 'Customers', value: customerSet.length },
+      ];
+    } else {
+      result.plannedOrders.supported = false;
+      result.plannedOrders.unavailableReason = 'Planned order data is temporarily unavailable from WISE.';
+    }
+  } catch (err) {
+    console.error('Bay 5 fetch error:', err.message);
+    result.plannedOrders.supported = false;
+    result.plannedOrders.unavailableReason = 'Planned order data is temporarily unavailable.';
+  }
+
+  return res.json(result);
+});
+
+// ── Evelyn / E-com LTL dedicated route ─────────────────────────────────────
+
+app.post('/api/dashboard/evelyn', requireAuth, async (req, res) => {
+  const { facilityId, timeZone } = req.body || {};
+  if (!facilityId) {
+    return res.status(400).json({ message: 'Facility is required.' });
+  }
+
+  const now = new Date().toISOString();
+
+  try {
+    const workbookPivot = JSON.parse(fs.readFileSync(path.join(__dirname, 'evelyn-pivot.json'), 'utf8'));
+    const result = {
+      bay: 'evelyn',
+      reportType: 'evelynGreenPivot',
+      title: 'E-com LTL',
+      siteLabel: 'Fontana',
+      source: 'WISE',
+      refreshedAt: workbookPivot.generatedAt || now,
+      generatedAt: workbookPivot.generatedAt || now,
+      customer: { name: 'E-com LTL' },
+      customerSet: (workbookPivot.evelynGreen?.rows || [])
+        .filter(r => r.level === 0)
+        .map(r => ({ name: r.label })),
+      plannedOrders: { supported: true, rows: [] },
+      inYardFullEquipment: { supported: true, rows: [] },
+      evelynGreen: workbookPivot.evelynGreen || { supported: true, rows: [], total: { orderCount: 0, baseQty: 0 }, aged72Rows: [] },
+      detailRows: workbookPivot.detailRows || [],
+      metrics: workbookPivot.metrics || [],
+    };
+    return res.json(result);
+  } catch (err) {
+    console.error('E-com LTL fetch error:', err.message);
+    return res.json({
+      title: 'E-com LTL',
+      siteLabel: 'Fontana',
+      source: 'WISE',
+      refreshedAt: now,
+      generatedAt: now,
+      customer: { name: 'E-com LTL' },
+      customerSet: [],
+      plannedOrders: { supported: true, rows: [] },
+      inYardFullEquipment: { supported: true, rows: [] },
+      evelynGreen: { supported: false, rows: [], total: { orderCount: 0, baseQty: 0 }, aged72Rows: [], unavailableReason: 'E-com LTL pivot data is unavailable.' },
+      metrics: [],
+    });
+  }
 });
 
 // ── Static file serving ────────────────────────────────────────────────────

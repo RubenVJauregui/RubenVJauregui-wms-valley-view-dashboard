@@ -821,7 +821,6 @@ export async function loadDashboard(
     searchPlannedOrders(token, tenantId, facilityId, [
       "PLANNED",
       "IMPORTED",
-      "APPROVED",
     ]),
     searchInYardEquipment(token, tenantId, facilityId),
     isNightShift

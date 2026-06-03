@@ -217,6 +217,32 @@ const ALESSANDRO_TEAM3_LAYOUT_TABS = new Set([
   "bay3",
 ]);
 
+const FONTANA_FACILITY_ID = "LT_ORG-7759";
+
+const FONTANA_VISIBLE_TABS = new Set([
+  "bay1",
+  "bay2",
+  "bay3",
+  "evelyn",
+  "bay4",
+  "bay5",
+  "nightShift",
+]);
+
+const FONTANA_TAB_LABELS: Record<string, string> = {
+  bay2: "E-comm",
+  evelyn: "E-com LTL",
+};
+
+// Dedicated endpoints per tab used by Fontana (bay4 uses standard /api/dashboard)
+const FONTANA_TAB_ENDPOINTS: Record<string, string> = {
+  bay1: "/api/dashboard/bay1",
+  bay2: "/api/dashboard/bay2",
+  bay3: "/api/dashboard/bay3",
+  evelyn: "/api/dashboard/evelyn",
+  bay5: "/api/dashboard/bay5",
+};
+
 /* ── Dashboard ── */
 
 interface DashboardProps {
@@ -416,28 +442,47 @@ export function Dashboard({
       }
 
       // ── Dedicated tab endpoints with AbortController + 30s timeout ──
+      const fontanaEndpoint = isFontana
+        ? FONTANA_TAB_ENDPOINTS[activeTab]
+        : undefined;
+
       if (
         activeTab === "bpWorkload" ||
-        (isAlessandro && (activeTab === "bay1" || activeTab === "bay3"))
+        (isAlessandro && (activeTab === "bay1" || activeTab === "bay3")) ||
+        (isFontana && fontanaEndpoint)
       ) {
         const endpoint =
           activeTab === "bpWorkload"
             ? "/api/dashboard/bp-workload"
-            : activeTab === "bay1"
-              ? "/api/dashboard/bay1"
-              : "/api/dashboard/bay3";
+            : fontanaEndpoint
+              ? fontanaEndpoint
+              : activeTab === "bay1"
+                ? "/api/dashboard/bay1"
+                : "/api/dashboard/bay3";
 
-        const label =
+        const tabLabel =
           activeTab === "bpWorkload"
             ? "BP Workload"
-            : activeTab === "bay1"
-              ? "Team 1"
-              : "Team 3";
+            : TABS.find((t) => t.key === activeTab)?.label ||
+              activeTab;
+
+        const needAllCustomers =
+          isFontana || isAlessandro || activeTab === "bpWorkload";
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30_000);
 
         try {
+          const body: Record<string, unknown> = {
+            facilityId: facility.id,
+            facilityName: facility.name,
+            timeZone: facility.timeZone,
+            tab: activeTab,
+          };
+          if (needAllCustomers) {
+            body.includeAllCustomers = true;
+          }
+
           const res = await fetch(endpoint, {
             method: "POST",
             cache: "no-store",
@@ -448,13 +493,7 @@ export function Dashboard({
               "x-tenant-id": session.identity.tenant_id,
               "x-facility-id": facility.id,
             },
-            body: JSON.stringify({
-              facilityId: facility.id,
-              facilityName: facility.name,
-              timeZone: facility.timeZone,
-              tab: activeTab,
-              includeAllCustomers: true,
-            }),
+            body: JSON.stringify(body),
           });
 
           if (res.status === 401) {
@@ -468,7 +507,8 @@ export function Dashboard({
           } else {
             setError(
               String(
-                payload.message || `${label} data is unavailable.`,
+                payload.message ||
+                  `${tabLabel} data is unavailable.`,
               ),
             );
           }
@@ -477,9 +517,11 @@ export function Dashboard({
             err instanceof DOMException &&
             err.name === "AbortError"
           ) {
-            setError(`${label} timed out after 30 seconds.`);
+            setError(
+              `${tabLabel} timed out after 30 seconds.`,
+            );
           } else {
-            setError(`${label} data is unavailable.`);
+            setError(`${tabLabel} data is unavailable.`);
           }
         } finally {
           clearTimeout(timeoutId);
@@ -489,6 +531,16 @@ export function Dashboard({
       }
 
       // ── All other tabs ─────────────────────────────────────────────────
+      const standardBody: Record<string, unknown> = {
+        facilityId: facility.id,
+        facilityName: facility.name,
+        timeZone: facility.timeZone,
+        tab: activeTab,
+      };
+      if (isFontana || isAlessandro) {
+        standardBody.includeAllCustomers = true;
+      }
+
       const res = await fetch("/api/dashboard", {
         method: "POST",
         cache: "no-store",
@@ -498,12 +550,7 @@ export function Dashboard({
           "x-tenant-id": session.identity.tenant_id,
           "x-facility-id": facility.id,
         },
-        body: JSON.stringify({
-          facilityId: facility.id,
-          facilityName: facility.name,
-          timeZone: facility.timeZone,
-          tab: activeTab,
-        }),
+        body: JSON.stringify(standardBody),
       });
 
       if (res.status === 401) {
@@ -531,6 +578,12 @@ export function Dashboard({
     // Clear customer filter when switching to a non-filterable tab
     if (!CUSTOMER_FILTER_TABS.has(activeTab)) {
       setCustomerFilter(null);
+    }
+
+    // Fontana: redirect to first allowed tab if current tab is hidden
+    if (isFontana && !FONTANA_VISIBLE_TABS.has(activeTab)) {
+      onChangeTab("bay1");
+      return;
     }
 
     if (activeTab === "bpWorkload") return;
@@ -596,8 +649,10 @@ export function Dashboard({
 
   // Per-tab customer filter — derived rows (Teams 1,3,4,5 + Night Shift)
   const isAlessandro = facility.id === ALESSANDRO_FACILITY_ID;
+  const isFontana = facility.id === FONTANA_FACILITY_ID;
   const useTeam3Layout =
-    isAlessandro && ALESSANDRO_TEAM3_LAYOUT_TABS.has(activeTab);
+    (isAlessandro && ALESSANDRO_TEAM3_LAYOUT_TABS.has(activeTab)) ||
+    (isFontana && FONTANA_VISIBLE_TABS.has(activeTab));
 
   const customerFilterActive = CUSTOMER_FILTER_TABS.has(activeTab);
   const customerFilteredYardRows = useMemo(() => {
@@ -836,14 +891,18 @@ export function Dashboard({
 
       {/* Tab bar */}
       <nav className="tab-bar">
-        {TABS.map((t) => (
+        {TABS.filter(
+          (t) => !isFontana || FONTANA_VISIBLE_TABS.has(t.key),
+        ).map((t) => (
           <button
             key={t.key}
             className={`report-tab${activeTab === t.key ? " active" : ""}`}
             type="button"
             onClick={() => onChangeTab(t.key)}
           >
-            {t.label}
+            {isFontana
+              ? FONTANA_TAB_LABELS[t.key] || t.label
+              : t.label}
           </button>
         ))}
       </nav>
