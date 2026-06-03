@@ -811,85 +811,6 @@
 })();
 </script>
 
-<style id="planned-customer-chip-filter-style">
-  .chips .chip:not(.active) {
-    color: #d8b4fe !important;
-    border-color: rgba(168,85,247,.38) !important;
-  }
-  .chips .chip.active {
-    color: #fbbf24 !important;
-    border-color: rgba(251,191,36,.68) !important;
-  }
-</style>
-<script id="planned-customer-chip-filter">
-(function(){
-  if (window.__plannedCustomerChipFilterApplied) return;
-  window.__plannedCustomerChipFilterApplied = true;
-  var selectedBySection = new WeakMap();
-  function norm(v){ return String(v||'').toUpperCase().replace(/\s*\(\d+\)\s*$/,'').replace(/[^A-Z0-9]+/g,' ').trim(); }
-  function label(v){ return String(v||'').replace(/\s*\(\d+\)\s*$/,'').trim(); }
-  function plannedSections(){
-    return Array.from(document.querySelectorAll('h2,h3')).map(function(head){
-      if((head.textContent||'').trim() !== 'Section 2 - PLANNED Outbound Orders') return null;
-      var section=head;
-      while(section && section!==document.body){
-        if(section.querySelector && section.querySelector('.chips') && section.querySelector('table')) return section;
-        section=section.parentElement;
-      }
-      return null;
-    }).filter(Boolean);
-  }
-  function customerColumn(table){
-    return Array.from(table.querySelectorAll('thead th')).findIndex(function(th){ return /customer/i.test(th.textContent||''); });
-  }
-  function applySection(section){
-    var chipsWrap=section.querySelector('.chips');
-    var table=section.querySelector('table');
-    if(!chipsWrap || !table) return;
-    var idx=customerColumn(table);
-    if(idx<0) return;
-    var rows=Array.from(table.querySelectorAll('tbody tr'));
-    var counts={};
-    rows.forEach(function(row){
-      var cell=row.querySelectorAll('td')[idx];
-      var customer=label(cell ? cell.textContent : '');
-      if(customer) counts[customer]=(counts[customer]||0)+1;
-    });
-    var selected=selectedBySection.get(section)||'ALL';
-    if(selected!=='ALL' && !Object.keys(counts).some(function(name){ return norm(name)===selected; })) selected='ALL';
-    selectedBySection.set(section, selected);
-    rows.forEach(function(row){
-      var cell=row.querySelectorAll('td')[idx];
-      var customer=norm(cell ? cell.textContent : '');
-      row.style.display=(selected==='ALL' || customer===selected) ? '' : 'none';
-    });
-    Array.from(chipsWrap.querySelectorAll('button,.chip')).forEach(function(chip){
-      var base=label(chip.textContent);
-      var key=norm(base);
-      chip.dataset.customerKey=key;
-      chip.classList.toggle('active', selected!=='ALL' && key===selected);
-      if(counts[base]!=null) chip.textContent=base+' ('+counts[base]+')';
-    });
-  }
-  function applyAll(){ plannedSections().forEach(applySection); }
-  document.addEventListener('click', function(e){
-    var chip=e.target && e.target.closest ? e.target.closest('.chips button,.chips .chip') : null;
-    if(!chip) return;
-    var section=chip.closest('section,.report-section') || chip.parentElement;
-    while(section && section!==document.body && !(section.querySelector && section.querySelector('table') && section.querySelector('.chips'))){
-      section=section.parentElement;
-    }
-    if(!section) return;
-    var key=chip.dataset.customerKey || norm(chip.textContent);
-    selectedBySection.set(section, selectedBySection.get(section)===key ? 'ALL' : key);
-    setTimeout(function(){ applySection(section); },0);
-  }, true);
-  applyAll();
-  document.addEventListener('click', function(){ setTimeout(applyAll,250); }, true);
-  setInterval(applyAll,1000);
-})();
-</script>
-
 <style id="ruben-section1-scroll-style">
   .section1-scroll-wrap {
     max-height: 336px !important;
@@ -1301,13 +1222,6 @@
     font-size: 12px;
     font-weight: 800;
     letter-spacing: .01em;
-    cursor: pointer;
-  }
-  .nightshift-customer-summary .customer-count-chip:hover,
-  .nightshift-customer-summary .customer-count-chip.active {
-    border-color: rgba(251,191,36,.65);
-    color: #ffffff;
-    background: rgba(35,26,73,.92);
   }
   .nightshift-customer-summary .customer-count-chip b {
     color: #fbbf24;
@@ -1318,7 +1232,6 @@
 (function(){
   if (window.__nightShiftCustomerSummaryApplied) return;
   window.__nightShiftCustomerSummaryApplied = true;
-  var selectedCustomer = 'ALL';
   function norm(v){ return String(v||'').toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim(); }
   function isNightShift(){ var a=document.querySelector('.report-tab.active'); return a && /Night Shift/i.test(a.textContent||''); }
   function applyNightShiftCustomerSummary(){
@@ -1335,43 +1248,25 @@
     var customerIdx=headers.findIndex(function(th){ return /customer/i.test(th.textContent||''); });
     if(customerIdx<0) return;
     var counts={};
-    var rows=Array.from(table.querySelectorAll('tbody tr'));
-    rows.forEach(function(tr){
+    var visible=0;
+    table.querySelectorAll('tbody tr').forEach(function(tr){
       var cells=tr.querySelectorAll('td');
       var customer=cells[customerIdx] ? cells[customerIdx].textContent.trim() : '';
       if(norm(customer)===norm(titleText)){
         tr.style.display='none';
         return;
       }
-      if(customer){ counts[customer]=(counts[customer]||0)+1; }
-    });
-    var selectedStillExists = selectedCustomer === 'ALL' || Object.keys(counts).some(function(name){ return norm(name) === selectedCustomer; });
-    if(!selectedStillExists) selectedCustomer = 'ALL';
-    var visible=0;
-    rows.forEach(function(tr){
-      var cells=tr.querySelectorAll('td');
-      var customer=cells[customerIdx] ? cells[customerIdx].textContent.trim() : '';
-      var show = norm(customer)!==norm(titleText) && (selectedCustomer === 'ALL' || norm(customer) === selectedCustomer);
-      tr.style.display=show ? '' : 'none';
-      if(show) visible++;
+      tr.style.display='';
+      if(customer){ counts[customer]=(counts[customer]||0)+1; visible++; }
     });
     title.textContent = titleText + ' (' + visible + ')';
     var old=section.querySelector('.nightshift-customer-summary');
     if(old) old.remove();
     var summary=document.createElement('div');
     summary.className='nightshift-customer-summary';
-    var allChip=document.createElement('button');
-    allChip.type='button';
-    allChip.className='customer-count-chip' + (selectedCustomer === 'ALL' ? ' active' : '');
-    allChip.dataset.customer='ALL';
-    allChip.innerHTML='ALL <b>(' + Object.keys(counts).reduce(function(sum,name){ return sum + counts[name]; },0) + ')</b>';
-    summary.appendChild(allChip);
     Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a] || a.localeCompare(b); }).forEach(function(name){
       var chip=document.createElement('span');
-      chip=document.createElement('button');
-      chip.type='button';
-      chip.className='customer-count-chip' + (norm(name) === selectedCustomer ? ' active' : '');
-      chip.dataset.customer=norm(name);
+      chip.className='customer-count-chip';
       chip.innerHTML = name + ' <b>(' + counts[name] + ')</b>';
       summary.appendChild(chip);
     });
@@ -1380,12 +1275,6 @@
     var caption=section.querySelector('.summary-caption');
     if(caption) caption.textContent=visible + ' equipment';
   }
-  document.addEventListener('click', function(e){
-    var chip=e.target && e.target.closest ? e.target.closest('.nightshift-customer-summary .customer-count-chip') : null;
-    if(!chip) return;
-    selectedCustomer = chip.dataset.customer || 'ALL';
-    setTimeout(applyNightShiftCustomerSummary,0);
-  }, true);
   applyNightShiftCustomerSummary();
   document.addEventListener('click', function(){ setTimeout(applyNightShiftCustomerSummary,300); }, true);
   setInterval(applyNightShiftCustomerSummary,1000);
