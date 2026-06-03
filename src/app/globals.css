@@ -549,25 +549,6 @@ body { min-height: 100vh; }
   background: var(--panel-alt);
 }
 
-/* ── Night Shift Customer Filter Links ── */
-.customer-link {
-  background: none;
-  border: none;
-  border-bottom: 1px dashed rgba(168, 85, 247, 0.45);
-  color: var(--accent-2);
-  font-size: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
-  text-align: left;
-  transition: color 0.15s, border-color 0.15s;
-}
-
-.customer-link:hover {
-  color: #d8b4fe;
-  border-bottom-color: #d8b4fe;
-}
-
 /* ── Pivot Tree Table ── */
 .pivot-customer-row td {
   background: rgba(139, 92, 246, 0.06);

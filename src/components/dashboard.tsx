@@ -10,7 +10,6 @@ import {
   AlertTriangle,
   ChevronRight,
   ChevronDown,
-  X,
 } from "lucide-react";
 import type { Session, Facility } from "@/app/page";
 
@@ -179,14 +178,6 @@ const TABS = [
 
 const SPEAK_TABS = new Set(["bay1", "bay4", "bay5"]);
 
-const CUSTOMER_FILTER_TABS = new Set([
-  "bay1",
-  "bay3",
-  "bay4",
-  "bay5",
-  "nightShift",
-]);
-
 /* ── Dashboard ── */
 
 interface DashboardProps {
@@ -210,9 +201,6 @@ export function Dashboard({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [customerFilter, setCustomerFilter] = useState<string | null>(
-    null,
-  );
   const [countdown, setCountdown] = useState(300);
   const [sortKey, setSortKey] = useState<string>("created");
   const [sortAsc, setSortAsc] = useState(false);
@@ -424,11 +412,6 @@ export function Dashboard({
     fetchData();
     setCountdown(300);
 
-    // Clear customer filter when switching to a non-filterable tab
-    if (!CUSTOMER_FILTER_TABS.has(activeTab)) {
-      setCustomerFilter(null);
-    }
-
     if (activeTab === "bpWorkload") return;
 
     intervalRef.current = setInterval(() => {
@@ -490,77 +473,6 @@ export function Dashboard({
   const inYardRows = data?.inYardFullEquipment?.rows ?? [];
   const yardSupported = data?.inYardFullEquipment?.supported ?? false;
 
-  // Per-tab customer filter — derived rows (Teams 1,3,4,5 + Night Shift)
-  const customerFilterActive = CUSTOMER_FILTER_TABS.has(activeTab);
-  const customerFilteredYardRows = useMemo(() => {
-    if (!customerFilterActive || !customerFilter) return inYardRows;
-    return inYardRows.filter(
-      (r) =>
-        normalizeCustomerNameForCount(r.customer) ===
-        normalizeCustomerNameForCount(customerFilter),
-    );
-  }, [inYardRows, customerFilter, customerFilterActive]);
-
-  const customerFilteredPlannedRows = useMemo(() => {
-    if (!customerFilterActive || !customerFilter) return filteredPlanned;
-    return filteredPlanned.filter(
-      (r) =>
-        normalizeCustomerNameForCount(r.customer) ===
-        normalizeCustomerNameForCount(customerFilter),
-    );
-  }, [filteredPlanned, customerFilter, customerFilterActive]);
-
-  // Which rows to actually render per section
-  const displayYardRows = customerFilterActive
-    ? customerFilteredYardRows
-    : inYardRows;
-  const displayPlannedRows = customerFilterActive
-    ? customerFilteredPlannedRows
-    : filteredPlanned;
-
-  const customerFilterSet = useMemo(() => {
-    if (!customerFilterActive) return [];
-    const seen = new Set<string>();
-    const result: { name: string; count: number }[] = [];
-    for (const r of inYardRows) {
-      const key = normalizeCustomerNameForCount(r.customer);
-      if (!seen.has(key)) {
-        seen.add(key);
-        result.push({ name: r.customer, count: 0 });
-      }
-    }
-    for (const r of plannedRows) {
-      const key = normalizeCustomerNameForCount(r.customer);
-      if (!seen.has(key)) {
-        seen.add(key);
-        result.push({ name: r.customer, count: 0 });
-      }
-    }
-    // Count from planned rows
-    for (const c of result) {
-      c.count = plannedRows.filter(
-        (r) =>
-          normalizeCustomerNameForCount(r.customer) ===
-          normalizeCustomerNameForCount(c.name),
-      ).length;
-    }
-    return result.sort((a, b) => b.count - a.count);
-  }, [customerFilterActive, inYardRows, plannedRows]);
-
-  const handleCustomerFilterClick = useCallback(
-    (customerName: string) => {
-      if (!customerFilterActive) return;
-      setCustomerFilter((prev) =>
-        prev === customerName ? null : customerName,
-      );
-    },
-    [customerFilterActive],
-  );
-
-  const clearCustomerFilter = useCallback(() => {
-    setCustomerFilter(null);
-  }, []);
-
   // ── Pivot expand / collapse ──────────────────────────────────────────────
   const togglePivotRow = useCallback((row: PivotRow) => {
     const key = pivotRowKey(row);
@@ -621,8 +533,7 @@ export function Dashboard({
   };
 
   const exportCSV = () => {
-    const rows = displayPlannedRows;
-    if (!rows.length) return;
+    if (!filteredPlanned.length) return;
     const cols = [
       ["orderNumber", "Order #"],
       ["customer", "Customer"],
@@ -636,7 +547,7 @@ export function Dashboard({
     ];
     const lines = [
       cols.map(([, h]) => h),
-      ...rows.map((r) =>
+      ...filteredPlanned.map((r) =>
         cols.map(([k]) =>
           k === "created" || k === "scheduleDate" || k === "mabd"
             ? fmtDate(String(r[k as keyof PlannedOrder] ?? ""))
@@ -936,91 +847,6 @@ export function Dashboard({
             </section>
           ) : null}
 
-          {/* Customer filter indicator (Teams 1,3,4,5 + Night Shift) */}
-          {customerFilterActive && customerFilter && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "8px 18px",
-                background: "rgba(139, 92, 246, 0.12)",
-                border: "1px solid rgba(139, 92, 246, 0.3)",
-                borderRadius: "var(--radius-sm)",
-                marginBottom: 4,
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "0.75rem",
-                  fontWeight: 600,
-                  color: "var(--accent-2)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.04em",
-                }}
-              >
-                Filtered by customer:
-              </span>
-              <span
-                style={{
-                  fontSize: "0.8125rem",
-                  fontWeight: 700,
-                  color: "#fff",
-                  background: "rgba(139, 92, 246, 0.22)",
-                  padding: "2px 12px",
-                  borderRadius: 999,
-                }}
-              >
-                {customerFilter}
-              </span>
-              <button
-                className="ghost-button"
-                onClick={clearCustomerFilter}
-                type="button"
-                style={{
-                  fontSize: "0.7rem",
-                  padding: "2px 10px",
-                  marginLeft: "auto",
-                }}
-              >
-                <X size={12} /> Clear filter
-              </button>
-            </div>
-          )}
-
-          {/* Customer filter chips (Teams 1,3,4,5 + Night Shift) */}
-          {customerFilterActive && customerFilterSet.length > 0 && (
-            <div className="chips" style={{ paddingBottom: 0 }}>
-              {customerFilterSet.map((c) => {
-                const isActive =
-                  customerFilter === c.name;
-                return (
-                  <button
-                    key={c.name}
-                    className={`chip${isActive ? " active" : ""}`}
-                    type="button"
-                    onClick={() =>
-                      setCustomerFilter(
-                        isActive ? null : c.name,
-                      )
-                    }
-                    style={{
-                      cursor: "pointer",
-                      borderColor: isActive
-                        ? "var(--accent-2)"
-                        : undefined,
-                    }}
-                  >
-                    {c.name}{" "}
-                    <span className="chip-count">
-                      ({c.count})
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
           {/* Section 1: In-Yard FULL Equipment */}
           <section className="report-section">
             <div className="section-heading">
@@ -1032,7 +858,7 @@ export function Dashboard({
               </h2>
             </div>
 
-            {!data || (!yardSupported && !displayYardRows.length) ? (
+            {!data || (!yardSupported && !inYardRows.length) ? (
               data?.inYardFullEquipment?.unavailableReason ? (
                 <div className="empty-state blocked">
                   <AlertTriangle size={18} />
@@ -1063,7 +889,7 @@ export function Dashboard({
                     </tr>
                   </thead>
                   <tbody>
-                    {displayYardRows.map((r) => (
+                    {inYardRows.map((r) => (
                       <tr
                         key={`${r.equipmentNumber}-${r.entryTicket}`}
                       >
@@ -1071,23 +897,7 @@ export function Dashboard({
                         <td>{r.entryTicket || "Pending"}</td>
                         <td>{fmtDate(r.checkIn)}</td>
                         <td>{r.timeInYard || "Pending"}</td>
-                        <td>
-                          {customerFilterActive ? (
-                            <button
-                              type="button"
-                              className="customer-link"
-                              onClick={() =>
-                                handleCustomerFilterClick(
-                                  r.customer,
-                                )
-                              }
-                            >
-                              {r.customer || "Pending"}
-                            </button>
-                          ) : (
-                            r.customer || "Pending"
-                          )}
-                        </td>
+                        <td>{r.customer || "Pending"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1112,33 +922,18 @@ export function Dashboard({
 
             {/* Customer chips with counts */}
             <div className="chips">
-              {customerSet.map((c) => {
-                const isFilterActive =
-                  customerFilterActive && customerFilter === c.name;
-                return (
-                  <button
-                    key={c.name}
-                    className={`chip${isFilterActive ? " active" : customerFilterActive ? "" : " active"}`}
-                    type="button"
-                    onClick={() =>
-                      customerFilterActive &&
-                      handleCustomerFilterClick(c.name)
-                    }
-                    style={{
-                      cursor: customerFilterActive ? "pointer" : "default",
-                      borderColor: isFilterActive
-                        ? "var(--accent-2)"
-                        : undefined,
-                    }}
-                  >
-                    {c.name}{" "}
-                    <span className="chip-count">({c.count})</span>
-                  </button>
-                );
-              })}
+              {customerSet.map((c) => (
+                <button
+                  key={c.name}
+                  className="chip active"
+                  type="button"
+                >
+                  {c.name} <span className="chip-count">({c.count})</span>
+                </button>
+              ))}
             </div>
 
-            {data?.plannedOrders.supported && displayPlannedRows.length === 0 ? (
+            {data?.plannedOrders.supported && filteredPlanned.length === 0 ? (
               search ? (
                 <div className="empty-state">
                   No planned orders match the current filters.
@@ -1161,7 +956,7 @@ export function Dashboard({
                 <div className="action-bar">
                   <button
                     className="download-button"
-                    disabled={!displayPlannedRows.length}
+                    disabled={!filteredPlanned.length}
                     onClick={exportCSV}
                     type="button"
                   >
@@ -1196,29 +991,10 @@ export function Dashboard({
                       </tr>
                     </thead>
                     <tbody>
-                      {displayPlannedRows.map((r) => (
+                      {filteredPlanned.map((r) => (
                         <tr key={r.orderNumber}>
                           <td className="strong">{r.orderNumber}</td>
-                          <td>
-                            {customerFilterActive ? (
-                              <button
-                                type="button"
-                                className="customer-link"
-                                onClick={() =>
-                                  handleCustomerFilterClick(
-                                    r.customer,
-                                  )
-                                }
-                              >
-                                {r.customer}
-                              </button>
-                            ) : (
-                              r.customer
-                            )}{" "}
-                            <span className="customer-order-count">
-                              ({getCustomerOrderCount(r.customer)})
-                            </span>
-                          </td>
+                          <td>{r.customer} <span className="customer-order-count">({getCustomerOrderCount(r.customer)})</span></td>
                           <td>{r.status}</td>
                           <td>{r.reference}</td>
                           <td>{fmtDate(r.created)}</td>
@@ -1241,7 +1017,7 @@ export function Dashboard({
               </span>
               <strong>
                 {fmtNum(plannedRows.length)} planned ·{" "}
-                {fmtNum(displayPlannedRows.length)} shown
+                {fmtNum(filteredPlanned.length)} shown
               </strong>
             </div>
           </section>
