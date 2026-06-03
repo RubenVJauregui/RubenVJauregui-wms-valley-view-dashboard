@@ -652,64 +652,93 @@ function addCustomerMetricRow(byCustomer, customer, metric) {
   return byCustomer.get(rowKey);
 }
 
-async function applyPickedYesterdayWorkloadCounts({ headers, accessToken, tenantId, timeZone, byCustomer, metric }) {
-  const window = getYesterdayWindow(timeZone || 'America/Los_Angeles');
+async function fetchAllStatusChangeEvents(headers, body) {
+  const events = [];
+  const pageSize = body.pageSize || 500;
+  for (let currentPage = 1; currentPage <= 50; currentPage += 1) {
+    const res = await fetch(`${WMS_API_BASE_URL}/wms/outbound/order-status-change-event/search-by-paging`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ ...body, currentPage, pageSize }),
+    });
+    if (!res.ok) {
+      if (currentPage === 1) return { ok: false, events: [], total: 0 };
+      break;
+    }
+    const json = await res.json().catch(() => ({}));
+    if (!(json.code === 0 || String(json.code) === '0')) {
+      if (currentPage === 1) return { ok: false, events: [], total: 0 };
+      break;
+    }
+    const list = json.data?.list || json.data?.records || json.data || [];
+    if (!Array.isArray(list) || !list.length) break;
+    events.push(...list);
+    const total = Number(json.data?.total || 0);
+    if (list.length < pageSize || (total && events.length >= total)) break;
+  }
+  return { ok: true, events, total: events.length };
+}
 
-  // Workload tab only: count every order for each customer where a WISE picked-time
-  // field falls yesterday and the order status is one of the picked/shipping statuses.
-  // WISE environments vary on the exact picked-time filter field name, so query several
-  // safe variants, merge by order ID, then apply the business filter locally.
-  const queryBodies = [
-    {
+async function fetchOrdersByIds(headers, ids) {
+  const orders = [];
+  const seen = new Set();
+  for (let i = 0; i < ids.length; i += 100) {
+    const batch = ids.slice(i, i + 100);
+    const result = await fetchAllOrderPages(headers, {
+      ids: batch,
+      pageNo: 1,
       currentPage: 1,
-      pageSize: 500,
-      statuses: WORKLOAD_PICKED_STATUSES,
-      pickedTimeStart: window.start.toISOString(),
-      pickedTimeEnd: window.end.toISOString(),
-      sortingFields: [{ field: 'pickedTime', orderBy: 'DESC' }],
-    },
-    {
-      currentPage: 1,
-      pageSize: 500,
-      statuses: WORKLOAD_PICKED_STATUSES,
-      pickTimeStart: window.start.toISOString(),
-      pickTimeEnd: window.end.toISOString(),
-      sortingFields: [{ field: 'pickTime', orderBy: 'DESC' }],
-    },
-    {
-      currentPage: 1,
-      pageSize: 500,
-      statuses: WORKLOAD_PICKED_STATUSES,
-      pickedAtStart: window.start.toISOString(),
-      pickedAtEnd: window.end.toISOString(),
-      sortingFields: [{ field: 'updatedTime', orderBy: 'DESC' }],
-    },
-    {
-      currentPage: 1,
-      pageSize: 500,
-      statuses: WORKLOAD_PICKED_STATUSES,
-      updatedTimeStart: window.start.toISOString(),
-      updatedTimeEnd: window.end.toISOString(),
-      sortingFields: [{ field: 'updatedTime', orderBy: 'DESC' }],
-    },
-  ];
-
-  const byOrder = new Map();
-  for (const body of queryBodies) {
-    const result = await fetchAllOrderPages(headers, body);
+      pageSize: 100,
+    });
     if (!result.ok) continue;
     for (const order of result.orders || []) {
-      const orderId = order.id || order.orderId || order.orderNumber || order.referenceNo || `${order.customerId || order.customerName}-${getOrderPickedTime(order)}`;
-      if (orderId && !byOrder.has(orderId)) byOrder.set(orderId, order);
+      const id = order.id || order.orderId || order.orderNumber;
+      if (id && !seen.has(id)) {
+        seen.add(id);
+        orders.push(order);
+      }
     }
   }
+  return orders;
+}
 
-  const orders = Array.from(byOrder.values());
-  const matchingOrders = orders.filter((order) => {
-    const pickedTime = getOrderPickedTime(order);
-    return isWorkloadPickedStatus(getOrderStatus(order)) &&
-      isWithinRange(pickedTime, window.start, window.end);
+async function applyPickedYesterdayWorkloadCounts({ headers, accessToken, tenantId, facilityId, timeZone, byCustomer, metric }) {
+  const window = getYesterdayWindow(timeZone || 'America/Los_Angeles');
+
+  // Workload tab only: WMS order.pickedTime is frequently blank. The reliable source
+  // for "picked yesterday" is the status-change event where newStatus = PICKED and
+  // event createdTime is yesterday in facility timezone. Then join event.orderId/DN
+  // back to outbound orders for customer and current status.
+  const eventResult = await fetchAllStatusChangeEvents(headers, {
+    pageSize: 500,
+    newStatus: 'PICKED',
+    isolationId: facilityId,
+    createdTimeStart: window.start.toISOString(),
+    createdTimeEnd: window.end.toISOString(),
+    startTime: window.start.toISOString(),
+    endTime: window.end.toISOString(),
+    sortingFields: [{ field: 'createdTime', orderBy: 'DESC' }],
   });
+
+  const eventOrderIds = Array.from(new Set((eventResult.events || [])
+    .filter((event) => String(event.newStatus || '').toUpperCase() === 'PICKED')
+    .filter((event) => isWithinRange(event.createdTime || event.updatedTime, window.start, window.end))
+    .map((event) => event.orderId || event.orderNo || event.orderNumber || event.order_id)
+    .filter(Boolean)));
+
+  if (!eventOrderIds.length) return { windowKey: window.key, count: 0, fetched: 0 };
+
+  const orders = await fetchOrdersByIds(headers, eventOrderIds);
+  const ordersById = new Map();
+  for (const order of orders) {
+    const id = order.id || order.orderId || order.orderNumber;
+    if (id) ordersById.set(id, order);
+  }
+
+  const matchingOrders = eventOrderIds
+    .map((id) => ordersById.get(id))
+    .filter(Boolean)
+    .filter((order) => isWorkloadPickedStatus(getOrderStatus(order)));
 
   const orgIds = new Set();
   for (const order of matchingOrders) {
@@ -721,7 +750,7 @@ async function applyPickedYesterdayWorkloadCounts({ headers, accessToken, tenant
 
   const seen = new Set();
   for (const order of matchingOrders) {
-    const orderId = order.id || order.orderId || order.orderNumber || order.referenceNo || `${order.customerId || order.customerName}-${getOrderPickedTime(order)}`;
+    const orderId = order.id || order.orderId || order.orderNumber || order.referenceNo;
     if (seen.has(orderId)) continue;
     seen.add(orderId);
     const customer =
@@ -733,7 +762,7 @@ async function applyPickedYesterdayWorkloadCounts({ headers, accessToken, tenant
       'Unknown';
     addCustomerMetricRow(byCustomer, customer, metric).ordersPickedYesterday.value += 1;
   }
-  return { windowKey: window.key, count: seen.size, fetched: orders.length };
+  return { windowKey: window.key, count: seen.size, fetched: eventResult.events.length };
 }
 
 // URL variant mapping: /api/dashboard/bay2-auto-assign etc.
@@ -1066,6 +1095,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           accessToken: req.accessToken,
           tenantId: req.tenantId,
           timeZone: timeZone || 'America/Los_Angeles',
+          facilityId,
           byCustomer,
           metric,
         });
@@ -1127,6 +1157,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
         accessToken: req.accessToken,
         tenantId: req.tenantId,
         timeZone: timeZone || 'America/Los_Angeles',
+        facilityId,
         byCustomer,
         metric,
       });
