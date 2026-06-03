@@ -1123,12 +1123,16 @@
       var text=(node.textContent || '').trim();
       if(/Buena Park/i.test(text) && /Report|Workload/i.test(text)){
         node.textContent=name;
+      } else if(/^(Fontana|Alessandro)\s+Workload$/i.test(text) && text !== name){
+        node.textContent=name;
       }
     });
     document.querySelectorAll('*').forEach(function(node){
       if(node.children && node.children.length) return;
       var text=(node.textContent || '').trim();
       if(/^Buena Park Report\s*-/i.test(text)){
+        node.textContent=name;
+      } else if(/^(Fontana|Alessandro)\s+Workload$/i.test(text) && text !== name){
         node.textContent=name;
       }
     });
@@ -1141,6 +1145,172 @@
   setInterval(cleanTitle,1000);
 })();
 </script>
+
+<script id="workload-customer-logos">
+(function(){
+  if (window.__workloadCustomerLogosApplied) return;
+  window.__workloadCustomerLogosApplied = true;
+  var domains = {
+    'ALL MARKET INC VITA COCO': 'vitacoco.com',
+    'VITA COCO': 'vitacoco.com',
+    'SIMPLE MODERN': 'simplemodern.com',
+    'ORGAIN': 'orgain.com',
+    'KING S HAWAIIAN': 'kingshawaiian.com',
+    'MAMA CHIA': 'mamachia.com',
+    'MAMMA CHIA': 'mamachia.com',
+    'NZXT': 'nzxt.com',
+    'LENNOX': 'lennox.com',
+    'LENNOX INDUSTRIES INC': 'lennox.com',
+    'GURUNANDA': 'gurunanda.com',
+    'GURUNANDA LLC': 'gurunanda.com',
+    'POMPEIAN INC': 'pompeian.com',
+    'ROAR BEVERAGES INC': 'drinkroar.com',
+    'SPLENDOR WATER LLC': 'splendorwater.com',
+    'COME READY FOODS LLC': 'comereadyfoods.com',
+    'UPTIME ENERGY INC': 'uptimeenergy.com',
+    'ZEN BEVERAGE LLC': 'zenwtr.com',
+    'RITUAL BEVERAGE COMPANY': 'ritualzeroproof.com',
+    'GIMME HEALTH FOODS INC': 'gimmesnacks.com',
+    'NATURAL DECADENCE LLC': 'naturaldecadence.com',
+    'CRATE AND BARREL': 'crateandbarrel.com',
+    'EUROMARKET DESIGNS INC': 'crateandbarrel.com',
+    'BOUNDLESS EC US LLC': 'boundless.com',
+    'DUPRAY USA LLC': 'dupray.com',
+    'PRISMA INTERNATIONAL LLC': 'prismainternational.com',
+    'TORQUAY ETRADING LLC': 'torquayetrading.com',
+    'BABYARK INC': 'babyark.com',
+    'EMBER TECHNOLOGIES INC': 'ember.com',
+    'DELTA ELECTRONICS': 'deltaww.com',
+    'SLINGER BAG AMERICAS INC': 'slingerbag.com',
+    'SUN NINJA LLC': 'sunninja.com',
+    'TINYYO LIMITED': 'tinyyo.com',
+    'UNIVERA BRANDS': 'univeraproducts.com'
+  };
+  function norm(value){
+    return String(value || '').replace(/\(\d+\)\s*$/,'').replace(/&/g,' AND ').toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim();
+  }
+  function cleanName(value){
+    return String(value || '').replace(/\s*\(\d+\)\s*$/,'').trim();
+  }
+  function domainForCustomer(name){
+    var key = norm(name);
+    if (domains[key]) return domains[key];
+    var found = Object.keys(domains).find(function(candidate){
+      return key === candidate || key.indexOf(candidate) >= 0 || candidate.indexOf(key) >= 0;
+    });
+    if (found) return domains[found];
+    var words = key.replace(/\b(LLC|INC|LTD|LIMITED|COMPANY|CO|CORP|CORPORATION|DBA|US|USA|NEW|ORG)\b/g,' ').replace(/\s+/g,' ').trim().split(' ').filter(Boolean).slice(0,2);
+    return words.length ? words.join('').toLowerCase() + '.com' : '';
+  }
+  function logoUrl(domain){
+    return 'https://www.google.com/s2/favicons?domain_url=' + encodeURIComponent('https://' + domain) + '&sz=64';
+  }
+  function initials(name){
+    return cleanName(name).split(/\s+/).filter(Boolean).slice(0,2).map(function(part){ return part.charAt(0).toUpperCase(); }).join('') || '?';
+  }
+  function decorateCell(cell){
+    if (!cell || cell.querySelector('.workload-customer-logo-wrap')) return;
+    var name = cleanName(cell.textContent);
+    if (!name || /^customer$/i.test(name)) return;
+    var domain = domainForCustomer(name);
+    var wrap = document.createElement('span');
+    wrap.className = 'workload-customer-logo-wrap';
+    var fallback = document.createElement('span');
+    fallback.className = 'workload-customer-logo-fallback';
+    fallback.textContent = initials(name);
+    wrap.appendChild(fallback);
+    if (domain) {
+      var img = document.createElement('img');
+      img.className = 'workload-customer-logo';
+      img.alt = '';
+      img.loading = 'lazy';
+      img.src = logoUrl(domain);
+      img.onerror = function(){ img.style.display='none'; };
+      wrap.appendChild(img);
+    }
+    var text = document.createElement('span');
+    text.className = 'workload-customer-name';
+    text.textContent = name;
+    cell.textContent = '';
+    cell.appendChild(wrap);
+    cell.appendChild(text);
+  }
+  function activeTab(){
+    var tab = document.querySelector('.report-tab.active');
+    return tab && tab.textContent ? tab.textContent : '';
+  }
+  function applyLogos(){
+    if (!/workload/i.test(activeTab())) return;
+    document.querySelectorAll('table').forEach(function(table){
+      var headers = Array.from(table.querySelectorAll('thead th'));
+      var customerIndex = headers.findIndex(function(th){ return /customer/i.test(th.textContent || ''); });
+      if (customerIndex < 0) return;
+      table.querySelectorAll('tbody tr').forEach(function(row){
+        var cells = row.querySelectorAll('td');
+        decorateCell(cells[customerIndex]);
+      });
+    });
+  }
+  var oldFetch = window.fetch;
+  window.fetch = function(){
+    return oldFetch.apply(this, arguments).then(function(response){
+      try {
+        var url = String(arguments[0] && arguments[0].url || arguments[0] || '');
+        if (url.indexOf('/api/dashboard') >= 0) {
+          setTimeout(applyLogos, 100);
+          setTimeout(applyLogos, 600);
+          setTimeout(applyLogos, 1600);
+        }
+      } catch(e) {}
+      return response;
+    });
+  };
+  document.addEventListener('click', function(){ setTimeout(applyLogos, 150); }, true);
+  setInterval(applyLogos, 1200);
+})();
+</script>
+<style id="workload-customer-logo-style">
+  .table-frame td .workload-customer-logo-wrap {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    margin-right: 8px !important;
+    vertical-align: middle !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+    background: rgba(255,255,255,.92) !important;
+    box-shadow: 0 0 0 1px rgba(148,163,184,.25) !important;
+  }
+  .table-frame td .workload-customer-logo,
+  .table-frame td .workload-customer-logo-fallback {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+  .table-frame td .workload-customer-logo {
+    object-fit: contain !important;
+    padding: 3px !important;
+    background: #fff !important;
+  }
+  .table-frame td .workload-customer-logo-fallback {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #0f172a !important;
+    font-size: 10px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0 !important;
+  }
+  .table-frame td .workload-customer-name {
+    vertical-align: middle !important;
+    font-weight: 800 !important;
+  }
+</style>
 
 <style id="ruben-section1-scroll-style">
   .section1-scroll-wrap {
@@ -1502,7 +1672,8 @@
   if (window.__nightShiftTitleCountAndFilter) return;
   window.__nightShiftTitleCountAndFilter = true;
   function norm(v){ return String(v||'').toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim(); }
-  function allowedCustomer(v){ var n=norm(v); return n === norm('ALL MARKET INC / VITA COCO') || n === norm('SIMPLE MODERN'); }
+  function allowedCustomer(v){ var n=norm(v); return n.indexOf('ALL MARKET') >= 0 || n.indexOf('VITA COCO') >= 0 || n.indexOf('SIMPLE MODERN') >= 0; }
+  function canonicalCustomer(v){ var n=norm(v); if(n.indexOf('ALL MARKET') >= 0 || n.indexOf('VITA COCO') >= 0) return 'ALL MARKET INC / VITA COCO'; if(n.indexOf('SIMPLE MODERN') >= 0) return 'SIMPLE MODERN'; return String(v||'').trim(); }
   function isNightShift(){ var a=document.querySelector('.report-tab.active'); return a && /Night Shift/i.test(a.textContent||''); }
   function applyNightShiftTitleAndFilter(){
     if(!isNightShift()) return;
@@ -1573,7 +1744,8 @@
   window.__nightShiftCustomerSummaryApplied = true;
   var selectedCustomer = 'ALL';
   function norm(v){ return String(v||'').toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim(); }
-  function allowedCustomer(v){ var n=norm(v); return n === norm('ALL MARKET INC / VITA COCO') || n === norm('SIMPLE MODERN'); }
+  function allowedCustomer(v){ var n=norm(v); return n.indexOf('ALL MARKET') >= 0 || n.indexOf('VITA COCO') >= 0 || n.indexOf('SIMPLE MODERN') >= 0; }
+  function canonicalCustomer(v){ var n=norm(v); if(n.indexOf('ALL MARKET') >= 0 || n.indexOf('VITA COCO') >= 0) return 'ALL MARKET INC / VITA COCO'; if(n.indexOf('SIMPLE MODERN') >= 0) return 'SIMPLE MODERN'; return String(v||'').trim(); }
   function isNightShift(){ var a=document.querySelector('.report-tab.active'); return a && /Night Shift/i.test(a.textContent||''); }
   function applyNightShiftCustomerSummary(){
     if(!isNightShift()) return;
@@ -1601,7 +1773,7 @@
         tr.style.display='none';
         return;
       }
-      if(customer){ counts[customer]=(counts[customer]||0)+1; }
+      if(customer){ var canonical=canonicalCustomer(customer); counts[canonical]=(counts[canonical]||0)+1; }
     });
     var selectedStillExists = selectedCustomer === 'ALL' || Object.keys(counts).some(function(name){ return norm(name) === selectedCustomer; });
     if(!selectedStillExists) selectedCustomer = 'ALL';

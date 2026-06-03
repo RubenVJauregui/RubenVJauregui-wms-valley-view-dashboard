@@ -314,7 +314,22 @@ const NIGHT_SHIFT_CUSTOMERS = [
 
 function isNightShiftCustomer(customer) {
   const normalized = normalizeName(customer);
-  return NIGHT_SHIFT_CUSTOMERS.some((name) => normalized === normalizeName(name));
+  if (!normalized) return false;
+  if (normalized === 'ORG 629731') return true;
+  if (normalized.includes('ALL MARKET') || normalized.includes('VITA COCO')) return true;
+  if (normalized.includes('SIMPLE MODERN')) return true;
+  return NIGHT_SHIFT_CUSTOMERS.some((name) => {
+    const target = normalizeName(name);
+    return normalized === target || normalized.includes(target) || target.includes(normalized);
+  });
+}
+
+function nightShiftCustomerName(customer, customerId = '') {
+  if (isNightShiftCustomer(customerId) || normalizeName(customer).includes('ALL MARKET') || normalizeName(customer).includes('VITA COCO')) {
+    return 'ALL MARKET INC / VITA COCO';
+  }
+  if (normalizeName(customer).includes('SIMPLE MODERN')) return 'SIMPLE MODERN';
+  return String(customer || customerId || '').trim();
 }
 
 function getTaskAssignedAt(task) {
@@ -479,6 +494,20 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
     customerSet: [],
     metrics: [],
   };
+
+  if (tab === 'nightShift') {
+    result.customer = { name: 'Night Shift' };
+    result.customerSet = NIGHT_SHIFT_CUSTOMERS.map(name => ({ name }));
+    result.metrics = [
+      { label: 'Customers', value: String(NIGHT_SHIFT_CUSTOMERS.length), sub: 'Valley View Night Shift set' },
+    ];
+  }
+
+  if (tab === 'evelyn' && includeAllCustomers) {
+    result.reportType = 'bay2Ecomm';
+    result.title = 'E-Comm LTL';
+    result.customer = { name: 'E-Comm LTL' };
+  }
 
   // ── Specialised tabs that don't use planned orders ───────────────────────
   if (tab === 'frontGuardShack') {
@@ -871,7 +900,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
     }
   }
 
-  if (tab === 'evelyn') {
+  if (tab === 'evelyn' && !includeAllCustomers) {
     try {
       const workbookPivot = JSON.parse(fs.readFileSync(path.join(__dirname, 'evelyn-pivot.json'), 'utf8'));
       result.bay = 'evelyn';
@@ -1112,7 +1141,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             const fullToOffloadMatch = isFullToOffloadContainer(e);
             if (tab === 'nightShift') {
               // Valley View Night Shift detail must match the two customer chips.
-              return fullToOffloadMatch && isNightShiftCustomer(customerName);
+              return fullToOffloadMatch && (isNightShiftCustomer(customerName) || isNightShiftCustomer(customerId));
             }
             return pivotCustomerMatch && tabCustomerMatch && fullToOffloadMatch;
           })
@@ -1122,7 +1151,9 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             entryTicket: e.checkInEntry || e.entryTicket || e.entryId || '',
             checkIn: e.gateCheckInTime || e.checkIn || e.checkInTime || e.createdTime || '',
             timeInYard: e.inYardTime || e.timeInYard || '',
-            customer: e.customerName || e.customer?.name || e.customerId || '',
+            customer: tab === 'nightShift'
+              ? nightShiftCustomerName(e.customerName || e.customer?.name || '', e.customerId || e.customer?.id || e.customerOrgId || '')
+              : (e.customerName || e.customer?.name || e.customerId || ''),
             location: e.locationName || e.location || '',
             status: e.equipmentStatus || e.status || '',
             details: e.equipmentOperationStatus || e.details || '',
@@ -1139,6 +1170,15 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           });
           result.inYardFullEquipment.rows = sortedNightShiftRows;
           result.inYardFullEquipment.candidateCount = sortedNightShiftRows.length;
+          const nightShiftCustomerCounts = buildCustomerCounts(sortedNightShiftRows);
+          result.customerSet = nightShiftCustomerCounts.length
+            ? nightShiftCustomerCounts
+            : NIGHT_SHIFT_CUSTOMERS.map(name => ({ name, count: 0 }));
+          result.customer = { name: 'Night Shift' };
+          result.metrics = [
+            { label: 'Customers', value: String(result.customerSet.length), sub: 'Valley View Night Shift set' },
+            { label: 'FULL Containers', value: String(sortedNightShiftRows.length), sub: 'Not yet devanned' },
+          ];
           result.nightShift = {
             supported: true,
             title: 'Night Shift - Full to Offload Containers',
@@ -1158,7 +1198,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
               carrierName: ''
             })),
             totalCount: sortedNightShiftRows.length,
-            customerCounts: buildCustomerCounts(sortedNightShiftRows)
+            customerCounts: nightShiftCustomerCounts
           };
         }
       }
