@@ -449,6 +449,14 @@ body { min-height: 100vh; }
   box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
 
+.equipment-customer-chips {
+  padding-bottom: 12px;
+}
+
+.equipment-customer-chips .chip {
+  cursor: pointer;
+}
+
 /* ── Table Frame ── */
 .table-frame {
   overflow-x: auto;

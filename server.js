@@ -789,7 +789,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
     }, {});
     result.bay = 'bpWorkload';
     result.reportType = 'bpWorkload';
-    result.title = 'Buena Park Report';
+    result.title = 'B.P. Workload';
     result.customer = { name: 'B.P. Workload' };
     result.bpWorkload = {
       supported: true,

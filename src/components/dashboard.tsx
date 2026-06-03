@@ -157,6 +157,7 @@ export function Dashboard({
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
+  const [selectedEquipmentCustomer, setSelectedEquipmentCustomer] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(300);
   const [sortKey, setSortKey] = useState<string>("created");
   const [sortAsc, setSortAsc] = useState(false);
@@ -450,6 +451,37 @@ export function Dashboard({
 
   const inYardRows = data?.inYardFullEquipment?.rows ?? [];
   const yardSupported = data?.inYardFullEquipment?.supported ?? false;
+  const equipmentCustomerSet: { name: string; count: number }[] = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const row of inYardRows) {
+      const name = row.customer || "Pending";
+      const key = normalizeCustomerNameForCount(name);
+      const existing = counts.get(key) ?? 0;
+      counts.set(key, existing + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([key, count]) => ({
+        name: inYardRows.find((row) => normalizeCustomerNameForCount(row.customer || "Pending") === key)?.customer || "Pending",
+        count,
+      }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  }, [inYardRows]);
+  const filteredInYardRows = useMemo(() => {
+    if (!selectedEquipmentCustomer) return inYardRows;
+    const selectedKey = normalizeCustomerNameForCount(selectedEquipmentCustomer);
+    return inYardRows.filter(
+      (row) => normalizeCustomerNameForCount(row.customer || "Pending") === selectedKey
+    );
+  }, [inYardRows, selectedEquipmentCustomer]);
+
+  useEffect(() => {
+    if (!selectedEquipmentCustomer) return;
+    const selectedKey = normalizeCustomerNameForCount(selectedEquipmentCustomer);
+    const stillExists = equipmentCustomerSet.some(
+      (c) => normalizeCustomerNameForCount(c.name) === selectedKey
+    );
+    if (!stillExists) setSelectedEquipmentCustomer(null);
+  }, [equipmentCustomerSet, selectedEquipmentCustomer]);
 
   const handleSort = (key: string) => {
     if (sortKey === key) setSortAsc(!sortAsc);
@@ -634,6 +666,41 @@ export function Dashboard({
                 </span>
               </h2>
             </div>
+            {usesFontanaTabs && equipmentCustomerSet.length > 0 ? (
+              <div className="chips equipment-customer-chips">
+                <button
+                  className={`chip ${!selectedEquipmentCustomer ? "active" : ""}`}
+                  onClick={() => setSelectedEquipmentCustomer(null)}
+                  type="button"
+                >
+                  All <span className="chip-count">({inYardRows.length})</span>
+                </button>
+                {equipmentCustomerSet.map((c) => (
+                  <button
+                    key={c.name}
+                    className={`chip ${
+                      selectedEquipmentCustomer &&
+                      normalizeCustomerNameForCount(selectedEquipmentCustomer) ===
+                        normalizeCustomerNameForCount(c.name)
+                        ? "active"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      setSelectedEquipmentCustomer((current) =>
+                        current &&
+                        normalizeCustomerNameForCount(current) ===
+                          normalizeCustomerNameForCount(c.name)
+                          ? null
+                          : c.name
+                      )
+                    }
+                    type="button"
+                  >
+                    {c.name} <span className="chip-count">({c.count})</span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
 
             {!data || (!yardSupported && !inYardRows.length) ? (
               data?.inYardFullEquipment?.unavailableReason ? (
@@ -666,7 +733,7 @@ export function Dashboard({
                     </tr>
                   </thead>
                   <tbody>
-                    {inYardRows.map((r) => (
+                    {filteredInYardRows.map((r) => (
                       <tr
                         key={`${r.equipmentNumber}-${r.entryTicket}`}
                       >
