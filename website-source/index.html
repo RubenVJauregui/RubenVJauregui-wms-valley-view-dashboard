@@ -1119,9 +1119,16 @@
   function cleanTitle(){
     var name=workloadName();
     if(!name) return;
-    document.querySelectorAll('h1,h2,h3').forEach(function(node){
+    document.querySelectorAll('h1,h2,h3,strong,b,.bp-title,.bp-heading').forEach(function(node){
       var text=(node.textContent || '').trim();
       if(/Buena Park/i.test(text) && /Report|Workload/i.test(text)){
+        node.textContent=name;
+      }
+    });
+    document.querySelectorAll('*').forEach(function(node){
+      if(node.children && node.children.length) return;
+      var text=(node.textContent || '').trim();
+      if(/^Buena Park Report\s*-/i.test(text)){
         node.textContent=name;
       }
     });
