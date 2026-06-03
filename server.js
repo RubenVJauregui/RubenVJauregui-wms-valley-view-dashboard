@@ -279,6 +279,11 @@ function normalizeName(value) {
   return String(value || '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
 }
 
+function isEuromarketCustomer(customer) {
+  const normalized = normalizeName(customer);
+  return normalized.includes('EUROMARKET') || normalized.includes('CRATE') || normalized.includes('BARREL');
+}
+
 function normalizeWiseCode(value) {
   return String(value || '').toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 }
@@ -287,13 +292,7 @@ function isFullToOffloadContainer(row) {
   const type = normalizeWiseCode(row.equipmentType || row.type || '');
   const status = normalizeWiseCode(row.equipmentStatus || row.status || '');
   const detail = normalizeWiseCode(row.equipmentOperationStatus || row.details || row.operationStatus || '');
-
-  // Mirrors the "Full to offload.xlsx" pivot:
-  // Equipment Type = CONTAINER; Status includes FULL and blank;
-  // Details excludes EMPTY_TO_LOAD and EMPTY_AFTER_OFFLOADED.
-  if (type !== 'CONTAINER') return false;
-  if (status && status !== 'FULL') return false;
-  return !['EMPTY_TO_LOAD', 'EMPTY_AFTER_OFFLOADED'].includes(detail);
+  return type === 'CONTAINER' && status === 'FULL' && detail === 'FULL_TO_OFFLOAD';
 }
 
 function buildCustomerCounts(rows, customerKey = 'customer') {
@@ -1323,7 +1322,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             const fullToOffloadMatch = isFullToOffloadContainer(e);
             if (tab === 'nightShift') {
               // Valley View Night Shift detail must match the two customer chips.
-              return fullToOffloadMatch && (isNightShiftCustomer(customerName) || isNightShiftCustomer(customerId));
+              return fullToOffloadMatch && !isEuromarketCustomer(customerName) && !isEuromarketCustomer(customerId);
             }
             return pivotCustomerMatch && tabCustomerMatch && fullToOffloadMatch;
           })
@@ -1355,7 +1354,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           const nightShiftCustomerCounts = buildCustomerCounts(sortedNightShiftRows);
           result.customerSet = nightShiftCustomerCounts.length
             ? nightShiftCustomerCounts
-            : NIGHT_SHIFT_CUSTOMERS.map(name => ({ name, count: 0 }));
+            : [];
           result.customer = { name: 'Night Shift' };
           result.metrics = [
             { label: 'Customers', value: String(result.customerSet.length), sub: 'Valley View Night Shift set' },
