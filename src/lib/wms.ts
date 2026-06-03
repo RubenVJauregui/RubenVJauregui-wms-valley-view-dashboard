@@ -104,6 +104,37 @@ async function wmsPost<T>(
   return (json.data ?? json) as T;
 }
 
+async function wmsSearchAllPages<T>(
+  path: string,
+  body: Record<string, unknown>,
+  token: string,
+  tenantId: string,
+  facilityId: string,
+  pageSize = 500
+): Promise<T[]> {
+  const rows: T[] = [];
+  let page = 1;
+
+  while (page <= 50) {
+    const result = await wmsPost<{ list?: T[]; records?: T[]; total?: number }>(
+      path,
+      { ...body, page, pageSize },
+      token,
+      tenantId,
+      facilityId
+    );
+    const pageRows = result.list ?? result.records ?? [];
+    rows.push(...pageRows);
+
+    const total = Number(result.total ?? 0);
+    if (pageRows.length < pageSize) break;
+    if (total > 0 && rows.length >= total) break;
+    page += 1;
+  }
+
+  return rows;
+}
+
 export async function getUserProfile(
   userId: string,
   token: string,
@@ -210,23 +241,23 @@ export async function searchPlannedOrders(
   statuses: string[]
 ): Promise<{ rows: WmsPlannedOrder[]; supported: boolean }> {
   try {
-    const result = await wmsPost<{ list: WmsOrderRecord[] }>(
+    const orders = await wmsSearchAllPages<WmsOrderRecord>(
       "/wms/outbound/order/search-by-paging",
-      { page: 1, pageSize: 500, statuses },
+      { statuses },
       token,
       tenantId,
       facilityId
     );
 
     const orgIds = new Set<string>();
-    for (const o of result.list ?? []) {
+    for (const o of orders) {
       if (o.customerId) orgIds.add(o.customerId);
       if (o.carrierId) orgIds.add(o.carrierId);
     }
 
     const orgMap = await batchResolveOrgNames(orgIds, token, tenantId);
 
-    const rows: WmsPlannedOrder[] = (result.list ?? []).map((o) => ({
+    const rows: WmsPlannedOrder[] = orders.map((o) => ({
       orderNumber: o.id,
       customer: resolveCustomerName(o, orgMap),
       customerId: o.customerId ?? "",
@@ -254,11 +285,9 @@ export async function searchInYardEquipment(
   facilityId: string
 ): Promise<{ rows: WmsInYardEquipment[]; supported: boolean }> {
   try {
-    const result = await wmsPost<{ list: Record<string, unknown>[] }>(
+    const equipment = await wmsSearchAllPages<Record<string, unknown>>(
       "/wms-bam/entry-ticket/search-by-paging",
       {
-        page: 1,
-        pageSize: 500,
         statuses: [
           "Gate Checked In",
           "Window Checked In",
@@ -271,7 +300,7 @@ export async function searchInYardEquipment(
       facilityId
     );
 
-    const rows: WmsInYardEquipment[] = (result.list ?? []).map((e) => ({
+    const rows: WmsInYardEquipment[] = equipment.map((e) => ({
       equipmentNumber: String(
         e.equipmentNumber ?? e.equipment_id ?? e.equipmentId ?? ""
       ),

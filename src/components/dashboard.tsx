@@ -118,13 +118,19 @@ const TABS = [
   { key: "bay2AutoAssign", label: "Team 2 Auto Assign" },
 ];
 
-const FONTANA_TAB_LABELS: Record<string, string> = {
+const FONTANA_STYLE_TAB_LABELS: Record<string, string> = {
   bpWorkload: "Fontana Workload",
   bay2: "E-Comm",
   evelyn: "E-Comm LTL",
+  bay2AutoAssign: "E-Comm Auto Assign",
 };
 
-const FONTANA_HIDDEN_TABS = new Set(["bay4AutoAssign", "frontGuardShack"]);
+const FONTANA_STYLE_HIDDEN_TABS = new Set([
+  "bay5",
+  "crateBarrel",
+  "bay4AutoAssign",
+  "frontGuardShack",
+]);
 
 const SPEAK_TABS = new Set(["bay1", "bay4", "bay5"]);
 
@@ -486,17 +492,20 @@ export function Dashboard({
   const mins = Math.floor(countdown / 60);
   const secs = countdown % 60;
   const countdownLabel = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-  const isFontanaFacility =
-    `${facility.id} ${facility.name}`.toLowerCase().includes("fontana");
-  const visibleTabs = isFontanaFacility
-    ? TABS.filter((tab) => !FONTANA_HIDDEN_TABS.has(tab.key))
+  const facilityLabel = `${facility.id} ${facility.name}`.toLowerCase();
+  const usesFontanaTabs =
+    facilityLabel.includes("fontana") ||
+    facilityLabel.includes("alessandro") ||
+    facilityLabel.includes("alesandro");
+  const visibleTabs = usesFontanaTabs
+    ? TABS.filter((tab) => !FONTANA_STYLE_HIDDEN_TABS.has(tab.key))
     : TABS;
 
   useEffect(() => {
-    if (isFontanaFacility && FONTANA_HIDDEN_TABS.has(activeTab)) {
+    if (usesFontanaTabs && FONTANA_STYLE_HIDDEN_TABS.has(activeTab)) {
       onChangeTab("bpWorkload");
     }
-  }, [activeTab, isFontanaFacility, onChangeTab]);
+  }, [activeTab, usesFontanaTabs, onChangeTab]);
 
   return (
     <main className="dashboard-shell">
@@ -555,7 +564,7 @@ export function Dashboard({
             type="button"
             onClick={() => onChangeTab(t.key)}
           >
-            {isFontanaFacility ? FONTANA_TAB_LABELS[t.key] ?? t.label : t.label}
+            {usesFontanaTabs ? FONTANA_STYLE_TAB_LABELS[t.key] ?? t.label : t.label}
           </button>
         ))}
       </nav>

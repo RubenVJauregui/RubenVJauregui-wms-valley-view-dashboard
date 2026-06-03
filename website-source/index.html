@@ -184,7 +184,8 @@
   }
 
   function applyBay2AutoAssignKpis(){
-    if (activeTabLabel() !== 'Team 2 Auto Assign' || !latestBay2AutoAssign) return;
+    var activeLabel = activeTabLabel();
+    if ((activeLabel !== 'Team 2 Auto Assign' && activeLabel !== 'E-Comm Auto Assign') || !latestBay2AutoAssign) return;
     var data = latestBay2AutoAssign.bay2AutoAssign || {};
     var history = Array.isArray(data.historyTasks) ? data.historyTasks : [];
     var active = Array.isArray(data.pickTasks) ? data.pickTasks : [];
@@ -908,10 +909,10 @@
 })();
 </script>
 
-<script id="fontana-tab-labels">
+<script id="fontana-alessandro-tab-labels">
 (function(){
-  if (window.__fontanaTabLabelsApplied) return;
-  window.__fontanaTabLabelsApplied = true;
+  if (window.__fontanaAlessandroTabLabelsApplied) return;
+  window.__fontanaAlessandroTabLabelsApplied = true;
   var labels = {
     'B.P. Workload': 'Fontana Workload',
     'BP Workload': 'Fontana Workload',
@@ -919,14 +920,19 @@
     'Team 2': 'E-Comm',
     'E-Comm': 'E-Comm',
     'Team 2 LTL': 'E-Comm LTL',
-    'E-Comm LTL': 'E-Comm LTL'
+    'E-Comm LTL': 'E-Comm LTL',
+    'Team 2 Auto Assign': 'E-Comm Auto Assign',
+    'E-Comm Auto Assign': 'E-Comm Auto Assign'
   };
   var originalLabels = {
     'Fontana Workload': 'B.P. Workload',
     'E-Comm': 'Team 2',
-    'E-Comm LTL': 'Team 2 LTL'
+    'E-Comm LTL': 'Team 2 LTL',
+    'E-Comm Auto Assign': 'Team 2 Auto Assign'
   };
   var hidden = {
+    'Team 5': true,
+    'Crate & Barrel': true,
     'Rear Guard Shack': true,
     'Front Guard Shack': true
   };
@@ -936,12 +942,15 @@
     var option=select.options && select.options[select.selectedIndex];
     return ((option && option.textContent) || select.value || '').toLowerCase();
   }
-  function isFontana(){ return currentFacilityText().indexOf('fontana') >= 0; }
+  function usesFontanaTabs(){
+    var text=currentFacilityText();
+    return text.indexOf('fontana') >= 0 || text.indexOf('alessandro') >= 0 || text.indexOf('alesandro') >= 0;
+  }
   function normalizeTabText(text){
     return String(text||'').trim().replace(/\s+/g,' ');
   }
   function applyFontanaTabs(){
-    var fontana=isFontana();
+    var fontana=usesFontanaTabs();
     document.querySelectorAll('.report-tab').forEach(function(tab){
       var raw=normalizeTabText(tab.textContent);
       var original=tab.dataset.originalLabel || originalLabels[raw] || raw;
@@ -1289,7 +1298,7 @@
   if (window.__bay2OrdersAssignedTodayApplied) return;
   window.__bay2OrdersAssignedTodayApplied = true;
   function activeTab(){ var a=document.querySelector('.report-tab.active'); return a && a.textContent ? a.textContent.trim() : ''; }
-  function isBay2AutoAssign(){ var t=activeTab(); return t === 'Team 2 Auto Assign' || t === 'Bay 2 Auto Assign'; }
+  function isBay2AutoAssign(){ var t=activeTab(); return t === 'Team 2 Auto Assign' || t === 'Bay 2 Auto Assign' || t === 'E-Comm Auto Assign'; }
   function isHistoryTitle(text){
     text=String(text||'').trim();
     return text === "Assignment History Today" || text === "Today's Assignment History" || /^Today\'s Assignment History/.test(text) || text === 'Orders Assigned Today';
