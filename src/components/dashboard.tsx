@@ -29,11 +29,6 @@ interface PlannedOrder {
   mabd: string;
   orderType: string;
   source: string;
-  loadNo: string;
-  appointmentTime: string;
-  stagingLocation: string;
-  baseQty: number;
-  palletQty: number;
 }
 
 interface InYardEquipment {
@@ -82,23 +77,6 @@ interface DashboardData {
     unavailableReason?: string;
   };
   bay2?: Bay2ExpandedPivot;
-  bay?: string;
-  reportType?: string;
-  bpWorkload?: {
-    supported: boolean;
-    facilityId: string;
-    newOrdersWindow: string;
-    rows: {
-      customer: string;
-      unloadedYesterday: { supported: boolean; value: number };
-      containersFull: { supported: boolean; value: number };
-      ordersPickedYesterday: { supported: boolean; value: number };
-      newOrders: { supported: boolean; value: number };
-      fillableOrders: { supported: boolean; value: number };
-    }[];
-    totals: Record<string, { supported: boolean; value: number }>;
-    definitions: Record<string, string>;
-  };
 }
 
 /* ── Helpers ── */
@@ -208,40 +186,6 @@ const CUSTOMER_FILTER_TABS = new Set([
   "bay5",
   "nightShift",
 ]);
-
-const ALESSANDRO_FACILITY_ID = "LT_F11";
-
-const ALESSANDRO_TEAM3_LAYOUT_TABS = new Set([
-  "bpWorkload",
-  "bay1",
-  "bay3",
-]);
-
-const FONTANA_FACILITY_ID = "LT_ORG-7759";
-
-const FONTANA_VISIBLE_TABS = new Set([
-  "bay1",
-  "bay2",
-  "bay3",
-  "evelyn",
-  "bay4",
-  "bay5",
-  "nightShift",
-]);
-
-const FONTANA_TAB_LABELS: Record<string, string> = {
-  bay2: "E-comm",
-  evelyn: "E-com LTL",
-};
-
-// Dedicated endpoints per tab used by Fontana (bay4 uses standard /api/dashboard)
-const FONTANA_TAB_ENDPOINTS: Record<string, string> = {
-  bay1: "/api/dashboard/bay1",
-  bay2: "/api/dashboard/bay2",
-  bay3: "/api/dashboard/bay3",
-  evelyn: "/api/dashboard/evelyn",
-  bay5: "/api/dashboard/bay5",
-};
 
 /* ── Dashboard ── */
 
@@ -441,106 +385,6 @@ export function Dashboard({
         }
       }
 
-      // ── Dedicated tab endpoints with AbortController + 30s timeout ──
-      const fontanaEndpoint = isFontana
-        ? FONTANA_TAB_ENDPOINTS[activeTab]
-        : undefined;
-
-      if (
-        activeTab === "bpWorkload" ||
-        (isAlessandro && (activeTab === "bay1" || activeTab === "bay3")) ||
-        (isFontana && fontanaEndpoint)
-      ) {
-        const endpoint =
-          activeTab === "bpWorkload"
-            ? "/api/dashboard/bp-workload"
-            : fontanaEndpoint
-              ? fontanaEndpoint
-              : activeTab === "bay1"
-                ? "/api/dashboard/bay1"
-                : "/api/dashboard/bay3";
-
-        const tabLabel =
-          activeTab === "bpWorkload"
-            ? "BP Workload"
-            : TABS.find((t) => t.key === activeTab)?.label ||
-              activeTab;
-
-        const needAllCustomers =
-          isFontana || isAlessandro || activeTab === "bpWorkload";
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30_000);
-
-        try {
-          const body: Record<string, unknown> = {
-            facilityId: facility.id,
-            facilityName: facility.name,
-            timeZone: facility.timeZone,
-            tab: activeTab,
-          };
-          if (needAllCustomers) {
-            body.includeAllCustomers = true;
-          }
-
-          const res = await fetch(endpoint, {
-            method: "POST",
-            cache: "no-store",
-            signal: controller.signal,
-            headers: {
-              "content-type": "application/json",
-              authorization: `Bearer ${token}`,
-              "x-tenant-id": session.identity.tenant_id,
-              "x-facility-id": facility.id,
-            },
-            body: JSON.stringify(body),
-          });
-
-          if (res.status === 401) {
-            onLogout();
-            return;
-          }
-
-          const payload = await res.json().catch(() => ({}));
-          if (res.ok) {
-            setData(payload);
-          } else {
-            setError(
-              String(
-                payload.message ||
-                  `${tabLabel} data is unavailable.`,
-              ),
-            );
-          }
-        } catch (err) {
-          if (
-            err instanceof DOMException &&
-            err.name === "AbortError"
-          ) {
-            setError(
-              `${tabLabel} timed out after 30 seconds.`,
-            );
-          } else {
-            setError(`${tabLabel} data is unavailable.`);
-          }
-        } finally {
-          clearTimeout(timeoutId);
-          setLoading(false);
-        }
-        return;
-      }
-
-      // ── All other tabs ─────────────────────────────────────────────────
-      const standardBody: Record<string, unknown> = {
-        facilityId: facility.id,
-        facilityName: facility.name,
-        timeZone: facility.timeZone,
-        tab: activeTab,
-      };
-      if (isFontana || isAlessandro) {
-        standardBody.includeAllCustomers = true;
-      }
-
       const res = await fetch("/api/dashboard", {
         method: "POST",
         cache: "no-store",
@@ -550,7 +394,12 @@ export function Dashboard({
           "x-tenant-id": session.identity.tenant_id,
           "x-facility-id": facility.id,
         },
-        body: JSON.stringify(standardBody),
+        body: JSON.stringify({
+          facilityId: facility.id,
+          facilityName: facility.name,
+          timeZone: facility.timeZone,
+          tab: activeTab,
+        }),
       });
 
       if (res.status === 401) {
@@ -578,12 +427,6 @@ export function Dashboard({
     // Clear customer filter when switching to a non-filterable tab
     if (!CUSTOMER_FILTER_TABS.has(activeTab)) {
       setCustomerFilter(null);
-    }
-
-    // Fontana: redirect to first allowed tab if current tab is hidden
-    if (isFontana && !FONTANA_VISIBLE_TABS.has(activeTab)) {
-      onChangeTab("bay1");
-      return;
     }
 
     if (activeTab === "bpWorkload") return;
@@ -648,12 +491,6 @@ export function Dashboard({
   const yardSupported = data?.inYardFullEquipment?.supported ?? false;
 
   // Per-tab customer filter — derived rows (Teams 1,3,4,5 + Night Shift)
-  const isAlessandro = facility.id === ALESSANDRO_FACILITY_ID;
-  const isFontana = facility.id === FONTANA_FACILITY_ID;
-  const useTeam3Layout =
-    (isAlessandro && ALESSANDRO_TEAM3_LAYOUT_TABS.has(activeTab)) ||
-    (isFontana && FONTANA_VISIBLE_TABS.has(activeTab));
-
   const customerFilterActive = CUSTOMER_FILTER_TABS.has(activeTab);
   const customerFilteredYardRows = useMemo(() => {
     if (!customerFilterActive || !customerFilter) return inYardRows;
@@ -786,37 +623,22 @@ export function Dashboard({
   const exportCSV = () => {
     const rows = displayPlannedRows;
     if (!rows.length) return;
-    const cols = useTeam3Layout
-      ? [
-          ["customer", "Customer"],
-          ["orderNumber", "Order Number"],
-          ["loadNo", "Load #"],
-          ["status", "Order Status"],
-          ["appointmentTime", "Appointment Date"],
-          ["scheduleDate", "Schedule Date"],
-          ["stagingLocation", "Staging Location"],
-          ["baseQty", "Total Base QTY"],
-          ["palletQty", "Pallet Qty"],
-        ]
-      : [
-          ["orderNumber", "Order #"],
-          ["customer", "Customer"],
-          ["status", "Status"],
-          ["reference", "PO / Reference"],
-          ["created", "Created (PDT)"],
-          ["shipMethod", "Ship Method"],
-          ["carrier", "Carrier"],
-          ["scheduleDate", "Schedule Date"],
-          ["mabd", "MABD"],
-        ];
+    const cols = [
+      ["orderNumber", "Order #"],
+      ["customer", "Customer"],
+      ["status", "Status"],
+      ["reference", "PO / Reference"],
+      ["created", "Created (PDT)"],
+      ["shipMethod", "Ship Method"],
+      ["carrier", "Carrier"],
+      ["scheduleDate", "Schedule Date"],
+      ["mabd", "MABD"],
+    ];
     const lines = [
       cols.map(([, h]) => h),
       ...rows.map((r) =>
         cols.map(([k]) =>
-          k === "created" ||
-          k === "scheduleDate" ||
-          k === "mabd" ||
-          k === "appointmentTime"
+          k === "created" || k === "scheduleDate" || k === "mabd"
             ? fmtDate(String(r[k as keyof PlannedOrder] ?? ""))
             : String(r[k as keyof PlannedOrder] ?? "")
         )
@@ -891,18 +713,14 @@ export function Dashboard({
 
       {/* Tab bar */}
       <nav className="tab-bar">
-        {TABS.filter(
-          (t) => !isFontana || FONTANA_VISIBLE_TABS.has(t.key),
-        ).map((t) => (
+        {TABS.map((t) => (
           <button
             key={t.key}
             className={`report-tab${activeTab === t.key ? " active" : ""}`}
             type="button"
             onClick={() => onChangeTab(t.key)}
           >
-            {isFontana
-              ? FONTANA_TAB_LABELS[t.key] || t.label
-              : t.label}
+            {t.label}
           </button>
         ))}
       </nav>
@@ -1352,211 +1170,65 @@ export function Dashboard({
                 </div>
                 <div className="table-frame">
                   <table>
-                    {useTeam3Layout ? (
-                      <>
-                        <thead>
-                          <tr>
-                            {[
-                              ["customer", "Customer"],
-                              ["orderNumber", "Order Number"],
-                              ["loadNo", "Load #"],
-                              ["status", "Order Status"],
-                              ["appointmentTime", "Appt Date"],
-                              ["appointmentTime", "Appt Time"],
-                              ["scheduleDate", "Schedule Date"],
-                              ["stagingLocation", "Staging Location"],
-                              ["baseQty", "Total Base QTY"],
-                              ["palletQty", "Pallet Qty"],
-                            ].map(([k, label]) => (
-                              <th key={k}>
-                                <button
-                                  type="button"
-                                  onClick={() => handleSort(k)}
-                                >
-                                  {label}
-                                  {sortKey === k
-                                    ? sortAsc
-                                      ? " ↑"
-                                      : " ↓"
-                                    : ""}
-                                </button>
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {displayPlannedRows.map((r) => (
-                            <tr key={r.orderNumber}>
-                              <td>
-                                {customerFilterActive ? (
-                                  <button
-                                    type="button"
-                                    className="customer-link"
-                                    onClick={() =>
-                                      handleCustomerFilterClick(
-                                        r.customer,
-                                      )
-                                    }
-                                  >
-                                    {r.customer}
-                                  </button>
-                                ) : (
-                                  r.customer
-                                )}
-                              </td>
-                              <td className="strong">
-                                {r.orderNumber}
-                              </td>
-                              <td>{r.loadNo || "—"}</td>
-                              <td>{r.status}</td>
-                              <td>
-                                {fmtDate(r.appointmentTime)}
-                              </td>
-                              <td>
-                                {r.appointmentTime
-                                  ? (() => {
-                                      const d = new Date(
-                                        r.appointmentTime,
-                                      );
-                                      return Number.isNaN(
-                                        d.getTime(),
-                                      )
-                                        ? r.appointmentTime
-                                        : new Intl.DateTimeFormat(
-                                            "en-US",
-                                            {
-                                              timeZone:
-                                                facility.timeZone ||
-                                                "America/Los_Angeles",
-                                              hour: "2-digit",
-                                              minute: "2-digit",
-                                              hour12: false,
-                                            },
-                                          ).format(d);
-                                    })()
-                                  : "—"}
-                              </td>
-                              <td>
-                                {fmtDate(r.scheduleDate)}
-                              </td>
-                              <td>
-                                {r.stagingLocation || "—"}
-                              </td>
-                              <td
-                                style={{
-                                  textAlign: "right",
-                                  fontVariantNumeric:
-                                    "tabular-nums",
-                                }}
-                              >
-                                {fmtNum(r.baseQty)}
-                              </td>
-                              <td
-                                style={{
-                                  textAlign: "right",
-                                  fontVariantNumeric:
-                                    "tabular-nums",
-                                }}
-                              >
-                                {fmtNum(r.palletQty)}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </>
-                    ) : (
-                      <>
-                        <thead>
-                          <tr>
-                            {[
-                              ["orderNumber", "Order #"],
-                              ["customer", "Customer"],
-                              ["status", "Status"],
-                              [
-                                "reference",
-                                "PO / Reference",
-                              ],
-                              [
-                                "created",
-                                "Created (PDT)",
-                              ],
-                              [
-                                "shipMethod",
-                                "Ship Method",
-                              ],
-                              ["carrier", "Carrier"],
-                              [
-                                "scheduleDate",
-                                "Schedule Date",
-                              ],
-                              ["mabd", "MABD"],
-                            ].map(([k, label]) => (
-                              <th key={k}>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleSort(k)
-                                  }
-                                >
-                                  {label}
-                                  {sortKey === k
-                                    ? sortAsc
-                                      ? " ↑"
-                                      : " ↓"
-                                    : ""}
-                                </button>
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {displayPlannedRows.map((r) => (
-                            <tr key={r.orderNumber}>
-                              <td className="strong">
-                                {r.orderNumber}
-                              </td>
-                              <td>
-                                {customerFilterActive ? (
-                                  <button
-                                    type="button"
-                                    className="customer-link"
-                                    onClick={() =>
-                                      handleCustomerFilterClick(
-                                        r.customer,
-                                      )
-                                    }
-                                  >
-                                    {r.customer}
-                                  </button>
-                                ) : (
-                                  r.customer
-                                )}{" "}
-                                <span className="customer-order-count">
-                                  (
-                                  {getCustomerOrderCount(
+                    <thead>
+                      <tr>
+                        {[
+                          ["orderNumber", "Order #"],
+                          ["customer", "Customer"],
+                          ["status", "Status"],
+                          ["reference", "PO / Reference"],
+                          ["created", "Created (PDT)"],
+                          ["shipMethod", "Ship Method"],
+                          ["carrier", "Carrier"],
+                          ["scheduleDate", "Schedule Date"],
+                          ["mabd", "MABD"],
+                        ].map(([k, label]) => (
+                          <th key={k}>
+                            <button
+                              type="button"
+                              onClick={() => handleSort(k)}
+                            >
+                              {label}
+                              {sortKey === k ? (sortAsc ? " ↑" : " ↓") : ""}
+                            </button>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {displayPlannedRows.map((r) => (
+                        <tr key={r.orderNumber}>
+                          <td className="strong">{r.orderNumber}</td>
+                          <td>
+                            {customerFilterActive ? (
+                              <button
+                                type="button"
+                                className="customer-link"
+                                onClick={() =>
+                                  handleCustomerFilterClick(
                                     r.customer,
-                                  )}
                                   )
-                                </span>
-                              </td>
-                              <td>{r.status}</td>
-                              <td>{r.reference}</td>
-                              <td>
-                                {fmtDate(r.created)}
-                              </td>
-                              <td>{r.shipMethod}</td>
-                              <td>{r.carrier}</td>
-                              <td>
-                                {fmtDate(
-                                  r.scheduleDate,
-                                )}
-                              </td>
-                              <td>{fmtDate(r.mabd)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </>
-                    )}
+                                }
+                              >
+                                {r.customer}
+                              </button>
+                            ) : (
+                              r.customer
+                            )}{" "}
+                            <span className="customer-order-count">
+                              ({getCustomerOrderCount(r.customer)})
+                            </span>
+                          </td>
+                          <td>{r.status}</td>
+                          <td>{r.reference}</td>
+                          <td>{fmtDate(r.created)}</td>
+                          <td>{r.shipMethod}</td>
+                          <td>{r.carrier}</td>
+                          <td>{fmtDate(r.scheduleDate)}</td>
+                          <td>{fmtDate(r.mabd)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
                   </table>
                 </div>
               </>

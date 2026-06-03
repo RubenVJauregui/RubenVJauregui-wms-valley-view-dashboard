@@ -18,11 +18,6 @@ export interface WmsPlannedOrder {
   mabd: string;
   orderType: string;
   source: string;
-  loadNo: string;
-  appointmentTime: string;
-  stagingLocation: string;
-  baseQty: number;
-  palletQty: number;
 }
 
 export interface WmsInYardEquipment {
@@ -224,11 +219,6 @@ export interface WmsDashboardData {
     unavailableReason?: string;
   };
   bay2?: Bay2ExpandedPivot;
-  nightShift?: {
-    supported: boolean;
-    rows: NightShiftEquipmentRow[];
-    totalCount: number;
-  };
 }
 
 function authHeaders(token: string, tenantId: string, facilityId?: string) {
@@ -247,56 +237,6 @@ function normalizeName(value: string): string {
     .replace(/&/g, "AND")
     .replace(/[^A-Z0-9]+/g, " ")
     .trim();
-}
-
-// ── Night Shift equipment helpers ─────────────────────────────────────────
-
-function norm(value: string): string {
-  return String(value || "")
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, " ")
-    .trim();
-}
-
-function isFullTrailerOrContainer(row: Record<string, unknown>): boolean {
-  const status = norm(String(row.equipmentStatus || row.status || ""));
-  const type = norm(String(row.equipmentType || row.type || ""));
-  return status === "FULL" && (type === "TRAILER" || type === "CONTAINER");
-}
-
-function isNotYetDevanned(row: Record<string, unknown>): boolean {
-  const opStatus = norm(
-    String(
-      row.equipmentOperationStatus || row.details || row.operationStatus || "",
-    ),
-  );
-  return opStatus === "FULL_TO_OFFLOAD" || opStatus === "OFFLOAD_WAITING";
-}
-
-function filterNightShiftEquipment(
-  equipment: Record<string, unknown>[],
-): Record<string, unknown>[] {
-  return (equipment || []).filter(
-    (row) => isFullTrailerOrContainer(row) && isNotYetDevanned(row),
-  );
-}
-
-// ── Night Shift equipment row ─────────────────────────────────────────────
-
-interface NightShiftEquipmentRow {
-  equipmentNo: string;
-  equipmentType: string;
-  customerName: string;
-  equipmentStatus: string;
-  equipmentOperationStatus: string;
-  locationName: string;
-  checkInEntry: string;
-  gateCheckInTime: string;
-  inYardTime: string;
-  loadId: string;
-  receiptId: string;
-  orderId: string;
-  carrierName: string;
 }
 
 async function wmsGet<T>(
@@ -377,16 +317,6 @@ interface WmsOrderRecord {
   shipNoLater?: string;
   shipToAddress?: { name?: string };
   loadNo?: string;
-  appointmentTime?: string;
-  baseQty?: number;
-  totalQty?: number;
-  itemLineTotalQty?: number;
-  estPiecePickQty?: number;
-  qty?: number;
-  palletQty?: number;
-  estPalletPickQty?: number;
-  stagingLocation?: string;
-  stagingLocationName?: string;
 }
 
 // Known customer names mapped from org IDs seen in the data
@@ -485,22 +415,6 @@ export async function searchPlannedOrders(
       mabd: o.shipNoLater ?? "",
       orderType: o.orderType ?? "",
       source: o.source ?? "",
-      loadNo: String(o.loadNo ?? ""),
-      appointmentTime: String(o.appointmentTime ?? ""),
-      stagingLocation: String(
-        o.stagingLocation || o.stagingLocationName || "",
-      ),
-      baseQty:
-        Number(
-          o.baseQty ??
-            o.totalQty ??
-            o.itemLineTotalQty ??
-            o.estPiecePickQty ??
-            o.qty ??
-            0,
-        ) || 0,
-      palletQty:
-        Number(o.palletQty ?? o.estPalletPickQty ?? 0) || 0,
     }));
 
     return { rows, supported: true };
@@ -554,258 +468,6 @@ export async function searchInYardEquipment(
   }
 }
 
-async function searchNightShiftEquipment(
-  token: string,
-  tenantId: string,
-  facilityId: string,
-): Promise<{ rows: NightShiftEquipmentRow[]; supported: boolean }> {
-  try {
-    const result = await wmsPost<{ list: Record<string, unknown>[] }>(
-      "/wms-bam/yard/equipment/search",
-      { currentPage: 1, pageSize: 500 },
-      token,
-      tenantId,
-      facilityId,
-    );
-
-    const equipment = result.list ?? [];
-    const filtered = filterNightShiftEquipment(equipment);
-
-    const sorted = [...filtered].sort((a, b) => {
-      const at = new Date(
-        String(
-          a.gateCheckInTime || a.checkIn || a.checkInTime || a.createdTime || 0,
-        ),
-      ).getTime();
-      const bt = new Date(
-        String(
-          b.gateCheckInTime || b.checkIn || b.checkInTime || b.createdTime || 0,
-        ),
-      ).getTime();
-      return (Number.isNaN(at) ? 0 : at) - (Number.isNaN(bt) ? 0 : bt);
-    });
-
-    const rows: NightShiftEquipmentRow[] = sorted.map((e) => ({
-      equipmentNo:
-        String(e.equipmentNo || e.equipmentNumber || e.barcode || e.id || ""),
-      equipmentType: String(e.equipmentType || e.type || ""),
-      customerName:
-        String(
-          e.customerName ||
-            (e.customer as Record<string, unknown> | undefined)?.name ||
-            e.customerId ||
-            "",
-        ),
-      equipmentStatus: String(e.equipmentStatus || e.status || "FULL"),
-      equipmentOperationStatus: String(
-        e.equipmentOperationStatus ||
-          e.details ||
-          e.operationStatus ||
-          "FULL_TO_OFFLOAD",
-      ),
-      locationName: String(e.locationName || e.location || ""),
-      checkInEntry:
-        String(e.checkInEntry || e.entryTicket || e.entryId || ""),
-      gateCheckInTime:
-        String(
-          e.gateCheckInTime ||
-            e.checkIn ||
-            e.checkInTime ||
-            e.createdTime ||
-            "",
-        ),
-      inYardTime: String(e.inYardTime || e.timeInYard || ""),
-      loadId: String(e.loadId || ""),
-      receiptId: String(e.receiptId || ""),
-      orderId: String(e.orderId || ""),
-      carrierName: String(e.carrierName || e.carrier || ""),
-    }));
-
-    return { rows, supported: true };
-  } catch {
-    return { rows: [], supported: false };
-  }
-}
-
-// ── BP Workload ──────────────────────────────────────────────────────────
-
-export interface BpWorkloadMetric {
-  supported: boolean;
-  value: number;
-}
-
-export interface BpWorkloadRow {
-  customer: string;
-  unloadedYesterday: BpWorkloadMetric;
-  containersFull: BpWorkloadMetric;
-  ordersPickedYesterday: BpWorkloadMetric;
-  newOrders: BpWorkloadMetric;
-  fillableOrders: BpWorkloadMetric;
-}
-
-export interface BpWorkloadData {
-  title: string;
-  source: string;
-  refreshedAt: string;
-  generatedAt: string;
-  bay: string;
-  reportType: string;
-  siteLabel: string;
-  customer: { name: string };
-  bpWorkload: {
-    supported: boolean;
-    facilityId: string;
-    newOrdersWindow: string;
-    rows: BpWorkloadRow[];
-    totals: Record<string, BpWorkloadMetric>;
-    definitions: Record<string, string>;
-  };
-  metrics: { label: string; value: string; sub: string }[];
-}
-
-export function loadBpWorkload(
-  facilityId: string,
-  timeZone?: string,
-): BpWorkloadData {
-  const now = new Date().toISOString();
-  const metric = (value: number): BpWorkloadMetric => ({
-    supported: true,
-    value,
-  });
-
-  const rows: BpWorkloadRow[] = [
-    {
-      customer: "Orgain",
-      unloadedYesterday: metric(0),
-      containersFull: metric(0),
-      ordersPickedYesterday: metric(0),
-      newOrders: metric(0),
-      fillableOrders: metric(26),
-    },
-    {
-      customer: "King's Hawaiian",
-      unloadedYesterday: metric(0),
-      containersFull: metric(1),
-      ordersPickedYesterday: metric(0),
-      newOrders: metric(0),
-      fillableOrders: metric(1),
-    },
-    {
-      customer: "Mama Chia",
-      unloadedYesterday: metric(0),
-      containersFull: metric(0),
-      ordersPickedYesterday: metric(0),
-      newOrders: metric(15),
-      fillableOrders: metric(89),
-    },
-    {
-      customer: "NZXT",
-      unloadedYesterday: metric(0),
-      containersFull: metric(0),
-      ordersPickedYesterday: metric(0),
-      newOrders: metric(21),
-      fillableOrders: metric(6),
-    },
-    {
-      customer: "Lennox",
-      unloadedYesterday: metric(0),
-      containersFull: metric(0),
-      ordersPickedYesterday: metric(0),
-      newOrders: metric(0),
-      fillableOrders: metric(28),
-    },
-    {
-      customer: "Karakas",
-      unloadedYesterday: metric(0),
-      containersFull: metric(0),
-      ordersPickedYesterday: metric(0),
-      newOrders: metric(1),
-      fillableOrders: metric(3),
-    },
-    {
-      customer: "Gurunanda",
-      unloadedYesterday: metric(0),
-      containersFull: metric(0),
-      ordersPickedYesterday: metric(0),
-      newOrders: metric(0),
-      fillableOrders: metric(129),
-    },
-    {
-      customer: "Vita Coco",
-      unloadedYesterday: metric(0),
-      containersFull: metric(11),
-      ordersPickedYesterday: metric(0),
-      newOrders: metric(14),
-      fillableOrders: metric(22),
-    },
-  ];
-
-  const metricKeys = [
-    "unloadedYesterday",
-    "containersFull",
-    "ordersPickedYesterday",
-    "newOrders",
-    "fillableOrders",
-  ] as const;
-
-  const totals: Record<string, BpWorkloadMetric> = {};
-  for (const key of metricKeys) {
-    totals[key] = metric(rows.reduce((sum, row) => sum + row[key].value, 0));
-  }
-
-  const newOrdersWindow = new Date().toISOString().slice(0, 10);
-
-  return {
-    title: "Buena Park Report",
-    source: "WISE",
-    refreshedAt: now,
-    generatedAt: now,
-    bay: "bpWorkload",
-    reportType: "bpWorkload",
-    siteLabel: "Valley View",
-    customer: { name: "B.P. Workload" },
-    bpWorkload: {
-      supported: true,
-      facilityId,
-      newOrdersWindow,
-      rows,
-      totals,
-      definitions: {
-        unloadedYesterday:
-          "Trailer/container equipment devanned or offloaded yesterday.",
-        containersFull:
-          "Trailer/container equipment currently FULL and waiting to offload.",
-        newOrders: "Orders created yesterday.",
-        fillableOrders: "Orders currently in PLANNED status.",
-        ordersPickedYesterday:
-          "Unique orders represented in WISE pick history yesterday.",
-      },
-    },
-    metrics: [
-      {
-        label: "Customers",
-        value: String(rows.length),
-        sub: "Configured BP workload customers",
-      },
-      {
-        label: "Containers FULL",
-        value: String(totals.containersFull.value),
-        sub: "Current WISE yard read",
-      },
-      {
-        label: "New Orders",
-        value: String(totals.newOrders.value),
-        sub: newOrdersWindow,
-      },
-      {
-        label: "Fillable Orders",
-        value: String(totals.fillableOrders.value),
-        sub: "PLANNED orders",
-      },
-    ],
-  };
-}
-
 export async function loadDashboard(
   token: string,
   tenantId: string,
@@ -815,21 +477,17 @@ export async function loadDashboard(
 ): Promise<WmsDashboardData> {
   const now = new Date().toISOString();
 
-  const isNightShift = tab === "nightShift";
-
-  const [plannedOrders, inYard, nightShiftEquipment] = await Promise.all([
+  const [plannedOrders, inYard] = await Promise.all([
     searchPlannedOrders(token, tenantId, facilityId, [
       "PLANNED",
       "IMPORTED",
+      "APPROVED",
     ]),
     searchInYardEquipment(token, tenantId, facilityId),
-    isNightShift
-      ? searchNightShiftEquipment(token, tenantId, facilityId)
-      : Promise.resolve({ rows: [], supported: false }),
   ]);
 
   const excludedNightShiftCustomers = new Set([normalizeName("Euromarket designs")]);
-  const plannedRows = isNightShift
+  const plannedRows = tab === "nightShift"
     ? plannedOrders.rows.filter((r) => !excludedNightShiftCustomers.has(normalizeName(r.customer)))
     : plannedOrders.rows;
 
@@ -855,31 +513,10 @@ export async function loadDashboard(
       rows: plannedRows,
     },
     inYardFullEquipment: {
-      supported: isNightShift
-        ? nightShiftEquipment.supported
-        : inYard.supported,
-      rows: isNightShift
-        ? nightShiftEquipment.rows.map((r) => ({
-            equipmentNumber: r.equipmentNo,
-            entryTicket: r.checkInEntry,
-            checkIn: r.gateCheckInTime,
-            timeInYard: r.inYardTime,
-            customer: r.customerName,
-          }))
-        : inYard.rows,
-      candidateCount: isNightShift
-        ? nightShiftEquipment.rows.length
-        : inYard.rows.length,
+      supported: inYard.supported,
+      rows: inYard.rows,
+      candidateCount: inYard.rows.length,
     },
     ...(bay2ExpandedPivot ? { bay2: bay2ExpandedPivot } : {}),
-    ...(isNightShift && nightShiftEquipment.supported
-      ? {
-          nightShift: {
-            supported: true,
-            rows: nightShiftEquipment.rows,
-            totalCount: nightShiftEquipment.rows.length,
-          },
-        }
-      : {}),
   };
 }
