@@ -914,9 +914,6 @@
   if (window.__fontanaAlessandroTabLabelsApplied) return;
   window.__fontanaAlessandroTabLabelsApplied = true;
   var labels = {
-    'B.P. Workload': 'Fontana Workload',
-    'BP Workload': 'Fontana Workload',
-    'Fontana Workload': 'Fontana Workload',
     'Team 2': 'E-Comm',
     'E-Comm': 'E-Comm',
     'Team 2 LTL': 'E-Comm LTL',
@@ -926,6 +923,7 @@
   };
   var originalLabels = {
     'Fontana Workload': 'B.P. Workload',
+    'Alessandro Workload': 'B.P. Workload',
     'E-Comm': 'Team 2',
     'E-Comm LTL': 'Team 2 LTL',
     'E-Comm Auto Assign': 'Team 2 Auto Assign'
@@ -944,7 +942,11 @@
   }
   function usesFontanaTabs(){
     var text=currentFacilityText();
-    return text.indexOf('fontana') >= 0 || text.indexOf('alessandro') >= 0 || text.indexOf('alesandro') >= 0;
+    return text.indexOf('fontana') >= 0 || text.indexOf('aless') >= 0;
+  }
+  function workloadLabel(){
+    var text=currentFacilityText();
+    return text.indexOf('aless') >= 0 ? 'Alessandro Workload' : 'Fontana Workload';
   }
   function normalizeTabText(text){
     return String(text||'').trim().replace(/\s+/g,' ');
@@ -955,7 +957,9 @@
       var raw=normalizeTabText(tab.textContent);
       var original=tab.dataset.originalLabel || originalLabels[raw] || raw;
       tab.dataset.originalLabel=original;
-      if(fontana && labels[original]){
+      if(fontana && (original === 'B.P. Workload' || original === 'BP Workload')){
+        tab.textContent=workloadLabel();
+      } else if(fontana && labels[original]){
         tab.textContent=labels[original];
       } else if(!fontana) {
         tab.textContent=original;
@@ -966,7 +970,7 @@
       var active=document.querySelector('.report-tab.active');
       if(active && active.style.display === 'none'){
         var fallback=Array.from(document.querySelectorAll('.report-tab')).find(function(tab){
-          return normalizeTabText(tab.textContent) === 'Fontana Workload' && tab.style.display !== 'none';
+          return normalizeTabText(tab.textContent) === workloadLabel() && tab.style.display !== 'none';
         }) || Array.from(document.querySelectorAll('.report-tab')).find(function(tab){ return tab.style.display !== 'none'; });
         if(fallback) fallback.click();
       }

@@ -119,7 +119,6 @@ const TABS = [
 ];
 
 const FONTANA_STYLE_TAB_LABELS: Record<string, string> = {
-  bpWorkload: "Fontana Workload",
   bay2: "E-Comm",
   evelyn: "E-Comm LTL",
   bay2AutoAssign: "E-Comm Auto Assign",
@@ -506,6 +505,13 @@ export function Dashboard({
     facilityLabel.includes("fontana") ||
     facilityLabel.includes("alessandro") ||
     facilityLabel.includes("alesandro");
+  const workloadTabLabel = facilityLabel.includes("aless")
+    ? "Alessandro Workload"
+    : "Fontana Workload";
+  const fontanaStyleTabLabel = (key: string, fallback: string) => {
+    if (key === "bpWorkload") return workloadTabLabel;
+    return FONTANA_STYLE_TAB_LABELS[key] ?? fallback;
+  };
   const visibleTabs = usesFontanaTabs
     ? TABS.filter((tab) => !FONTANA_STYLE_HIDDEN_TABS.has(tab.key))
     : TABS;
@@ -573,7 +579,7 @@ export function Dashboard({
             type="button"
             onClick={() => onChangeTab(t.key)}
           >
-            {usesFontanaTabs ? FONTANA_STYLE_TAB_LABELS[t.key] ?? t.label : t.label}
+            {usesFontanaTabs ? fontanaStyleTabLabel(t.key, t.label) : t.label}
           </button>
         ))}
       </nav>
