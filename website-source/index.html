@@ -1807,12 +1807,6 @@
     if(old) old.remove();
     var summary=document.createElement('div');
     summary.className='nightshift-customer-summary';
-    var allChip=document.createElement('button');
-    allChip.type='button';
-    allChip.className='customer-count-chip' + (selectedCustomer === 'ALL' ? ' active' : '');
-    allChip.dataset.customer='ALL';
-    allChip.innerHTML='ALL <b>(' + Object.keys(counts).reduce(function(sum,name){ return sum + counts[name]; },0) + ')</b>';
-    summary.appendChild(allChip);
     Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a] || a.localeCompare(b); }).forEach(function(name){
       var chip=document.createElement('span');
       chip=document.createElement('button');
