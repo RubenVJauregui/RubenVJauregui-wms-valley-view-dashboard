@@ -8,8 +8,6 @@ import {
   Download,
   MapPin,
   AlertTriangle,
-  ChevronRight,
-  ChevronDown,
 } from "lucide-react";
 import type { Session, Facility } from "@/app/page";
 
@@ -38,24 +36,6 @@ interface InYardEquipment {
   customer: string;
 }
 
-interface PivotRow {
-  kind: "customer" | "status" | "date";
-  level: number;
-  label: string;
-  orderCount: number;
-  baseQty: number;
-  children?: PivotRow[];
-}
-
-interface Bay2ExpandedPivot {
-  supported: boolean;
-  rows: PivotRow[];
-  metrics: { label: string; value: string; sub: string }[];
-  totalOrderCount: number;
-  totalBaseQty: number;
-  unavailableReason?: string;
-}
-
 interface DashboardData {
   title: string;
   siteLabel: string;
@@ -75,7 +55,6 @@ interface DashboardData {
     candidateCount?: number;
     unavailableReason?: string;
   };
-  bay2?: Bay2ExpandedPivot;
 }
 
 /* ── Helpers ── */
@@ -124,43 +103,6 @@ function fmtTimeAgo(iso: string): string {
   return `${h}h ${min % 60}m ago`;
 }
 
-function pivotRowKey(row: PivotRow): string {
-  return `${row.kind}:${row.label}`;
-}
-
-/** Flatten a pivot tree into visible rows, honouring expanded state. */
-function flattenPivotRows(
-  rows: PivotRow[],
-  expanded: Set<string>,
-): {
-  row: PivotRow;
-  depth: number;
-  hasChildren: boolean;
-  isExpanded: boolean;
-}[] {
-  const result: {
-    row: PivotRow;
-    depth: number;
-    hasChildren: boolean;
-    isExpanded: boolean;
-  }[] = [];
-  const walk = (row: PivotRow, depth: number) => {
-    const key = pivotRowKey(row);
-    const hasChildren = !!(row.children && row.children.length > 0);
-    const isExpanded = expanded.has(key);
-    result.push({ row, depth, hasChildren, isExpanded });
-    if (hasChildren && isExpanded) {
-      for (const child of row.children!) {
-        walk(child, depth + 1);
-      }
-    }
-  };
-  for (const row of rows) {
-    walk(row, 0);
-  }
-  return result;
-}
-
 const TABS = [
   { key: "bay1", label: "Team 1" },
   { key: "bay2", label: "Team 2" },
@@ -204,9 +146,6 @@ export function Dashboard({
   const [countdown, setCountdown] = useState(300);
   const [sortKey, setSortKey] = useState<string>("created");
   const [sortAsc, setSortAsc] = useState(false);
-  const [expandedPivotRows, setExpandedPivotRows] = useState<Set<string>>(
-    () => new Set()
-  );
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const prevDataRef = useRef<DashboardData | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
@@ -473,57 +412,6 @@ export function Dashboard({
   const inYardRows = data?.inYardFullEquipment?.rows ?? [];
   const yardSupported = data?.inYardFullEquipment?.supported ?? false;
 
-  // ── Pivot expand / collapse ──────────────────────────────────────────────
-  const togglePivotRow = useCallback((row: PivotRow) => {
-    const key = pivotRowKey(row);
-    setExpandedPivotRows((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }, []);
-
-  const expandAllPivotRows = useCallback(() => {
-    if (!data?.bay2?.rows) return;
-    const keys = new Set<string>();
-    const collect = (rows: PivotRow[]) => {
-      for (const r of rows) {
-        if (r.children && r.children.length > 0) {
-          keys.add(pivotRowKey(r));
-          collect(r.children);
-        }
-      }
-    };
-    collect(data.bay2.rows);
-    setExpandedPivotRows(keys);
-  }, [data]);
-
-  const collapseAllPivotRows = useCallback(() => {
-    setExpandedPivotRows(new Set());
-  }, []);
-
-  // Auto-expand first level on data load
-  useEffect(() => {
-    const rows = data?.bay2?.rows;
-    if (!rows?.length) return;
-    setExpandedPivotRows((prev) => {
-      if (prev.size > 0) return prev; // preserve user state on refresh
-      const keys = new Set<string>();
-      for (const r of rows) {
-        if (r.children && r.children.length > 0) {
-          keys.add(pivotRowKey(r));
-        }
-      }
-      return keys;
-    });
-  }, [data?.bay2?.rows]);
-
-  const flattenedPivot = useMemo(() => {
-    if (!data?.bay2?.rows) return [];
-    return flattenPivotRows(data.bay2.rows, expandedPivotRows);
-  }, [data?.bay2?.rows, expandedPivotRows]);
-
   const handleSort = (key: string) => {
     if (sortKey === key) setSortAsc(!sortAsc);
     else {
@@ -675,177 +563,6 @@ export function Dashboard({
               </small>
             </div>
           </div>
-
-          {/* Team 2 Expanded Pivot */}
-          {activeTab === "bay2" && data?.bay2?.supported ? (
-            <section className="report-section">
-              <div className="section-heading">
-                <h2>
-                  Team 2 Order Pivot{" "}
-                  <span style={{ fontWeight: 400, color: "var(--muted-2)" }}>
-                    Customer · Status · Date
-                  </span>
-                </h2>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button
-                    className="ghost-button"
-                    onClick={expandAllPivotRows}
-                    type="button"
-                    style={{ fontSize: "0.75rem", padding: "2px 10px" }}
-                  >
-                    Expand All
-                  </button>
-                  <button
-                    className="ghost-button"
-                    onClick={collapseAllPivotRows}
-                    type="button"
-                    style={{ fontSize: "0.75rem", padding: "2px 10px" }}
-                  >
-                    Collapse All
-                  </button>
-                </div>
-              </div>
-
-              {/* Pivot metrics chips */}
-              <div className="chips">
-                {data.bay2.metrics.map((m) => (
-                  <button key={m.label} className="chip active" type="button">
-                    {m.label}{" "}
-                    <span className="chip-count">({m.value})</span>
-                  </button>
-                ))}
-              </div>
-
-              <div className="table-frame" style={{ maxHeight: "70vh" }}>
-                <table>
-                  <thead>
-                    <tr>
-                      <th style={{ width: "60%" }}>Row Labels</th>
-                      <th style={{ width: "20%", textAlign: "right" }}>
-                        Count of Order #
-                      </th>
-                      <th style={{ width: "20%", textAlign: "right" }}>
-                        Sum of BASE QTY
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {flattenedPivot.map(({ row, depth, hasChildren, isExpanded }) => (
-                      <tr
-                        key={pivotRowKey(row)}
-                        className={
-                          row.kind === "customer"
-                            ? "pivot-customer-row"
-                            : row.kind === "status"
-                              ? "pivot-status-row"
-                              : "pivot-date-row"
-                        }
-                        style={{ cursor: hasChildren ? "pointer" : "default" }}
-                        onClick={() => hasChildren && togglePivotRow(row)}
-                      >
-                        <td
-                          style={{
-                            paddingLeft: `${12 + depth * 24}px`,
-                            fontWeight:
-                              row.kind === "customer" ? 600 : row.kind === "status" ? 500 : 400,
-                            fontSize:
-                              row.kind === "customer"
-                                ? "0.875rem"
-                                : row.kind === "status"
-                                  ? "0.8125rem"
-                                  : "0.75rem",
-                            color:
-                              row.kind === "customer"
-                                ? "var(--foreground)"
-                                : row.kind === "status"
-                                  ? "var(--muted-1)"
-                                  : "var(--muted-2)",
-                          }}
-                        >
-                          <span
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: 4,
-                            }}
-                          >
-                            {hasChildren ? (
-                              isExpanded ? (
-                                <ChevronDown size={14} />
-                              ) : (
-                                <ChevronRight size={14} />
-                              )
-                            ) : (
-                              <span style={{ width: 14, display: "inline-block" }} />
-                            )}
-                            {row.label}
-                          </span>
-                        </td>
-                        <td
-                          style={{
-                            textAlign: "right",
-                            fontWeight: row.kind === "customer" ? 600 : 400,
-                            fontVariantNumeric: "tabular-nums",
-                          }}
-                        >
-                          {fmtNum(row.orderCount)}
-                        </td>
-                        <td
-                          style={{
-                            textAlign: "right",
-                            fontWeight: row.kind === "customer" ? 600 : 400,
-                            fontVariantNumeric: "tabular-nums",
-                          }}
-                        >
-                          {fmtNum(row.baseQty)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr
-                      style={{
-                        borderTop: "2px solid var(--border)",
-                        fontWeight: 700,
-                      }}
-                    >
-                      <td style={{ fontWeight: 700 }}>Grand Total</td>
-                      <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
-                        {fmtNum(data.bay2.totalOrderCount)}
-                      </td>
-                      <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
-                        {fmtNum(data.bay2.totalBaseQty)}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-
-              <div className="meta-row">
-                <span className="meta-label">
-                  {data?.source ?? "Pivot"} · {flattenedPivot.length} rows shown
-                </span>
-                <strong>
-                  {data.bay2.rows.length} customers ·{" "}
-                  {fmtNum(data.bay2.totalOrderCount)} orders ·{" "}
-                  {fmtNum(data.bay2.totalBaseQty)} total qty
-                </strong>
-              </div>
-            </section>
-          ) : activeTab === "bay2" && data?.bay2 && !data.bay2.supported ? (
-            <section className="report-section">
-              <div className="section-heading">
-                <h2>Team 2 Order Pivot</h2>
-              </div>
-              <div className="empty-state blocked">
-                <AlertTriangle size={18} />
-                <span>
-                  {data.bay2.unavailableReason ||
-                    "Expanded pivot data is currently unavailable."}
-                </span>
-              </div>
-            </section>
-          ) : null}
 
           {/* Section 1: In-Yard FULL Equipment */}
           <section className="report-section">

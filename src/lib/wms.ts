@@ -1,6 +1,3 @@
-import fs from "fs";
-import path from "path";
-
 const WMS_API_BASE_URL =
   process.env.WMS_API_BASE_URL || "https://unis.item.com/api";
 
@@ -28,177 +25,6 @@ export interface WmsInYardEquipment {
   customer: string;
 }
 
-export interface PivotRow {
-  kind: "customer" | "status" | "date";
-  level: number;
-  label: string;
-  orderCount: number;
-  baseQty: number;
-  children?: PivotRow[];
-}
-
-export interface Bay2ExpandedPivot {
-  supported: boolean;
-  rows: PivotRow[];
-  metrics: { label: string; value: string; sub: string }[];
-  totalOrderCount: number;
-  totalBaseQty: number;
-  unavailableReason?: string;
-}
-
-function buildExpandedPivotFromJson(): Bay2ExpandedPivot {
-  try {
-    const filePath = path.join(process.cwd(), "evelyn-pivot.json");
-    const raw = fs.readFileSync(filePath, "utf8");
-    const pivot = JSON.parse(raw);
-
-    const detailRows: Record<string, unknown>[] = pivot.detailRows || [];
-    if (!detailRows.length) {
-      return {
-        supported: false,
-        rows: [],
-        metrics: pivot.metrics || [],
-        totalOrderCount: 0,
-        totalBaseQty: 0,
-        unavailableReason: "No detail rows available in pivot data.",
-      };
-    }
-
-    // Build three-level hierarchy: customer -> status -> date
-    const byCustomer = new Map<
-      string,
-      {
-        orders: Record<string, unknown>[];
-        statuses: Map<
-          string,
-          {
-            orders: Record<string, unknown>[];
-            dates: Map<string, Record<string, unknown>[]>;
-          }
-        >;
-      }
-    >();
-
-    for (const row of detailRows) {
-      const customerKey = String(row.customer || "Unknown");
-      const statusKey = String(row.status || "Unknown");
-      const dateKey = String(row.created || "").slice(0, 10) || "No Date";
-
-      if (!byCustomer.has(customerKey)) {
-        byCustomer.set(customerKey, { orders: [], statuses: new Map() });
-      }
-      const cust = byCustomer.get(customerKey)!;
-      cust.orders.push(row);
-
-      if (!cust.statuses.has(statusKey)) {
-        cust.statuses.set(statusKey, { orders: [], dates: new Map() });
-      }
-      const stat = cust.statuses.get(statusKey)!;
-      stat.orders.push(row);
-
-      if (!stat.dates.has(dateKey)) {
-        stat.dates.set(dateKey, []);
-      }
-      stat.dates.get(dateKey)!.push(row);
-    }
-
-    // Build flat hierarchical rows
-    const rows: PivotRow[] = [];
-    let totalOrderCount = 0;
-    let totalBaseQty = 0;
-
-    // Sort customers by order count descending
-    const sortedCustomers = [...byCustomer.entries()].sort(
-      ([, a], [, b]) => b.orders.length - a.orders.length,
-    );
-
-    for (const [customerName, custData] of sortedCustomers) {
-      const custOrderCount = custData.orders.length;
-      const custBaseQty = custData.orders.reduce(
-        (s, r) => s + (Number(r.baseQty) || 0),
-        0,
-      );
-      totalOrderCount += custOrderCount;
-      totalBaseQty += custBaseQty;
-
-      const customerRow: PivotRow = {
-        kind: "customer",
-        level: 0,
-        label: customerName,
-        orderCount: custOrderCount,
-        baseQty: custBaseQty,
-        children: [],
-      };
-
-      // Sort statuses by order count descending
-      const sortedStatuses = [...custData.statuses.entries()].sort(
-        ([, a], [, b]) => b.orders.length - a.orders.length,
-      );
-
-      for (const [statusName, statData] of sortedStatuses) {
-        const statOrderCount = statData.orders.length;
-        const statBaseQty = statData.orders.reduce(
-          (s, r) => s + (Number(r.baseQty) || 0),
-          0,
-        );
-
-        const statusRow: PivotRow = {
-          kind: "status",
-          level: 1,
-          label: statusName,
-          orderCount: statOrderCount,
-          baseQty: statBaseQty,
-          children: [],
-        };
-
-        // Sort dates chronologically
-        const sortedDates = [...statData.dates.entries()].sort(([a], [b]) =>
-          a.localeCompare(b),
-        );
-
-        for (const [dateKey, dateOrders] of sortedDates) {
-          const dateOrderCount = dateOrders.length;
-          const dateBaseQty = dateOrders.reduce(
-            (s, r) => s + (Number(r.baseQty) || 0),
-            0,
-          );
-
-          statusRow.children!.push({
-            kind: "date",
-            level: 2,
-            label: dateKey,
-            orderCount: dateOrderCount,
-            baseQty: dateBaseQty,
-          });
-        }
-
-        customerRow.children!.push(statusRow);
-      }
-
-      rows.push(customerRow);
-    }
-
-    return {
-      supported: true,
-      rows,
-      metrics: pivot.metrics || [],
-      totalOrderCount,
-      totalBaseQty,
-    };
-  } catch (err) {
-    return {
-      supported: false,
-      rows: [],
-      metrics: [],
-      totalOrderCount: 0,
-      totalBaseQty: 0,
-      unavailableReason:
-        "Expanded pivot data is unavailable: " +
-        (err instanceof Error ? err.message : "unknown error"),
-    };
-  }
-}
-
 export interface WmsDashboardData {
   title: string;
   siteLabel: string;
@@ -218,7 +44,6 @@ export interface WmsDashboardData {
     candidateCount?: number;
     unavailableReason?: string;
   };
-  bay2?: Bay2ExpandedPivot;
 }
 
 function authHeaders(token: string, tenantId: string, facilityId?: string) {
@@ -496,10 +321,6 @@ export async function loadDashboard(
   );
   const customerSet = Array.from(customerNames).map((name) => ({ name }));
 
-  // Build expanded pivot for Team 2 from evelyn-pivot.json
-  const bay2ExpandedPivot =
-    tab === "bay2" ? buildExpandedPivotFromJson() : undefined;
-
   return {
     title: facilityName,
     siteLabel: facilityName,
@@ -517,6 +338,5 @@ export async function loadDashboard(
       rows: inYard.rows,
       candidateCount: inYard.rows.length,
     },
-    ...(bay2ExpandedPivot ? { bay2: bay2ExpandedPivot } : {}),
   };
 }
