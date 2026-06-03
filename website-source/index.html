@@ -1161,6 +1161,9 @@
     'NZXT': 'nzxt.com',
     'LENNOX': 'lennox.com',
     'LENNOX INDUSTRIES INC': 'lennox.com',
+    'KARAKAS': 'karakallc.com',
+    'KARAKA': 'karakallc.com',
+    'KARAKA LLC': 'karakallc.com',
     'GURUNANDA': 'gurunanda.com',
     'GURUNANDA LLC': 'gurunanda.com',
     'POMPEIAN INC': 'pompeian.com',
@@ -1239,9 +1242,23 @@
     var tab = document.querySelector('.report-tab.active');
     return tab && tab.textContent ? tab.textContent : '';
   }
+  function tableLooksLikeWorkload(table){
+    var headers = Array.from(table.querySelectorAll('thead th')).map(function(th){ return th.textContent || ''; });
+    var headerText = headers.join(' ');
+    return /customer/i.test(headerText) && /(unloaded yesterday|containers.*full|picked yesterday|orders picked yesterday|new orders|fillable orders)/i.test(headerText);
+  }
+  function isWorkloadContext(){
+    if (/workload/i.test(activeTab())) return true;
+    var title = Array.from(document.querySelectorAll('h1,h2,h3,strong,b')).some(function(node){
+      return /workload/i.test(node.textContent || '');
+    });
+    if (title) return true;
+    return Array.from(document.querySelectorAll('table')).some(tableLooksLikeWorkload);
+  }
   function applyLogos(){
-    if (!/workload/i.test(activeTab())) return;
+    var workloadPage = isWorkloadContext();
     document.querySelectorAll('table').forEach(function(table){
+      if (!workloadPage && !tableLooksLikeWorkload(table)) return;
       var headers = Array.from(table.querySelectorAll('thead th'));
       var customerIndex = headers.findIndex(function(th){ return /customer/i.test(th.textContent || ''); });
       if (customerIndex < 0) return;
@@ -1270,7 +1287,7 @@
 })();
 </script>
 <style id="workload-customer-logo-style">
-  .table-frame td .workload-customer-logo-wrap {
+  td .workload-customer-logo-wrap {
     position: relative !important;
     display: inline-flex !important;
     align-items: center !important;
@@ -1285,19 +1302,19 @@
     background: rgba(255,255,255,.92) !important;
     box-shadow: 0 0 0 1px rgba(148,163,184,.25) !important;
   }
-  .table-frame td .workload-customer-logo,
-  .table-frame td .workload-customer-logo-fallback {
+  td .workload-customer-logo,
+  td .workload-customer-logo-fallback {
     position: absolute !important;
     inset: 0 !important;
     width: 100% !important;
     height: 100% !important;
   }
-  .table-frame td .workload-customer-logo {
+  td .workload-customer-logo {
     object-fit: contain !important;
     padding: 3px !important;
     background: #fff !important;
   }
-  .table-frame td .workload-customer-logo-fallback {
+  td .workload-customer-logo-fallback {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -1306,7 +1323,7 @@
     font-weight: 900 !important;
     letter-spacing: 0 !important;
   }
-  .table-frame td .workload-customer-name {
+  td .workload-customer-name {
     vertical-align: middle !important;
     font-weight: 800 !important;
   }
