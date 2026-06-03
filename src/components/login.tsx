@@ -91,7 +91,7 @@ export function LoginPanel({ onLogin }: { onLogin: (s: Session) => void }) {
               onChange={(e) => setPassword(e.target.value)}
             />
           </label>
-          {error && <p className="text-red-400 text-xs font-semibold m-0">{error}</p>}
+          <p className="login-error-message">{error || "Enter your username and password."}</p>
           <button className="primary-button" type="submit" disabled={loading}>
             {loading ? <Loader2 size={16} className="spin" /> : null}
             Sign in

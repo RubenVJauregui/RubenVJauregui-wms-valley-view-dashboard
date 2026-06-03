@@ -568,3 +568,126 @@ body { min-height: 100vh; }
 .pivot-date-row:hover td {
   background: rgba(79, 70, 229, 0.12) !important;
 }
+
+/* Screenshot-matched Valley View login restore */
+.login-shell {
+  min-height: 100vh !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 32px !important;
+  background:
+    radial-gradient(circle at 12% 92%, rgba(41, 31, 92, 0.34), transparent 30%),
+    linear-gradient(180deg, #050a10 0%, #070b12 52%, #070b12 100%) !important;
+}
+
+.login-panel {
+  width: 100% !important;
+  max-width: 460px !important;
+  min-height: 614px !important;
+  align-items: stretch !important;
+  gap: 28px !important;
+  padding: 40px 36px !important;
+  background: #0d1118 !important;
+  border: 1px solid #242b36 !important;
+  border-radius: 18px !important;
+  box-shadow: none !important;
+}
+
+.login-logo {
+  align-self: flex-start !important;
+  height: 56px !important;
+  max-width: 120px !important;
+  object-fit: contain !important;
+  filter: brightness(0) invert(1) !important;
+  margin-bottom: 18px !important;
+}
+
+.login-panel > div {
+  text-align: left !important;
+}
+
+.login-panel .eyebrow {
+  margin: 0 0 6px !important;
+  color: #f59e0b !important;
+  text-align: left !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.18em !important;
+}
+
+.login-panel h1 {
+  margin: 0 !important;
+  color: #ffffff !important;
+  text-align: left !important;
+  font-size: 44px !important;
+  line-height: 1.08 !important;
+  letter-spacing: -0.055em !important;
+  font-weight: 800 !important;
+}
+
+.login-copy {
+  margin: 16px 0 0 !important;
+  max-width: 340px !important;
+  color: #a7b8ce !important;
+  text-align: left !important;
+  font-size: 14px !important;
+  line-height: 1.65 !important;
+}
+
+.login-form {
+  gap: 16px !important;
+  margin-top: 4px !important;
+}
+
+.login-form label {
+  gap: 8px !important;
+  color: #b8bbc2 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+
+.login-form input {
+  height: 44px !important;
+  border-radius: 9px !important;
+  border: 1px solid #252d39 !important;
+  background: #080d14 !important;
+  color: #f8fafc !important;
+  font-size: 15px !important;
+  padding: 0 14px !important;
+  box-shadow: none !important;
+}
+
+.login-form input:focus {
+  border-color: #4f46e5 !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18) !important;
+}
+
+.login-error-message {
+  margin: 1px 0 7px !important;
+  padding: 13px 14px !important;
+  min-height: 42px !important;
+  border-radius: 9px !important;
+  border: 1px solid #7f3036 !important;
+  background: #3a171d !important;
+  color: #fecaca !important;
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+  font-weight: 700 !important;
+}
+
+.primary-button {
+  height: 43px !important;
+  border-radius: 9px !important;
+  background: linear-gradient(90deg, #7c3aed 0%, #7c3aed 45%, #8b3ff2 100%) !important;
+  color: #ffffff !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  box-shadow: 0 12px 24px rgba(124, 58, 237, 0.22) !important;
+}
+
+.primary-button:hover {
+  background: linear-gradient(90deg, #6d28d9 0%, #7c3aed 100%) !important;
+}
