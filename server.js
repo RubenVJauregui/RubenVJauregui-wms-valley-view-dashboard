@@ -673,6 +673,106 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
 
   if (tab === 'bpWorkload') {
     const metric = (value) => ({ supported: true, value });
+    if (includeAllCustomers) {
+      const orderResult = await fetchOrdersForTab(headers, cfg, true);
+      const orders = orderResult.ok ? (orderResult.orders || []) : [];
+      const orgIds = new Set();
+      for (const o of orders) {
+        if (o.customerId) orgIds.add(o.customerId);
+      }
+      const orgNames = await resolveOrgNames([...orgIds], req.accessToken, req.tenantId);
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayKey = yesterday.toISOString().slice(0, 10);
+      const byCustomer = new Map();
+
+      for (const o of orders) {
+        const customer =
+          orgNames[o.customerId || o.customer?.id || o.customer?.organizationId] ||
+          o.customerName ||
+          o.customer?.name ||
+          o.customerId ||
+          o.customer?.id ||
+          'Unknown';
+        if (!byCustomer.has(customer)) {
+          byCustomer.set(customer, {
+            customer,
+            unloadedYesterday: metric(0),
+            containersFull: metric(0),
+            ordersPickedYesterday: metric(0),
+            newOrders: metric(0),
+            fillableOrders: metric(0),
+          });
+        }
+        const row = byCustomer.get(customer);
+        row.fillableOrders.value += 1;
+        if (String(o.createdTime || '').slice(0, 10) === yesterdayKey) {
+          row.newOrders.value += 1;
+        }
+      }
+
+      try {
+        const yardRes = await fetch(`${WMS_API_BASE_URL}/wms-bam/yard/equipment/search`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ currentPage: 1, pageSize: 500, statuses: ['FULL'] })
+        });
+        const yardJson = await yardRes.json().catch(() => ({}));
+        const equipment = yardRes.ok && (yardJson.code === 0 || String(yardJson.code) === '0')
+          ? (yardJson.data?.list || yardJson.data || [])
+          : [];
+        for (const e of Array.isArray(equipment) ? equipment : []) {
+          const customer = e.customerName || e.customer?.name || e.customerId || 'Unknown';
+          if (!byCustomer.has(customer)) {
+            byCustomer.set(customer, {
+              customer,
+              unloadedYesterday: metric(0),
+              containersFull: metric(0),
+              ordersPickedYesterday: metric(0),
+              newOrders: metric(0),
+              fillableOrders: metric(0),
+            });
+          }
+          byCustomer.get(customer).containersFull.value += 1;
+        }
+      } catch (err) {
+        console.error('All-customer workload yard fetch error:', err.message);
+      }
+
+      const rows = Array.from(byCustomer.values()).sort((a, b) => a.customer.localeCompare(b.customer));
+      const totals = ['unloadedYesterday', 'containersFull', 'ordersPickedYesterday', 'newOrders', 'fillableOrders'].reduce((acc, key) => {
+        acc[key] = metric(rows.reduce((sum, row) => sum + (row[key]?.value || 0), 0));
+        return acc;
+      }, {});
+      const workloadTitle = `${facilityName || 'Facility'} Workload`;
+
+      result.bay = 'bpWorkload';
+      result.reportType = 'bpWorkload';
+      result.title = workloadTitle;
+      result.customer = { name: workloadTitle };
+      result.bpWorkload = {
+        supported: true,
+        facilityId,
+        newOrdersWindow: yesterdayKey,
+        rows,
+        totals,
+        definitions: {
+          unloadedYesterday: 'Trailer/container equipment devanned or offloaded yesterday.',
+          containersFull: 'Trailer/container equipment currently FULL and waiting to offload.',
+          newOrders: 'Orders created yesterday.',
+          fillableOrders: 'Orders currently in PLANNED status.',
+          ordersPickedYesterday: 'Unique orders represented in WISE pick history yesterday.'
+        }
+      };
+      result.metrics = [
+        { label: 'Customers', value: String(rows.length), sub: 'All facility customers' },
+        { label: 'Containers FULL', value: String(totals.containersFull.value), sub: 'Current WISE yard read' },
+        { label: 'New Orders', value: String(totals.newOrders.value), sub: result.bpWorkload.newOrdersWindow },
+        { label: 'Fillable Orders', value: String(totals.fillableOrders.value), sub: 'PLANNED orders' },
+      ];
+      return res.json(result);
+    }
+
     const rows = [
       { customer: 'Orgain', unloadedYesterday: metric(0), containersFull: metric(0), ordersPickedYesterday: metric(0), newOrders: metric(0), fillableOrders: metric(26) },
       { customer: "King's Hawaiian", unloadedYesterday: metric(0), containersFull: metric(1), ordersPickedYesterday: metric(0), newOrders: metric(0), fillableOrders: metric(1) },
