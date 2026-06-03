@@ -364,6 +364,7 @@ async function fetchAllYardEquipment(headers, includeAllRows = false) {
 }
 
 const WORKLOAD_PICKED_STATUSES = [
+  // Exact statuses from the workload filter screenshot only.
   'PICKED',
   'READY TO SHIP',
   'PACKING',
@@ -382,7 +383,8 @@ function normalizeStatus(value) {
 
 function isWorkloadPickedStatus(value) {
   const normalized = normalizeStatus(value);
-  return WORKLOAD_PICKED_STATUSES.some((status) => normalized === normalizeStatus(status));
+  const allowed = new Set(WORKLOAD_PICKED_STATUSES.map((status) => normalizeStatus(status)));
+  return allowed.has(normalized);
 }
 
 function getOrderPickedTime(order) {
