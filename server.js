@@ -474,6 +474,10 @@ function usesAllCustomerFacility(facilityId, facilityName = '') {
   );
 }
 
+function usesFullToOffloadCustomerMetric(facilityId, facilityName = '', tab = '') {
+  return tab === 'nightShift' || usesAllCustomerFacility(facilityId, facilityName);
+}
+
 function rowMatchesTab(row, cfg) {
   if (cfg.customerIds && cfg.customerIds.length && cfg.customerIds.includes(row.customerId)) return true;
   if (cfg.customerIds && cfg.customerIds.length && !cfg.customerNames) return false;
@@ -1304,7 +1308,8 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
 
   // ── Fetch in-yard equipment ──────────────────────────────────────────────
   try {
-    const equipment = await fetchAllYardEquipment(headers, tab === 'nightShift');
+    const useFullToOffloadMetric = usesFullToOffloadCustomerMetric(facilityId, facilityName, tab);
+    const equipment = await fetchAllYardEquipment(headers, useFullToOffloadMetric);
     if (Array.isArray(equipment)) {
         result.inYardFullEquipment.rows = equipment
           .filter(e => {
@@ -1329,8 +1334,9 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
               || (cfg.customerIds || []).includes(customerId)
               || rowMatchesTab({ customer: customerName, customerId }, cfg);
             const fullToOffloadMatch = isFullToOffloadContainer(e);
-            if (tab === 'nightShift') {
-              // Valley View Night Shift detail must match the two customer chips.
+            if (useFullToOffloadMetric) {
+              // Fontana, Alessandro, and Night Shift use the Full-to-Offload Excel logic:
+              // CONTAINER + FULL + FULL_TO_OFFLOAD, excluding Euromarket / Crate & Barrel only.
               return fullToOffloadMatch && !isEuromarketCustomer(customerName) && !isEuromarketCustomer(customerId);
             }
             return pivotCustomerMatch && tabCustomerMatch && fullToOffloadMatch;
@@ -1341,7 +1347,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             entryTicket: e.checkInEntry || e.entryTicket || e.entryId || '',
             checkIn: e.gateCheckInTime || e.checkIn || e.checkInTime || e.createdTime || '',
             timeInYard: e.inYardTime || e.timeInYard || '',
-            customer: tab === 'nightShift'
+            customer: useFullToOffloadMetric
               ? nightShiftCustomerName(e.customerName || e.customer?.name || '', e.customerId || e.customer?.id || e.customerOrgId || '')
               : (e.customerName || e.customer?.name || e.customerId || ''),
             location: e.locationName || e.location || '',
@@ -1349,6 +1355,17 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             details: e.equipmentOperationStatus || e.details || '',
           }));
         result.inYardFullEquipment.candidateCount = result.inYardFullEquipment.rows.length;
+        if (useFullToOffloadMetric && tab !== 'nightShift') {
+          const fullToOffloadRows = result.inYardFullEquipment.rows.filter(e => normalizeName(e.customer) !== normalizeName('Night Shift — All FULL Trailers & Containers'));
+          result.inYardFullEquipment.rows = fullToOffloadRows;
+          result.inYardFullEquipment.candidateCount = fullToOffloadRows.length;
+          const fullToOffloadCustomerCounts = buildCustomerCounts(fullToOffloadRows);
+          result.customerSet = fullToOffloadCustomerCounts;
+          result.metrics = [
+            { label: 'Customers', value: String(fullToOffloadCustomerCounts.length), sub: 'Full-to-offload customer set' },
+            { label: 'FULL Containers', value: String(fullToOffloadRows.length), sub: 'Not yet devanned' },
+          ];
+        }
         if (tab === 'nightShift') {
           const nightShiftRows = result.inYardFullEquipment.rows.filter(e => normalizeName(e.customer) !== normalizeName('Night Shift — All FULL Trailers & Containers'));
           result.inYardFullEquipment.rows = nightShiftRows;
