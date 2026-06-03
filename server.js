@@ -307,6 +307,15 @@ function buildCustomerCounts(rows, customerKey = 'customer') {
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 }
 
+function getTaskAssignedAt(task) {
+  return task.lastAssignedWhen || task.lastAssignedTime || task.assignedTime || task.updatedTime || task.modifiedTime || task.createdTime || '';
+}
+
+function isWithinRange(value, start, end) {
+  const time = value ? new Date(value).getTime() : NaN;
+  return !Number.isNaN(time) && time >= start.getTime() && time <= end.getTime();
+}
+
 function rowMatchesTab(row, cfg) {
   if (cfg.customerIds && cfg.customerIds.length && cfg.customerIds.includes(row.customerId)) return true;
   if (cfg.customerIds && cfg.customerIds.length && !cfg.customerNames) return false;
@@ -447,6 +456,8 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
         todayStart.setHours(0, 0, 0, 0);
         const todayEnd = new Date();
         todayEnd.setHours(23, 59, 59, 999);
+        const lookbackStart = new Date(todayStart);
+        lookbackStart.setDate(lookbackStart.getDate() - 14);
 
         const pickRes = await fetch(
           `${WMS_API_BASE_URL}/wms-bam/outbound/pick-task/search-by-paging`,
@@ -456,7 +467,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             body: JSON.stringify({
               page: 1,
               pageSize: 500,
-              createdTimeStart: todayStart.toISOString(),
+              createdTimeStart: lookbackStart.toISOString(),
               createdTimeEnd: todayEnd.toISOString(),
             }),
           }
@@ -500,7 +511,11 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
               return value || '';
             };
 
-            const excelAssignedTasks = allTasks.filter((t) => {
+            const assignedTodayTasks = allTasks.filter((t) => isWithinRange(getTaskAssignedAt(t), todayStart, todayEnd));
+            b2a.totalFetchedTasks = allTasks.length;
+            b2a.assignedTodayTaskCount = assignedTodayTasks.length;
+
+            const excelAssignedTasks = assignedTodayTasks.filter((t) => {
               const customer = (t.customerNames && t.customerNames[0]) || '';
               const expectedAssignee = excelCustomerAssigneeMap[customer];
               if (!expectedAssignee) return false;
@@ -523,7 +538,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
                 pickedPieces: pieces,
                 pieces: pieces,
                 assignee: canonicalAssignee(t.assigneeUserName || ''),
-                assignedTime: t.lastAssignedWhen || t.createdTime || '',
+                assignedTime: getTaskAssignedAt(t),
                 status: t.status,
                 createdTime: t.createdTime || '',
                 pickMethod: t.pickMethod || '',
@@ -549,7 +564,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
 
             // Compute per-assignee stats from all of today's history
             const statsByUser = {};
-            for (const t of allTasks) {
+            for (const t of assignedTodayTasks) {
               const user = t.assigneeUserName || 'unassigned';
               if (!statsByUser[user]) statsByUser[user] = { orders: 0, pieces: 0 };
               statsByUser[user].orders += (t.orderIds || []).length;

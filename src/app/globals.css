@@ -238,6 +238,23 @@ body { min-height: 100vh; }
   font-size: 12px;
   font-weight: 600;
   outline: none;
+  color-scheme: dark;
+}
+
+.facility-select select:focus {
+  background: #080d1f;
+  color: #ffffff;
+}
+
+.facility-select select option {
+  background: #080d1f;
+  color: #ffffff;
+}
+
+.facility-select select option:checked,
+.facility-select select option:hover {
+  background: #111a3a;
+  color: #ffffff;
 }
 
 .user-tag {
@@ -552,6 +569,11 @@ body { min-height: 100vh; }
 .table-frame thead { background: rgba(12, 20, 44, 0.86); }
 .table-frame tbody tr:hover td { background: rgba(79, 70, 229, 0.10); }
 .search-box, .facility-select select { background: rgba(10, 16, 35, 0.86); }
+.facility-select select,
+.facility-select select option {
+  color: #ffffff;
+  background-color: #080d1f;
+}
 
 .customer-order-count,
 .chip-count {
