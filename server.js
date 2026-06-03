@@ -326,6 +326,17 @@ function isWithinRange(value, start, end) {
   return !Number.isNaN(time) && time >= start.getTime() && time <= end.getTime();
 }
 
+function usesAllCustomerFacility(facilityId, facilityName = '') {
+  const label = normalizeName(`${facilityId || ''} ${facilityName || ''}`);
+  return (
+    label.includes('FONTANA') ||
+    label.includes('ALESS') ||
+    facilityId === 'LT_F11' ||
+    facilityId === 'LT_ORG-7759' ||
+    facilityId === 'ORG-7759'
+  );
+}
+
 function rowMatchesTab(row, cfg) {
   if (cfg.customerIds && cfg.customerIds.length && cfg.customerIds.includes(row.customerId)) return true;
   if (cfg.customerIds && cfg.customerIds.length && !cfg.customerNames) return false;
@@ -348,7 +359,33 @@ async function fetchOrderPage(headers, body) {
   return { ok: true, orders: json.data?.list || [], total: json.data?.total || 0 };
 }
 
-async function fetchOrdersForTab(headers, cfg) {
+async function fetchAllOrderPages(headers, body) {
+  const pageSize = body.pageSize || 500;
+  const orders = [];
+  const seen = new Set();
+  let total = 0;
+
+  for (let currentPage = 1; currentPage <= 50; currentPage += 1) {
+    const page = await fetchOrderPage(headers, { ...body, currentPage, page: currentPage, pageSize });
+    if (!page.ok) {
+      if (currentPage === 1) return page;
+      break;
+    }
+    total = page.total || total;
+    for (const order of page.orders) {
+      if (!seen.has(order.id)) {
+        seen.add(order.id);
+        orders.push(order);
+      }
+    }
+    if (page.orders.length < pageSize) break;
+    if (total && orders.length >= total) break;
+  }
+
+  return { ok: true, orders, total: total || orders.length };
+}
+
+async function fetchOrdersForTab(headers, cfg, includeAllCustomers = false) {
   const base = {
     currentPage: 1,
     pageSize: 500,
@@ -356,9 +393,12 @@ async function fetchOrdersForTab(headers, cfg) {
     statuses: ['PLANNED'],
     sortingFields: [{ field: 'createdTime', orderBy: 'DESC' }]
   };
+  if (includeAllCustomers) {
+    return fetchAllOrderPages(headers, base);
+  }
   if (cfg.customerIds && cfg.customerIds.length) {
     // Query each customer explicitly so tabs are not limited by the first 500 all-facility orders.
-    const batches = await Promise.all(cfg.customerIds.map(id => fetchOrderPage(headers, { ...base, customerId: id })));
+    const batches = await Promise.all(cfg.customerIds.map(id => fetchAllOrderPages(headers, { ...base, customerId: id })));
     const merged = [];
     const seen = new Set();
     for (const b of batches) for (const o of b.orders) {
@@ -367,7 +407,7 @@ async function fetchOrdersForTab(headers, cfg) {
     // If the API ignored customer filters or returned nothing, fallback to a generic page and filter after mapping.
     if (merged.length) return { ok: true, orders: merged, total: merged.length };
   }
-  return fetchOrderPage(headers, base);
+  return fetchAllOrderPages(headers, base);
 }
 
 // URL variant mapping: /api/dashboard/bay2-auto-assign etc.
@@ -761,7 +801,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
 
   // ── Fetch planned outbound orders ────────────────────────────────────────
   try {
-    const orderResult = await fetchOrdersForTab(headers, cfg);
+    const orderResult = await fetchOrdersForTab(headers, cfg, includeAllCustomers);
 
     if (orderResult.ok) {
         const orders = orderResult.orders || [];
@@ -965,7 +1005,8 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
               'WOODY FLAW CREST INC'
             ];
             const pivotCustomerMatch = pivotCustomerNames.some(name => normalizeName(customerName).includes(normalizeName(name)) || normalizeName(name).includes(normalizeName(customerName)));
-            const tabCustomerMatch = (!cfg.customerIds?.length && !cfg.customerNames?.length)
+            const tabCustomerMatch = includeAllCustomers
+              || (!cfg.customerIds?.length && !cfg.customerNames?.length)
               || (cfg.customerIds || []).includes(customerId)
               || rowMatchesTab({ customer: customerName, customerId }, cfg);
             const fullToOffloadMatch = isFullToOffloadContainer(e);
