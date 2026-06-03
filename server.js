@@ -652,18 +652,57 @@ function addCustomerMetricRow(byCustomer, customer, metric) {
 
 async function applyPickedYesterdayWorkloadCounts({ headers, accessToken, tenantId, timeZone, byCustomer, metric }) {
   const window = getYesterdayWindow(timeZone || 'America/Los_Angeles');
-  const body = {
-    currentPage: 1,
-    pageSize: 500,
-    statuses: WORKLOAD_PICKED_STATUSES,
-    pickedTimeStart: window.start.toISOString(),
-    pickedTimeEnd: window.end.toISOString(),
-    pickTimeStart: window.start.toISOString(),
-    pickTimeEnd: window.end.toISOString(),
-    sortingFields: [{ field: 'pickedTime', orderBy: 'DESC' }],
-  };
-  const result = await fetchAllOrderPages(headers, body);
-  const orders = result.ok ? result.orders : [];
+
+  // Workload tab only: count every order for each customer where a WISE picked-time
+  // field falls yesterday and the order status is one of the picked/shipping statuses.
+  // WISE environments vary on the exact picked-time filter field name, so query several
+  // safe variants, merge by order ID, then apply the business filter locally.
+  const queryBodies = [
+    {
+      currentPage: 1,
+      pageSize: 500,
+      statuses: WORKLOAD_PICKED_STATUSES,
+      pickedTimeStart: window.start.toISOString(),
+      pickedTimeEnd: window.end.toISOString(),
+      sortingFields: [{ field: 'pickedTime', orderBy: 'DESC' }],
+    },
+    {
+      currentPage: 1,
+      pageSize: 500,
+      statuses: WORKLOAD_PICKED_STATUSES,
+      pickTimeStart: window.start.toISOString(),
+      pickTimeEnd: window.end.toISOString(),
+      sortingFields: [{ field: 'pickTime', orderBy: 'DESC' }],
+    },
+    {
+      currentPage: 1,
+      pageSize: 500,
+      statuses: WORKLOAD_PICKED_STATUSES,
+      pickedAtStart: window.start.toISOString(),
+      pickedAtEnd: window.end.toISOString(),
+      sortingFields: [{ field: 'updatedTime', orderBy: 'DESC' }],
+    },
+    {
+      currentPage: 1,
+      pageSize: 500,
+      statuses: WORKLOAD_PICKED_STATUSES,
+      updatedTimeStart: window.start.toISOString(),
+      updatedTimeEnd: window.end.toISOString(),
+      sortingFields: [{ field: 'updatedTime', orderBy: 'DESC' }],
+    },
+  ];
+
+  const byOrder = new Map();
+  for (const body of queryBodies) {
+    const result = await fetchAllOrderPages(headers, body);
+    if (!result.ok) continue;
+    for (const order of result.orders || []) {
+      const orderId = order.id || order.orderId || order.orderNumber || order.referenceNo || `${order.customerId || order.customerName}-${getOrderPickedTime(order)}`;
+      if (orderId && !byOrder.has(orderId)) byOrder.set(orderId, order);
+    }
+  }
+
+  const orders = Array.from(byOrder.values());
   const matchingOrders = orders.filter((order) => {
     const pickedTime = getOrderPickedTime(order);
     return isWorkloadPickedStatus(getOrderStatus(order)) &&
@@ -677,6 +716,7 @@ async function applyPickedYesterdayWorkloadCounts({ headers, accessToken, tenant
     if (order.customer?.organizationId) orgIds.add(order.customer.organizationId);
   }
   const orgNames = await resolveOrgNames([...orgIds], accessToken, tenantId);
+
   const seen = new Set();
   for (const order of matchingOrders) {
     const orderId = order.id || order.orderId || order.orderNumber || order.referenceNo || `${order.customerId || order.customerName}-${getOrderPickedTime(order)}`;
