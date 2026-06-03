@@ -1332,6 +1332,7 @@
   if (window.__nightShiftTitleCountAndFilter) return;
   window.__nightShiftTitleCountAndFilter = true;
   function norm(v){ return String(v||'').toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim(); }
+  function allowedCustomer(v){ var n=norm(v); return n === norm('ALL MARKET INC / VITA COCO') || n === norm('SIMPLE MODERN'); }
   function isNightShift(){ var a=document.querySelector('.report-tab.active'); return a && /Night Shift/i.test(a.textContent||''); }
   function applyNightShiftTitleAndFilter(){
     if(!isNightShift()) return;
@@ -1349,7 +1350,7 @@
     table.querySelectorAll('tbody tr').forEach(function(tr){
       var cells=tr.querySelectorAll('td');
       var customer=customerIdx>=0 && cells[customerIdx] ? cells[customerIdx].textContent : '';
-      if(norm(customer)===norm(titleText)){
+      if(norm(customer)===norm(titleText) || !allowedCustomer(customer)){
         tr.style.display='none';
       } else {
         tr.style.display='';
@@ -1402,6 +1403,7 @@
   window.__nightShiftCustomerSummaryApplied = true;
   var selectedCustomer = 'ALL';
   function norm(v){ return String(v||'').toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim(); }
+  function allowedCustomer(v){ var n=norm(v); return n === norm('ALL MARKET INC / VITA COCO') || n === norm('SIMPLE MODERN'); }
   function isNightShift(){ var a=document.querySelector('.report-tab.active'); return a && /Night Shift/i.test(a.textContent||''); }
   function applyNightShiftCustomerSummary(){
     if(!isNightShift()) return;
@@ -1425,6 +1427,10 @@
         tr.style.display='none';
         return;
       }
+      if(!allowedCustomer(customer)){
+        tr.style.display='none';
+        return;
+      }
       if(customer){ counts[customer]=(counts[customer]||0)+1; }
     });
     var selectedStillExists = selectedCustomer === 'ALL' || Object.keys(counts).some(function(name){ return norm(name) === selectedCustomer; });
@@ -1433,7 +1439,7 @@
     rows.forEach(function(tr){
       var cells=tr.querySelectorAll('td');
       var customer=cells[customerIdx] ? cells[customerIdx].textContent.trim() : '';
-      var show = norm(customer)!==norm(titleText) && (selectedCustomer === 'ALL' || norm(customer) === selectedCustomer);
+      var show = norm(customer)!==norm(titleText) && allowedCustomer(customer) && (selectedCustomer === 'ALL' || norm(customer) === selectedCustomer);
       tr.style.display=show ? '' : 'none';
       if(show) visible++;
     });

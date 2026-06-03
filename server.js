@@ -307,6 +307,16 @@ function buildCustomerCounts(rows, customerKey = 'customer') {
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 }
 
+const NIGHT_SHIFT_CUSTOMERS = [
+  'ALL MARKET INC / VITA COCO',
+  'SIMPLE MODERN'
+];
+
+function isNightShiftCustomer(customer) {
+  const normalized = normalizeName(customer);
+  return NIGHT_SHIFT_CUSTOMERS.some((name) => normalized === normalizeName(name));
+}
+
 function getTaskAssignedAt(task) {
   return task.lastAssignedWhen || task.lastAssignedTime || task.assignedTime || task.updatedTime || task.modifiedTime || task.createdTime || '';
 }
@@ -952,8 +962,8 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
               || rowMatchesTab({ customer: customerName, customerId }, cfg);
             const fullToOffloadMatch = isFullToOffloadContainer(e);
             if (tab === 'nightShift') {
-              // Night Shift follows the Excel Full-to-Offload metric across all customers.
-              return fullToOffloadMatch;
+              // Valley View Night Shift detail must match the two customer chips.
+              return fullToOffloadMatch && isNightShiftCustomer(customerName);
             }
             return pivotCustomerMatch && tabCustomerMatch && fullToOffloadMatch;
           })
