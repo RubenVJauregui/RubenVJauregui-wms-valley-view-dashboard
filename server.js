@@ -304,24 +304,15 @@ function buildCustomerCounts(rows, customerKey = 'customer') {
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 }
 
-const NIGHT_SHIFT_CUSTOMERS = [
-  'ALL MARKET INC / VITA COCO',
-  'AMIEE LYNN, LNC.',
-  'Euromarket Designs, Inc.',
-  'GURUNANDA, LLC',
-  'LENNOX INDUSTRIES INC.',
-  'WOODY FLAW CREST INC',
-  '(blank)'
-];
+function isEuromarketCustomer(customer) {
+  const normalized = normalizeName(customer);
+  return normalized.includes('EUROMARKET') || normalized.includes('CRATE') || normalized.includes('BARREL');
+}
 
 function isNightShiftCustomer(customer) {
   const normalized = normalizeName(customer);
-  if (!normalized) return true; // Excel pivot has a large (blank) bucket.
-  return NIGHT_SHIFT_CUSTOMERS.some((name) => {
-    const target = normalizeName(name);
-    if (!target || target === 'BLANK') return false;
-    return normalized === target || normalized.includes(target) || target.includes(normalized);
-  });
+  if (!normalized) return true; // Keep Excel pivot blank bucket.
+  return !isEuromarketCustomer(customer);
 }
 
 function nightShiftCustomerName(customer, customerId = '') {
@@ -330,7 +321,6 @@ function nightShiftCustomerName(customer, customerId = '') {
   if (!normalized) return '(blank)';
   if (normalized.includes('ALL MARKET') || normalized.includes('VITA COCO') || normalized === 'ORG 629731') return 'ALL MARKET INC / VITA COCO';
   if (normalized.includes('AMIEE LYNN')) return 'AMIEE LYNN, LNC.';
-  if (normalized.includes('EUROMARKET') || normalized.includes('CRATE') || normalized.includes('BARREL')) return 'Euromarket Designs, Inc.';
   if (normalized.includes('GURUNANDA')) return 'GURUNANDA, LLC';
   if (normalized.includes('LENNOX')) return 'LENNOX INDUSTRIES INC.';
   if (normalized.includes('WOODY')) return 'WOODY FLAW CREST INC';
@@ -1145,9 +1135,9 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
               || rowMatchesTab({ customer: customerName, customerId }, cfg);
             const fullToOffloadMatch = isFullToOffloadContainer(e);
             if (tab === 'nightShift') {
-              // Night Shift follows the attached Excel pivot exactly: all FULL_TO_OFFLOAD containers,
-              // grouped by customer, including the (blank) bucket.
-              return fullToOffloadMatch;
+              // Night Shift follows the attached Excel metric (FULL_TO_OFFLOAD containers),
+              // but shows all customers except Euromarket / Crate & Barrel.
+              return fullToOffloadMatch && !isEuromarketCustomer(customerName) && !isEuromarketCustomer(customerId);
             }
             return pivotCustomerMatch && tabCustomerMatch && fullToOffloadMatch;
           })
@@ -1179,7 +1169,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           const nightShiftCustomerCounts = buildCustomerCounts(sortedNightShiftRows);
           result.customerSet = nightShiftCustomerCounts.length
             ? nightShiftCustomerCounts
-            : NIGHT_SHIFT_CUSTOMERS.map(name => ({ name, count: 0 }));
+            : [];
           result.customer = { name: 'Night Shift' };
           result.metrics = [
             { label: 'Customers', value: String(result.customerSet.length), sub: 'Valley View Night Shift set' },
