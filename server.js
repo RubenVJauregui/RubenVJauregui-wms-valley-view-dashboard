@@ -288,12 +288,9 @@ function isFullToOffloadContainer(row) {
   const status = normalizeWiseCode(row.equipmentStatus || row.status || '');
   const detail = normalizeWiseCode(row.equipmentOperationStatus || row.details || row.operationStatus || '');
 
-  // Mirrors the "Full to offload.xlsx" pivot:
-  // Equipment Type = CONTAINER; Status includes FULL and blank;
-  // Details excludes EMPTY_TO_LOAD and EMPTY_AFTER_OFFLOADED.
-  if (type !== 'CONTAINER') return false;
-  if (status && status !== 'FULL') return false;
-  return !['EMPTY_TO_LOAD', 'EMPTY_AFTER_OFFLOADED'].includes(detail);
+  // Mirrors the attached Full to offload.xlsx pivot:
+  // Equipment Type = CONTAINER; Status = FULL; Details = FULL_TO_OFFLOAD.
+  return type === 'CONTAINER' && status === 'FULL' && detail === 'FULL_TO_OFFLOAD';
 }
 
 function buildCustomerCounts(rows, customerKey = 'customer') {
@@ -309,27 +306,35 @@ function buildCustomerCounts(rows, customerKey = 'customer') {
 
 const NIGHT_SHIFT_CUSTOMERS = [
   'ALL MARKET INC / VITA COCO',
-  'SIMPLE MODERN'
+  'AMIEE LYNN, LNC.',
+  'Euromarket Designs, Inc.',
+  'GURUNANDA, LLC',
+  'LENNOX INDUSTRIES INC.',
+  'WOODY FLAW CREST INC',
+  '(blank)'
 ];
 
 function isNightShiftCustomer(customer) {
   const normalized = normalizeName(customer);
-  if (!normalized) return false;
-  if (normalized === 'ORG 629731') return true;
-  if (normalized.includes('ALL MARKET') || normalized.includes('VITA COCO')) return true;
-  if (normalized.includes('SIMPLE MODERN')) return true;
+  if (!normalized) return true; // Excel pivot has a large (blank) bucket.
   return NIGHT_SHIFT_CUSTOMERS.some((name) => {
     const target = normalizeName(name);
+    if (!target || target === 'BLANK') return false;
     return normalized === target || normalized.includes(target) || target.includes(normalized);
   });
 }
 
 function nightShiftCustomerName(customer, customerId = '') {
-  if (isNightShiftCustomer(customerId) || normalizeName(customer).includes('ALL MARKET') || normalizeName(customer).includes('VITA COCO')) {
-    return 'ALL MARKET INC / VITA COCO';
-  }
-  if (normalizeName(customer).includes('SIMPLE MODERN')) return 'SIMPLE MODERN';
-  return String(customer || customerId || '').trim();
+  const raw = String(customer || customerId || '').trim();
+  const normalized = normalizeName(raw);
+  if (!normalized) return '(blank)';
+  if (normalized.includes('ALL MARKET') || normalized.includes('VITA COCO') || normalized === 'ORG 629731') return 'ALL MARKET INC / VITA COCO';
+  if (normalized.includes('AMIEE LYNN')) return 'AMIEE LYNN, LNC.';
+  if (normalized.includes('EUROMARKET') || normalized.includes('CRATE') || normalized.includes('BARREL')) return 'Euromarket Designs, Inc.';
+  if (normalized.includes('GURUNANDA')) return 'GURUNANDA, LLC';
+  if (normalized.includes('LENNOX')) return 'LENNOX INDUSTRIES INC.';
+  if (normalized.includes('WOODY')) return 'WOODY FLAW CREST INC';
+  return raw;
 }
 
 function getTaskAssignedAt(task) {
@@ -1140,8 +1145,9 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
               || rowMatchesTab({ customer: customerName, customerId }, cfg);
             const fullToOffloadMatch = isFullToOffloadContainer(e);
             if (tab === 'nightShift') {
-              // Valley View Night Shift detail must match the two customer chips.
-              return fullToOffloadMatch && (isNightShiftCustomer(customerName) || isNightShiftCustomer(customerId));
+              // Night Shift follows the attached Excel pivot exactly: all FULL_TO_OFFLOAD containers,
+              // grouped by customer, including the (blank) bucket.
+              return fullToOffloadMatch;
             }
             return pivotCustomerMatch && tabCustomerMatch && fullToOffloadMatch;
           })
