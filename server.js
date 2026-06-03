@@ -402,8 +402,16 @@ function resolveTab(req) {
 app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req, res) => {
   const tab = resolveTab(req);
   const cfg = TAB_CONFIG[tab];
-  const { facilityId, timeZone } = req.body || {};
+  const { facilityId, facilityName, timeZone, includeAllCustomers: requestedAllCustomers } = req.body || {};
   if (!facilityId) return res.status(400).json({ message: 'Facility is required.' });
+  const facilityAllCustomerLabel = `${facilityId || ''} ${facilityName || ''}`.toLowerCase();
+  const includeAllCustomers = Boolean(requestedAllCustomers)
+    || facilityAllCustomerLabel.includes('fontana')
+    || facilityAllCustomerLabel.includes('alessandro')
+    || facilityAllCustomerLabel.includes('alesandro')
+    || facilityId === 'LT_F11'
+    || facilityId === 'LT_ORG-7759'
+    || facilityId === 'ORG-7759';
 
   const headers = {
     Authorization: `Bearer ${req.accessToken}`,
@@ -794,12 +802,12 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           shipToName: o.shipToAddress?.name || o.shipToName || '',
         }));
 
-        let rows = allRows.filter(row => rowMatchesTab(row, cfg));
+        let rows = includeAllCustomers ? allRows : allRows.filter(row => rowMatchesTab(row, cfg));
 
         // Safety guard: Team 4 must be Gurunanda only. Never let the generic LT_F1
         // planned-order page leak other customers into this tab if WISE ignores a
         // customer filter parameter.
-        if (tab === 'bay4') {
+        if (tab === 'bay4' && !includeAllCustomers) {
           rows = allRows.filter(row =>
             row.customerId === 'ORG-655875' || normalizeName(row.customer).includes('GURUNANDA')
           );

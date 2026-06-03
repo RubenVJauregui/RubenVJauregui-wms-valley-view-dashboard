@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const facilityName = body.facilityName || "Valley View";
     const tab = body.tab || "";
+    const includeAllCustomers = Boolean(body.includeAllCustomers);
 
     // Check token expiry
     try {
@@ -41,7 +42,8 @@ export async function POST(request: NextRequest) {
       tenantId,
       facilityId,
       facilityName,
-      tab
+      tab,
+      includeAllCustomers
     );
 
     return NextResponse.json(data);

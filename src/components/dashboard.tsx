@@ -301,6 +301,14 @@ export function Dashboard({
 
   const fetchData = useCallback(async () => {
     if (!session || !facility) return;
+    const facilityLabelForAllCustomers = `${facility.id} ${facility.name}`.toLowerCase();
+    const includeAllCustomers =
+      facilityLabelForAllCustomers.includes("fontana") ||
+      facilityLabelForAllCustomers.includes("alessandro") ||
+      facilityLabelForAllCustomers.includes("alesandro") ||
+      facility.id === "LT_F11" ||
+      facility.id === "LT_ORG-7759" ||
+      facility.id === "ORG-7759";
     setLoading(true);
     setError("");
 
@@ -341,6 +349,7 @@ export function Dashboard({
           facilityName: facility.name,
           timeZone: facility.timeZone,
           tab: activeTab,
+          includeAllCustomers,
         }),
       });
 

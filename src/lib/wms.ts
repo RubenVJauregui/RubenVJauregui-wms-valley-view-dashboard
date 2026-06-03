@@ -327,7 +327,8 @@ export async function loadDashboard(
   tenantId: string,
   facilityId: string,
   facilityName: string,
-  tab?: string
+  tab?: string,
+  includeAllCustomers = false
 ): Promise<WmsDashboardData> {
   const now = new Date().toISOString();
 
@@ -341,7 +342,7 @@ export async function loadDashboard(
   ]);
 
   const excludedNightShiftCustomers = new Set([normalizeName("Euromarket designs")]);
-  const plannedRows = tab === "nightShift"
+  const plannedRows = tab === "nightShift" && !includeAllCustomers
     ? plannedOrders.rows.filter((r) => !excludedNightShiftCustomers.has(normalizeName(r.customer)))
     : plannedOrders.rows;
 
