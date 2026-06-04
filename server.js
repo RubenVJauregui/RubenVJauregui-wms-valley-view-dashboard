@@ -1283,6 +1283,70 @@ async function fetchAllEquipmentPages(headers, body) {
 }
 
 
+
+async function fetchOrderItemLines(headers, orderIds) {
+  const lines = [];
+  const uniqueIds = Array.from(new Set((orderIds || []).filter(Boolean).map(String)));
+
+  for (let i = 0; i < uniqueIds.length; i += 100) {
+    const batch = uniqueIds.slice(i, i + 100);
+    try {
+      const res = await fetch(`${WMS_API_BASE_URL}/wms/outbound/order/item-line/search`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ orderIds: batch })
+      });
+      if (!res.ok) continue;
+      const json = await res.json().catch(() => ({}));
+      if (!(json.code === 0 || String(json.code) === '0')) continue;
+      const batchLines = json.data?.list || json.data?.records || json.data || [];
+      if (Array.isArray(batchLines)) lines.push(...batchLines);
+    } catch (err) {
+      console.error('Order item-line search failed:', err.message);
+    }
+  }
+
+  return lines;
+}
+
+function itemLineOrderId(line) {
+  return String(
+    line.orderId ||
+    line.orderID ||
+    line.outboundOrderId ||
+    line.outboundOrderID ||
+    line.order?.id ||
+    line.orderNumber ||
+    line.orderNo ||
+    line.dn ||
+    ''
+  );
+}
+
+async function buildOrderBaseQtyMap(headers, orders) {
+  const orderIds = (orders || []).map(order => order.id || order.orderId || order.orderNumber).filter(Boolean);
+  const itemLines = await fetchOrderItemLines(headers, orderIds);
+  const qtyByOrder = new Map();
+
+  for (const line of itemLines) {
+    const orderId = itemLineOrderId(line);
+    if (!orderId) continue;
+    const qty = parseWiseNumber(
+      line.baseQty ??
+      line.baseQTY ??
+      line.baseQuantity ??
+      line.qty ??
+      line.quantity ??
+      line.orderedQty ??
+      line.orderQty ??
+      0
+    );
+    qtyByOrder.set(orderId, (qtyByOrder.get(orderId) || 0) + qty);
+  }
+
+  return qtyByOrder;
+}
+
 async function fetchReceiptPage(headers, body) {
   const res = await fetch(`${WMS_API_BASE_URL}/wms-bam/inbound/receipt/search-by-paging`, {
     method: 'POST',
@@ -2135,6 +2199,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           if (o.retailerId) orgIds.add(o.retailerId);
         }
         const orgNames = await resolveOrgNames([...orgIds], req.accessToken, req.tenantId);
+        const orderBaseQtyMap = await buildOrderBaseQtyMap(headers, orders);
 
         const allRows = orders.map(o => ({
           orderNumber: o.id,
@@ -2151,7 +2216,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           retailerName: orgNames[o.retailerId] || o.retailerId || '',
           orderType: o.orderType,
           source: o.source,
-          baseQty: getOrderBaseQty(o),
+          baseQty: orderBaseQtyMap.get(String(o.id || o.orderId || o.orderNumber)) ?? getOrderBaseQty(o),
           palletQty: parseWiseNumber(o.palletQty ?? o.estPalletPickQty ?? 0),
           stagingLocation: o.stagingLocation || o.stagingLocationName || '',
           prestatus: o.prestatus || o.preStatus || o.secondaryStatus || '',
