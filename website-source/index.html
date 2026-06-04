@@ -939,12 +939,7 @@
     var option=select.options && select.options[select.selectedIndex];
     return ((option && option.textContent) || select.value || '').toLowerCase();
   }
-  function isTargetFacility(){
-    var text=facilityText();
-    return text.indexOf('fontana') >= 0 || text.indexOf('aless') >= 0;
-  }
   function equipmentSections(){
-    if(!isTargetFacility()) return [];
     return Array.from(document.querySelectorAll('h2,h3')).map(function(head){
       if(!/Section 1 .*In-Yard FULL Equipment/i.test(head.textContent || '')) return null;
       var section=head;

@@ -712,7 +712,7 @@ export function Dashboard({
                 </span>
               </h2>
             </div>
-            {usesFontanaTabs && equipmentCustomerSet.length > 0 ? (
+            {equipmentCustomerSet.length > 0 ? (
               <div className="chips equipment-customer-chips">
                 <button
                   className={`chip ${!selectedEquipmentCustomer ? "active" : ""}`}
