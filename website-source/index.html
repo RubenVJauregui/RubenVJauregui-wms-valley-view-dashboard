@@ -1689,7 +1689,7 @@
   if (window.__nightShiftTitleCountAndFilter) return;
   window.__nightShiftTitleCountAndFilter = true;
   function norm(v){ return String(v||'').toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim(); }
-  function allowedCustomer(v){ var n=norm(v); return n.indexOf('ALL MARKET') >= 0 || n.indexOf('VITA COCO') >= 0 || n.indexOf('SIMPLE MODERN') >= 0; }
+  function allowedCustomer(v){ var n=norm(v); return n.indexOf('EUROMARKET') < 0 && n.indexOf('EURO MARKET') < 0 && n.indexOf('EUROMAERKET') < 0; }
   function canonicalCustomer(v){ var n=norm(v); if(n.indexOf('ALL MARKET') >= 0 || n.indexOf('VITA COCO') >= 0) return 'ALL MARKET INC / VITA COCO'; if(n.indexOf('SIMPLE MODERN') >= 0) return 'SIMPLE MODERN'; return String(v||'').trim(); }
   function isNightShift(){ var a=document.querySelector('.report-tab.active'); return a && /Night Shift/i.test(a.textContent||''); }
   function applyNightShiftTitleAndFilter(){
@@ -1761,7 +1761,7 @@
   window.__nightShiftCustomerSummaryApplied = true;
   var selectedCustomer = 'ALL';
   function norm(v){ return String(v||'').toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim(); }
-  function allowedCustomer(v){ var n=norm(v); return n.indexOf('ALL MARKET') >= 0 || n.indexOf('VITA COCO') >= 0 || n.indexOf('SIMPLE MODERN') >= 0; }
+  function allowedCustomer(v){ var n=norm(v); return n.indexOf('EUROMARKET') < 0 && n.indexOf('EURO MARKET') < 0 && n.indexOf('EUROMAERKET') < 0; }
   function canonicalCustomer(v){ var n=norm(v); if(n.indexOf('ALL MARKET') >= 0 || n.indexOf('VITA COCO') >= 0) return 'ALL MARKET INC / VITA COCO'; if(n.indexOf('SIMPLE MODERN') >= 0) return 'SIMPLE MODERN'; return String(v||'').trim(); }
   function isNightShift(){ var a=document.querySelector('.report-tab.active'); return a && /Night Shift/i.test(a.textContent||''); }
   function applyNightShiftCustomerSummary(){
