@@ -1946,4 +1946,41 @@
 })();
 </script>
 
+<style id="section1-equipment-filter-buttons-style">
+  .section1-equipment-filter-buttons{display:flex!important;flex-wrap:wrap!important;gap:8px!important;padding:12px 18px!important;border-top:1px solid rgba(39,52,95,.55)!important;border-bottom:1px solid rgba(39,52,95,.55)!important;background:rgba(8,13,31,.55)!important}
+  .section1-equipment-filter-buttons .section1-filter-chip{cursor:pointer!important;border:1px solid rgba(168,85,247,.45)!important;color:#d8b4fe!important;background:rgba(12,20,44,.86)!important;border-radius:999px!important;padding:7px 12px!important;font-size:12px!important;font-weight:800!important;letter-spacing:.01em!important}
+  .section1-equipment-filter-buttons .section1-filter-chip:hover,.section1-equipment-filter-buttons .section1-filter-chip.active{border-color:rgba(251,191,36,.7)!important;color:#fff!important;background:rgba(35,26,73,.92)!important}
+  .section1-equipment-filter-buttons .section1-filter-chip b{color:#fbbf24!important;margin-left:4px!important}
+</style>
+<script id="section1-equipment-filter-buttons">
+(function(){
+  if(window.__section1EquipmentFilterButtonsApplied)return;window.__section1EquipmentFilterButtonsApplied=true;
+  var selectedBySection=new WeakMap();
+  function norm(v){return String(v||'').toUpperCase().replace(/\s*\(\d+\)\s*$/,'').replace(/[^A-Z0-9]+/g,' ').trim();}
+  function clean(v){return String(v||'').replace(/\s*\(\d+\)\s*$/,'').trim();}
+  function isSection1Title(text){text=String(text||'').toUpperCase();return text.indexOf('SECTION 1')>=0&&text.indexOf('IN-YARD FULL EQUIPMENT')>=0;}
+  function section1Sections(){return Array.from(document.querySelectorAll('h2,h3')).map(function(head){if(!isSection1Title(head.textContent))return null;var n=head;while(n&&n!==document.body){if(n.querySelector&&n.querySelector('table'))return n;n=n.parentElement;}return null;}).filter(Boolean);}
+  function customerColumn(table){return Array.from(table.querySelectorAll('thead th')).findIndex(function(th){return /customer/i.test(th.textContent||'');});}
+  function applySection(section){
+    var table=section.querySelector('table');if(!table)return;var idx=customerColumn(table);if(idx<0)return;
+    var tbody=table.querySelector('tbody');if(!tbody)return;var rows=Array.from(tbody.querySelectorAll('tr'));
+    var counts={},names={};
+    rows.forEach(function(tr){var cells=tr.querySelectorAll('td');var name=clean(cells[idx]?cells[idx].textContent:'')||'Pending';var key=norm(name);if(!key)return;counts[key]=(counts[key]||0)+1;names[key]=names[key]||name;});
+    var selected=selectedBySection.get(section)||'ALL';if(selected!=='ALL'&&!counts[selected])selected='ALL';selectedBySection.set(section,selected);
+    rows.forEach(function(tr){var cells=tr.querySelectorAll('td');var key=norm(clean(cells[idx]?cells[idx].textContent:'')||'Pending');tr.style.display=(selected==='ALL'||key===selected)?'':'none';});
+    var old=section.querySelector('.section1-equipment-filter-buttons');if(old)old.remove();
+    if(!Object.keys(counts).length)return;
+    var wrap=document.createElement('div');wrap.className='section1-equipment-filter-buttons';
+    var total=Object.keys(counts).reduce(function(s,k){return s+counts[k];},0);
+    function button(label,key,count){var b=document.createElement('button');b.type='button';b.className='section1-filter-chip'+(selected===key?' active':'');b.dataset.customerKey=key;b.innerHTML=label+' <b>('+count+')</b>';return b;}
+    wrap.appendChild(button('All','ALL',total));
+    Object.keys(counts).sort(function(a,b){return counts[b]-counts[a]||names[a].localeCompare(names[b]);}).forEach(function(key){wrap.appendChild(button(names[key],key,counts[key]));});
+    var heading=section.querySelector('.section-heading')||section.querySelector('h2,h3');if(heading&&heading.parentNode)heading.parentNode.insertBefore(wrap,heading.nextSibling);
+  }
+  function applyAll(){section1Sections().forEach(applySection);}
+  document.addEventListener('click',function(e){var chip=e.target&&e.target.closest?e.target.closest('.section1-equipment-filter-buttons .section1-filter-chip'):null;if(!chip)return;var section=chip.closest('section,.report-section')||chip.parentElement;while(section&&section!==document.body&&!(section.querySelector&&section.querySelector('table')&&section.querySelector('.section1-equipment-filter-buttons'))){section=section.parentElement;}if(!section)return;var key=chip.dataset.customerKey||'ALL';selectedBySection.set(section,selectedBySection.get(section)===key?'ALL':key);setTimeout(function(){applySection(section);},0);},true);
+  applyAll();document.addEventListener('click',function(){setTimeout(applyAll,250);},true);setInterval(applyAll,1000);
+})();
+</script>
+
 </body></html>
