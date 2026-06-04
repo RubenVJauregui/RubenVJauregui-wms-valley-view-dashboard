@@ -345,6 +345,29 @@ function isFullToOffloadContainer(row) {
   return type === 'CONTAINER' && status === 'FULL' && detail === 'FULL_TO_OFFLOAD';
 }
 
+const TEAM_1_FULL_TO_OFFLOAD_DETAILS = new Set([
+  '',
+  'FULL_AFTER_LOADED',
+  'FULL_TO_OFFLOAD',
+  'LOAD_WAITING',
+  'LOADING',
+  'OFFLOAD_WAITING',
+  'OFFLOADING',
+  'UNKNOWN',
+]);
+
+function isTeam1ExcelFullToOffloadContainer(row) {
+  const type = normalizeWiseCode(row.equipmentType || row.type || '');
+  const status = normalizeWiseCode(row.equipmentStatus || row.status || '');
+  const detail = normalizeWiseCode(row.equipmentOperationStatus || row.details || row.operationStatus || '');
+
+  return (
+    type === 'CONTAINER' &&
+    (status === 'FULL' || status === '') &&
+    TEAM_1_FULL_TO_OFFLOAD_DETAILS.has(detail)
+  );
+}
+
 function buildCustomerCounts(rows, customerKey = 'customer') {
   const counts = new Map();
   for (const row of rows) {
@@ -1551,12 +1574,17 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
               || (cfg.customerIds || []).includes(customerId)
               || rowMatchesTab({ customer: customerName, customerId }, cfg);
             const fullToOffloadMatch = isFullToOffloadContainer(e);
+
+            if (tab === 'bay1') {
+              return tabCustomerMatch && isTeam1ExcelFullToOffloadContainer(e);
+            }
+
             if (useFullToOffloadMetric) {
               // Valley View Night Shift, Fontana, and Alessandro follow the Full-to-Offload metric:
               // CONTAINER + FULL + FULL_TO_OFFLOAD, excluding Euromarket / Crate & Barrel only.
               return fullToOffloadMatch && !isEuromarketCustomer(customerName) && !isEuromarketCustomer(customerId);
             }
-            return pivotCustomerMatch && tabCustomerMatch && fullToOffloadMatch;
+            return tabCustomerMatch && fullToOffloadMatch;
           })
           .map(e => ({
             equipmentNumber: e.equipmentNo || e.equipmentNumber || e.barcode || e.id,
