@@ -1498,19 +1498,6 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
       }
 
       try {
-        await applyUnloadedYesterdayWorkloadCounts({
-          headers,
-          accessToken: req.accessToken,
-          tenantId: req.tenantId,
-          timeZone: timeZone || 'America/Los_Angeles',
-          byCustomer,
-          metric,
-        });
-      } catch (err) {
-        console.error('Configured workload unloaded-yesterday fetch error:', err.message);
-      }
-
-      try {
         const pickedResult = await applyPickedYesterdayWorkloadCounts({
           headers,
           accessToken: req.accessToken,
@@ -1573,6 +1560,14 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
     let pickedYesterdayWindow = '2026-06-02';
     try {
       const byCustomer = new Map(rows.map(row => [row.customer, row]));
+      await applyUnloadedYesterdayWorkloadCounts({
+        headers,
+        accessToken: req.accessToken,
+        tenantId: req.tenantId,
+        timeZone: timeZone || 'America/Los_Angeles',
+        byCustomer,
+        metric,
+      });
       const pickedResult = await applyPickedYesterdayWorkloadCounts({
         headers,
         accessToken: req.accessToken,
