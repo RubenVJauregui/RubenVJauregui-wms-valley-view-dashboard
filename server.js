@@ -574,6 +574,12 @@ function getWorkloadCustomerKey(value) {
   if (normalized.includes('GURUNANDA') || normalized.includes('ORG 655875') || normalized.includes('ORG 738412')) return 'GURUNANDA';
   if (normalized.includes('VITA COCO') || normalized.includes('ALL MARKET')) return 'ALL MARKET VITA COCO';
   if (normalized.includes('SIMPLE MODERN')) return 'SIMPLE MODERN';
+  if (normalized.includes('ORGAIN')) return 'ORGAIN';
+  if (normalized.includes('KING') && normalized.includes('HAWAIIAN')) return 'KINGS HAWAIIAN';
+  if (normalized.includes('MAMA CHIA') || normalized.includes('MAMMA CHIA')) return 'MAMA CHIA';
+  if (normalized.includes('NZXT')) return 'NZXT';
+  if (normalized.includes('LENNOX')) return 'LENNOX';
+  if (normalized.includes('KARAKA') || normalized.includes('KARAKAS')) return 'KARAKA';
 
   return normalized || 'UNKNOWN CUSTOMER';
 }
@@ -582,6 +588,7 @@ function applyTeam4ContainersFullCountsToWorkload(workloadRows, team4FullRows) {
   const fullCountsByCustomer = new Map();
 
   for (const row of team4FullRows || []) {
+    if (!isFullToOffloadContainer(row)) continue;
     const key = getWorkloadCustomerKey(getEquipmentCustomer(row));
     if (!key || key === 'UNKNOWN CUSTOMER') continue;
     fullCountsByCustomer.set(key, (fullCountsByCustomer.get(key) || 0) + 1);
