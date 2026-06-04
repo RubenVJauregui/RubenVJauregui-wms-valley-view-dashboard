@@ -520,11 +520,19 @@ function isFullToEmptyEquipmentChange(row, start, end) {
     value.includes('EMPTY_AFTER_OFFLOADED')
   );
 
+  const impliedFullToEmptySignal = [current, detail].some(value =>
+    value.includes('EMPTY_AFTER_OFFLOAD') ||
+    value.includes('EMPTY_AFTER_OFFLOADED') ||
+    value.includes('OFFLOADED') ||
+    value.includes('DEVANNED')
+  );
+
   const hadFullSignal =
     previous === 'FULL' ||
     previous.includes('FULL_TO_OFFLOAD') ||
     previous.includes('FULL_AFTER_LOADED') ||
-    normalizeWiseCode(row.fromStatus || row.sourceStatus || '').includes('FULL');
+    normalizeWiseCode(row.fromStatus || row.sourceStatus || '').includes('FULL') ||
+    impliedFullToEmptySignal;
 
   return hasEmptySignal && hadFullSignal && isWithinRange(changedAt, start, end);
 }
