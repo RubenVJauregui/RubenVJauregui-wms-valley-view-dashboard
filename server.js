@@ -702,43 +702,62 @@ async function fetchOrdersByIds(headers, ids) {
   return orders;
 }
 
+async function fetchAllClosedPickTasks(headers, window, facilityId) {
+  const tasks = [];
+  const pageSize = 200;
+  for (let currentPage = 1; currentPage <= 50; currentPage += 1) {
+    const res = await fetch(`${WMS_API_BASE_URL}/wms-bam/outbound/pick-task/search-by-paging`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        currentPage,
+        pageNo: currentPage,
+        pageSize,
+        statuses: ['CLOSED'],
+        taskType: 'PICK',
+        isolationId: facilityId,
+        endTimeFrom: window.start.toISOString(),
+        endTimeTo: window.end.toISOString(),
+        sortingFields: [{ field: 'endTime', orderBy: 'DESC' }],
+      }),
+    });
+    if (!res.ok) {
+      if (currentPage === 1) return { ok: false, tasks: [], total: 0 };
+      break;
+    }
+    const json = await res.json().catch(() => ({}));
+    if (!(json.code === 0 || String(json.code) === '0')) {
+      if (currentPage === 1) return { ok: false, tasks: [], total: 0 };
+      break;
+    }
+    const list = json.data?.list || json.data?.records || json.data || [];
+    if (!Array.isArray(list) || !list.length) break;
+    tasks.push(...list);
+    const total = Number(json.data?.totalCount || json.data?.total || 0);
+    if (list.length < pageSize || (total && tasks.length >= total)) break;
+  }
+  return { ok: true, tasks, total: tasks.length };
+}
+
 async function applyPickedYesterdayWorkloadCounts({ headers, accessToken, tenantId, facilityId, timeZone, byCustomer, metric }) {
   const window = getYesterdayWindow(timeZone || 'America/Los_Angeles');
 
-  // Workload tab only: WMS order.pickedTime is frequently blank. The reliable source
-  // for "picked yesterday" is the status-change event where newStatus = PICKED and
-  // event createdTime is yesterday in facility timezone. Then join event.orderId/DN
-  // back to outbound orders for customer and current status.
-  const eventResult = await fetchAllStatusChangeEvents(headers, {
-    pageSize: 500,
-    newStatus: 'PICKED',
-    isolationId: facilityId,
-    createdTimeStart: window.start.toISOString(),
-    createdTimeEnd: window.end.toISOString(),
-    startTime: window.start.toISOString(),
-    endTime: window.end.toISOString(),
-    sortingFields: [{ field: 'createdTime', orderBy: 'DESC' }],
-  });
-
-  const eventOrderIds = Array.from(new Set((eventResult.events || [])
-    .filter((event) => String(event.newStatus || '').toUpperCase() === 'PICKED')
-    .filter((event) => isWithinRange(event.createdTime || event.updatedTime, window.start, window.end))
-    .map((event) => event.orderId || event.orderNo || event.orderNumber || event.order_id)
-    .filter(Boolean)));
-
-  if (!eventOrderIds.length) return { windowKey: window.key, count: 0, fetched: 0 };
-
-  const orders = await fetchOrdersByIds(headers, eventOrderIds);
-  const ordersById = new Map();
-  for (const order of orders) {
-    const id = order.id || order.orderId || order.orderNumber;
-    if (id) ordersById.set(id, order);
-  }
-
-  const matchingOrders = eventOrderIds
-    .map((id) => ordersById.get(id))
+  // Workload tab only: order.pickedTime is blank in WISE order responses.
+  // The operational "PICKED TIME" for this dashboard is the completed pick-task endTime.
+  // Count every unique order from CLOSED PICK tasks whose endTime was yesterday in the
+  // facility timezone, then keep only orders whose current status is in the allowed list.
+  const pickResult = await fetchAllClosedPickTasks(headers, window, facilityId);
+  const pickTasks = pickResult.tasks || [];
+  const pickedOrderIds = Array.from(new Set(pickTasks
+    .filter((task) => isWithinRange(task.endTime || task.updatedTime, window.start, window.end))
+    .flatMap((task) => Array.isArray(task.orderIds) ? task.orderIds : [task.orderId || task.orderNo || task.orderNumber])
     .filter(Boolean)
-    .filter((order) => isWorkloadPickedStatus(getOrderStatus(order)));
+    .map((id) => String(id))));
+
+  if (!pickedOrderIds.length) return { windowKey: window.key, count: 0, fetched: pickTasks.length };
+
+  const orders = await fetchOrdersByIds(headers, pickedOrderIds);
+  const matchingOrders = orders.filter((order) => isWorkloadPickedStatus(getOrderStatus(order)));
 
   const orgIds = new Set();
   for (const order of matchingOrders) {
@@ -751,7 +770,7 @@ async function applyPickedYesterdayWorkloadCounts({ headers, accessToken, tenant
   const seen = new Set();
   for (const order of matchingOrders) {
     const orderId = order.id || order.orderId || order.orderNumber || order.referenceNo;
-    if (seen.has(orderId)) continue;
+    if (!orderId || seen.has(orderId)) continue;
     seen.add(orderId);
     const customer =
       orgNames[order.customerId || order.customer?.id || order.customer?.organizationId] ||
@@ -762,7 +781,7 @@ async function applyPickedYesterdayWorkloadCounts({ headers, accessToken, tenant
       'Unknown';
     addCustomerMetricRow(byCustomer, customer, metric).ordersPickedYesterday.value += 1;
   }
-  return { windowKey: window.key, count: seen.size, fetched: eventResult.events.length };
+  return { windowKey: window.key, count: seen.size, fetched: pickTasks.length };
 }
 
 // URL variant mapping: /api/dashboard/bay2-auto-assign etc.
