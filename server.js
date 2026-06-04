@@ -552,6 +552,49 @@ function getEquipmentCustomer(row) {
     'Unknown';
 }
 
+function normalizeWorkloadCustomerName(value) {
+  return String(value || '')
+    .toUpperCase()
+    .replace(/&/g, ' AND ')
+    .replace(/[^A-Z0-9]+/g, ' ')
+    .replace(/\bLLC\b|\bINC\b|\bCO\b|\bLTD\b|\bCORP\b|\bCORPORATION\b/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getWorkloadCustomerKey(value) {
+  const normalized = normalizeWorkloadCustomerName(value);
+
+  if (normalized.includes('GURUNANDA')) return 'GURUNANDA';
+  if (normalized.includes('VITA COCO') || normalized.includes('ALL MARKET')) return 'ALL MARKET VITA COCO';
+  if (normalized.includes('SIMPLE MODERN')) return 'SIMPLE MODERN';
+
+  return normalized || 'UNKNOWN CUSTOMER';
+}
+
+function applyTeam4ContainersFullCountsToWorkload(workloadRows, team4FullRows) {
+  const fullCountsByCustomer = new Map();
+
+  for (const row of team4FullRows || []) {
+    const key = getWorkloadCustomerKey(getEquipmentCustomer(row));
+    if (!key || key === 'UNKNOWN CUSTOMER') continue;
+    fullCountsByCustomer.set(key, (fullCountsByCustomer.get(key) || 0) + 1);
+  }
+
+  for (const row of workloadRows || []) {
+    const key = getWorkloadCustomerKey(row.customer);
+    const count = fullCountsByCustomer.get(key) || 0;
+
+    row.containersFull = {
+      supported: true,
+      value: count,
+    };
+  }
+
+  return workloadRows;
+}
+
+
 function getEquipmentCurrentStatus(row) {
   return normalizeWiseCode(
     row.equipmentStatus ||
@@ -1628,6 +1671,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
       const yesterdayKey = yesterday.toISOString().slice(0, 10);
       const byCustomer = new Map();
       let pickedYesterdayWindow = yesterdayKey;
+      let team4FullRows = [];
 
       for (const o of orders) {
         const customer =
@@ -1654,7 +1698,8 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
         const equipment = yardRes.ok && (yardJson.code === 0 || String(yardJson.code) === '0')
           ? (yardJson.data?.list || yardJson.data || [])
           : [];
-        for (const e of Array.isArray(equipment) ? equipment : []) {
+        team4FullRows = Array.isArray(equipment) ? equipment : [];
+        for (const e of team4FullRows) {
           const customer = e.customerName || e.customer?.name || e.customerId || 'Unknown';
           addCustomerMetricRow(byCustomer, customer, metric).containersFull.value += 1;
         }
@@ -1691,6 +1736,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
       }
 
       const rows = Array.from(byCustomer.values()).sort((a, b) => a.customer.localeCompare(b.customer));
+      applyTeam4ContainersFullCountsToWorkload(rows, team4FullRows);
       const totals = ['unloadedYesterday', 'containersFull', 'ordersPickedYesterday', 'newOrders', 'fillableOrders'].reduce((acc, key) => {
         acc[key] = metric(rows.reduce((sum, row) => sum + (row[key]?.value || 0), 0));
         return acc;
@@ -1759,6 +1805,14 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
     } catch (err) {
       console.error('Configured workload picked-yesterday fetch error:', err.message);
     }
+
+    try {
+      const team4FullRows = await fetchAllYardEquipment(headers, false);
+      applyTeam4ContainersFullCountsToWorkload(rows, team4FullRows);
+    } catch (err) {
+      console.error('Configured workload containers-full fetch error:', err.message);
+    }
+
     const totals = ['unloadedYesterday', 'containersFull', 'ordersPickedYesterday', 'newOrders', 'fillableOrders'].reduce((acc, key) => {
       acc[key] = metric(rows.reduce((sum, row) => sum + (row[key]?.value || 0), 0));
       return acc;
