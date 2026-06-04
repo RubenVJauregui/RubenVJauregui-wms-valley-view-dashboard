@@ -1537,6 +1537,43 @@
 })();
 </script>
 
+<style id="team2-sheet2-summary-style">
+  .team2-sheet2-layout{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(360px,32%)!important;gap:16px!important;align-items:start!important}
+  .team2-sheet2-panel{position:sticky!important;top:88px!important;background:#0e1218!important;border:1px solid #202a36!important;border-radius:14px!important;overflow:hidden!important;box-shadow:0 10px 28px rgba(0,0,0,.25)!important}
+  .team2-sheet2-panel .summary-caption{color:#fbbf24!important;font-size:11px!important;font-weight:800!important;text-transform:uppercase!important;letter-spacing:.04em!important}
+  .team2-sheet2-panel table{width:100%!important;border-collapse:collapse!important;font-size:12px!important}
+  .team2-sheet2-panel th,.team2-sheet2-panel td{padding:9px 11px!important;border-bottom:1px solid rgba(39,52,95,.75)!important;white-space:nowrap!important;text-align:left!important}
+  .team2-sheet2-panel th{color:#aab6d3!important;background:#111827!important;font-size:10px!important;text-transform:uppercase!important;letter-spacing:.04em!important}
+  .team2-sheet2-panel td{color:#f4f7ff!important}.team2-sheet2-panel td:first-child{font-weight:700!important}.team2-sheet2-total td{background:#111827!important;color:#fff!important;font-weight:900!important}
+  @media (max-width:1100px){.team2-sheet2-layout{grid-template-columns:1fr!important}.team2-sheet2-panel{position:static!important}}
+</style>
+<script id="team2-sheet2-summary">
+(function(){
+  if(window.__team2Sheet2SummaryApplied)return;window.__team2Sheet2SummaryApplied=true;
+  var latestSummary=null;
+  function activeTab(){var a=document.querySelector('.report-tab.active');return a&&a.textContent?a.textContent.trim():'';}
+  function isTeam2(){var t=activeTab();return t==='Team 2'||t==='E-Comm';}
+  function esc(v){return String(v==null?'':v).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
+  function fmt(v){var n=Number(v||0);return Number.isFinite(n)?n.toLocaleString('en-US'):esc(v);}
+  function findSection2(){
+    var h=Array.from(document.querySelectorAll('h2,h3')).find(function(x){var t=(x.textContent||'').toUpperCase();return t.indexOf('SECTION 2')>=0&&t.indexOf('PLANNED OUTBOUND ORDERS')>=0;});
+    if(!h)return null;var n=h;while(n&&n!==document.body){if(n.classList&&n.classList.contains('report-section'))return n;if(n.querySelector&&n.querySelector('table'))return n;n=n.parentElement;}return null;
+  }
+  function render(){
+    var existing=document.querySelector('.team2-sheet2-panel');
+    if(!isTeam2()||!latestSummary){if(existing)existing.remove();document.querySelectorAll('.team2-sheet2-layout').forEach(function(x){x.classList.remove('team2-sheet2-layout');});return;}
+    var section=findSection2();if(!section||!section.parentElement)return;var parent=section.parentElement;parent.classList.add('team2-sheet2-layout');
+    if(!existing||existing.parentElement!==parent){if(existing)existing.remove();existing=document.createElement('section');existing.className='report-section team2-sheet2-panel';parent.insertBefore(existing,section.nextSibling);}
+    var rows=latestSummary.rows||[];var total=latestSummary.total||{orderCount:rows.reduce(function(s,r){return s+Number(r.orderCount||0);},0),baseQty:rows.reduce(function(s,r){return s+Number(r.baseQty||0);},0)};
+    existing.innerHTML='<div class="section-heading"><h2>Customer Summary</h2><span class="summary-caption">Sheet2 match</span></div><div class="table-frame"><table><thead><tr><th>Row Labels</th><th>Count of Order #</th><th>Sum of BASE QTY</th></tr></thead><tbody>'+
+      rows.map(function(r){return '<tr><td>'+esc(r.customer||r.label||r.customerName||'')+'</td><td>'+fmt(r.orderCount)+'</td><td>'+fmt(r.baseQty)+'</td></tr>';}).join('')+
+      '<tr class="team2-sheet2-total"><td>Grand Total</td><td>'+fmt(total.orderCount)+'</td><td>'+fmt(total.baseQty)+'</td></tr></tbody></table></div>';
+  }
+  var oldFetch=window.fetch;window.fetch=function(){return oldFetch.apply(this,arguments).then(function(res){try{var url=String(arguments[0]&&arguments[0].url||arguments[0]||'');if(url.indexOf('/api/dashboard')>=0){res.clone().json().then(function(json){if(json&&json.bay2&&json.bay2.sheet2Summary){latestSummary=json.bay2.sheet2Summary;setTimeout(render,50);setTimeout(render,500);setTimeout(render,1500);}}).catch(function(){});}}catch(e){}return res;}.bind(arguments));};
+  document.addEventListener('click',function(){setTimeout(render,250);},true);setInterval(render,1000);
+})();
+</script>
+
 <style id="original-login-restore">
   .login-shell {
     min-height: 100vh !important;

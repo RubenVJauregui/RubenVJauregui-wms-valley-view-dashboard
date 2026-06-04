@@ -275,6 +275,56 @@ function bay2Sheet3MetricFor(customer) {
   })?.[1] || null;
 }
 
+
+function bay2Sheet2CustomerLabel(customer) {
+  const normalized = normalizeName(customer);
+  const aliases = [
+    ['BYTE DANCE TIKTOK', 'BYTEDANCE INC.'],
+    ['BYTEDANCE', 'BYTEDANCE INC.'],
+    ['COME READY', 'COME READY FOODS LLC'],
+    ['EMBER', 'EMBER TECHNOLOGIES, INC.'],
+    ['FLAG AND ANTHEM', 'FLAG & ANTHEM'],
+    ['INNOVATIVE HEALTH PARTNERS DBA THE FEELIST', 'INNOVATIVE HEALTH PARTNERS DBA THE FEELIST'],
+    ['THE FEELIST', 'INNOVATIVE HEALTH PARTNERS DBA THE FEELIST'],
+    ['MAMMA CHIA', 'MAMMA CHIA'],
+    ['PUNK BUNNY', 'PUNK BUNNY LLC'],
+    ['RECOVERY', 'RECOVERY SPORTS LLC'],
+    ['RISEANDSHINE', 'RISE BEVERAGES LLC dba RISE BREWING COMPANY'],
+    ['RISE BEVERAGES', 'RISE BEVERAGES LLC dba RISE BREWING COMPANY'],
+    ['SPLENDOR WATER', 'SPLENDOR WATER LLC'],
+    ['THE OUAI', 'THE OUAI'],
+    ['UPTIME ENERGY', 'UPTIME ENERGY INC'],
+    ['VAONIS', 'VAONIS'],
+    ['VITA COCO DTC', 'VITA COCO - DTC'],
+    ['ALL MARKET INC VITA COCO', 'VITA COCO - DTC'],
+    ['ZEN', 'ZEN BEVERAGE LLC'],
+  ];
+  const match = aliases.find(([needle]) => normalized.includes(needle) || needle.includes(normalized));
+  return match ? match[1] : (customer || '(blank)');
+}
+
+function buildBay2Sheet2Summary(rows) {
+  const byCustomer = new Map();
+  for (const row of rows) {
+    const label = bay2Sheet2CustomerLabel(row.customer || row.customerName || row.label || '');
+    const current = byCustomer.get(label) || { customer: label, orderCount: 0, baseQty: 0 };
+    current.orderCount += 1;
+    current.baseQty += Number(row.baseQty || 0);
+    byCustomer.set(label, current);
+  }
+  const summaryRows = Array.from(byCustomer.values())
+    .filter(row => normalizeName(row.customer) !== normalizeName('(blank)'))
+    .sort((a, b) => a.customer.localeCompare(b.customer));
+  return {
+    rows: summaryRows,
+    total: {
+      customer: 'Grand Total',
+      orderCount: summaryRows.reduce((sum, row) => sum + row.orderCount, 0),
+      baseQty: summaryRows.reduce((sum, row) => sum + row.baseQty, 0),
+    },
+  };
+}
+
 function normalizeName(value) {
   return String(value || '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
 }
@@ -1417,11 +1467,13 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           };
           if (mezzanineRows.length) mezzanineRows.push(mezzanineTotal);
           const pivotRows = [...leftPivotRows, ...mezzanineRows];
+          const sheet2Summary = buildBay2Sheet2Summary(rows);
 
           result.bay2 = {
             supported: true,
             pivotRows,
             mezzanineRows,
+            sheet2Summary,
             detailRows: rows,
             aged24Rows,
             aged48Rows,
@@ -1455,8 +1507,8 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             })),
           };
           result.metrics = [
-            { label: 'Count of Order #', value: String(grandTotal.orderCount), sub: 'WISE planned orders' },
-            { label: 'Sum of BASE QTY', value: String(grandTotal.baseQty), sub: 'WISE base quantity' },
+            { label: 'Count of Order #', value: String(sheet2Summary.total.orderCount), sub: 'WISE planned orders' },
+            { label: 'Sum of BASE QTY', value: String(sheet2Summary.total.baseQty), sub: 'WISE base quantity' },
             { label: 'Past SLA', value: String(aged24Rows.length), sub: 'Orders older than 24 hours' },
             { label: 'Customers', value: String(customerSet.length), sub: 'Team 2 customer set' },
           ];
