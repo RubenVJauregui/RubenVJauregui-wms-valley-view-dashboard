@@ -408,6 +408,128 @@ function isFullToOffloadContainer(row) {
   return type === 'CONTAINER' && status === 'FULL' && detail === 'FULL_TO_OFFLOAD';
 }
 
+function isTrailerOrContainerEquipment(row) {
+  const type = normalizeWiseCode(row.equipmentType || row.type || row.equipmentTypeName || '');
+  return !type || type.includes('CONTAINER') || type.includes('TRAILER');
+}
+
+function readNestedValueByKey(row, matcher, seen = new Set()) {
+  if (!row || typeof row !== 'object' || seen.has(row)) return undefined;
+  seen.add(row);
+
+  for (const [key, value] of Object.entries(row)) {
+    if (matcher(normalizeWiseCode(key), key)) return value;
+  }
+
+  for (const value of Object.values(row)) {
+    if (value && typeof value === 'object') {
+      const nested = readNestedValueByKey(value, matcher, seen);
+      if (nested !== undefined && nested !== null && nested !== '') return nested;
+    }
+  }
+
+  return undefined;
+}
+
+function getEquipmentCustomer(row) {
+  return row.customerName ||
+    row.customer?.name ||
+    row.ownerName ||
+    row.organizationName ||
+    row.orgName ||
+    row.customerId ||
+    row.customer?.id ||
+    row.customerOrgId ||
+    'Unknown';
+}
+
+function getEquipmentCurrentStatus(row) {
+  return normalizeWiseCode(
+    row.equipmentStatus ||
+    row.status ||
+    row.currentStatus ||
+    row.currentEquipmentStatus ||
+    readNestedValueByKey(row, key => key.endsWith('STATUS') && !key.includes('PRE') && !key.includes('OLD')) ||
+    ''
+  );
+}
+
+function getEquipmentPreviousStatus(row) {
+  return normalizeWiseCode(
+    row.previousStatus ||
+    row.prevStatus ||
+    row.preStatus ||
+    row.oldStatus ||
+    row.beforeStatus ||
+    row.lastStatus ||
+    row.previousEquipmentStatus ||
+    row.prevEquipmentStatus ||
+    row.oldEquipmentStatus ||
+    row.beforeEquipmentStatus ||
+    readNestedValueByKey(row, key =>
+      (key.includes('PREVIOUS') || key.includes('PREV') || key.includes('OLD') || key.includes('BEFORE') || key.includes('LAST')) &&
+      key.endsWith('STATUS')
+    ) ||
+    ''
+  );
+}
+
+function getEquipmentUnloadTime(row) {
+  return row.unloadedTime ||
+    row.unloadTime ||
+    row.unloadedAt ||
+    row.unloadAt ||
+    row.offloadedTime ||
+    row.offloadTime ||
+    row.offloadedAt ||
+    row.offloadAt ||
+    row.devannedTime ||
+    row.devanningTime ||
+    row.devannedAt ||
+    row.devanningEndTime ||
+    row.statusChangedTime ||
+    row.statusChangeTime ||
+    row.statusUpdatedTime ||
+    row.equipmentStatusUpdatedTime ||
+    row.updatedTime ||
+    row.updateTime ||
+    row.modifiedTime ||
+    row.lastModifiedTime ||
+    row.lastUpdateTime ||
+    row.gmtModified ||
+    row.gmtUpdated ||
+    readNestedValueByKey(row, key =>
+      (key.includes('UNLOAD') || key.includes('OFFLOAD') || key.includes('DEVAN') ||
+        (key.includes('STATUS') && (key.includes('CHANGE') || key.includes('UPDATE')))) &&
+      (key.includes('TIME') || key.includes('DATE') || key.includes('AT') || key.includes('WHEN'))
+    ) ||
+    '';
+}
+
+function isFullToEmptyEquipmentChange(row, start, end) {
+  if (!isTrailerOrContainerEquipment(row)) return false;
+
+  const current = getEquipmentCurrentStatus(row);
+  const previous = getEquipmentPreviousStatus(row);
+  const detail = normalizeWiseCode(row.equipmentOperationStatus || row.details || row.operationStatus || row.loadStatus || '');
+  const changedAt = getEquipmentUnloadTime(row);
+
+  const hasEmptySignal = [current, detail].some(value =>
+    value === 'EMPTY' ||
+    value.includes('EMPTY_AFTER_OFFLOAD') ||
+    value.includes('EMPTY_AFTER_OFFLOADED')
+  );
+
+  const hadFullSignal =
+    previous === 'FULL' ||
+    previous.includes('FULL_TO_OFFLOAD') ||
+    previous.includes('FULL_AFTER_LOADED') ||
+    normalizeWiseCode(row.fromStatus || row.sourceStatus || '').includes('FULL');
+
+  return hasEmptySignal && hadFullSignal && isWithinRange(changedAt, start, end);
+}
+
+
 const TEAM_1_FULL_TO_OFFLOAD_DETAILS = new Set([
   '',
   'FULL_AFTER_LOADED',
@@ -737,6 +859,66 @@ async function fetchAllOrderPages(headers, body) {
   return { ok: true, orders, total: total || orders.length };
 }
 
+
+async function fetchEquipmentPage(headers, body) {
+  const res = await fetch(`${WMS_API_BASE_URL}/wms-bam/yard/equipment/search`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body)
+  });
+
+  if (!res.ok) return { ok: false, status: res.status, equipment: [], total: 0 };
+
+  const json = await res.json().catch(() => ({}));
+
+  if (!(json.code === 0 || String(json.code) === '0')) {
+    return { ok: false, status: res.status, equipment: [], total: 0 };
+  }
+
+  return {
+    ok: true,
+    equipment: json.data?.list || json.data || [],
+    total: json.data?.total || 0
+  };
+}
+
+async function fetchAllEquipmentPages(headers, body) {
+  const pageSize = body.pageSize || 500;
+  const equipment = [];
+  const seen = new Set();
+  let total = 0;
+
+  for (let currentPage = 1; currentPage <= 50; currentPage += 1) {
+    const page = await fetchEquipmentPage(headers, {
+      ...body,
+      currentPage,
+      page: currentPage,
+      pageSize
+    });
+
+    if (!page.ok) {
+      if (currentPage === 1) return page;
+      break;
+    }
+
+    total = page.total || total;
+
+    for (const row of Array.isArray(page.equipment) ? page.equipment : []) {
+      const id = row.id || row.equipmentId || row.equipmentNo || row.equipmentNumber || row.barcode || JSON.stringify(row);
+
+      if (!seen.has(id)) {
+        seen.add(id);
+        equipment.push(row);
+      }
+    }
+
+    if (page.equipment.length < pageSize) break;
+    if (total && equipment.length >= total) break;
+  }
+
+  return { ok: true, equipment, total: total || equipment.length };
+}
+
 async function fetchOrdersForTab(headers, cfg, includeAllCustomers = false) {
   const base = {
     currentPage: 1,
@@ -873,6 +1055,64 @@ async function fetchAllClosedPickTasks(headers, window, facilityId) {
     if (list.length < pageSize || (total && tasks.length >= total)) break;
   }
   return { ok: true, tasks, total: tasks.length };
+}
+
+
+async function applyUnloadedYesterdayWorkloadCounts({ headers, accessToken, tenantId, timeZone, byCustomer, metric }) {
+  const window = getYesterdayWindow(timeZone || 'America/Los_Angeles');
+
+  const body = {
+    currentPage: 1,
+    pageSize: 500,
+    statuses: ['EMPTY'],
+    statusChangedTimeStart: window.start.toISOString(),
+    statusChangedTimeEnd: window.end.toISOString(),
+    updateTimeStart: window.start.toISOString(),
+    updateTimeEnd: window.end.toISOString(),
+    unloadTimeStart: window.start.toISOString(),
+    unloadTimeEnd: window.end.toISOString(),
+    sortingFields: [{ field: 'updatedTime', orderBy: 'DESC' }],
+  };
+
+  const result = await fetchAllEquipmentPages(headers, body);
+  const equipment = result.ok ? result.equipment : [];
+  const matchingEquipment = equipment.filter(row =>
+    isFullToEmptyEquipmentChange(row, window.start, window.end)
+  );
+
+  const orgIds = new Set();
+
+  for (const row of matchingEquipment) {
+    const customerId = row.customerId || row.customer?.id || row.customerOrgId || row.organizationId;
+    if (customerId) orgIds.add(customerId);
+  }
+
+  const orgNames = await resolveOrgNames([...orgIds], accessToken, tenantId);
+  const seen = new Set();
+
+  for (const row of matchingEquipment) {
+    const equipmentId =
+      row.id ||
+      row.equipmentId ||
+      row.equipmentNo ||
+      row.equipmentNumber ||
+      row.barcode ||
+      `${getEquipmentCustomer(row)}-${getEquipmentUnloadTime(row)}`;
+
+    if (seen.has(equipmentId)) continue;
+    seen.add(equipmentId);
+
+    const customerId = row.customerId || row.customer?.id || row.customerOrgId || row.organizationId;
+    const customer = orgNames[customerId] || getEquipmentCustomer(row);
+
+    addCustomerMetricRow(byCustomer, customer, metric).unloadedYesterday.value += 1;
+  }
+
+  return {
+    windowKey: window.key,
+    count: seen.size,
+    fetched: equipment.length
+  };
 }
 
 async function applyPickedYesterdayWorkloadCounts({ headers, accessToken, tenantId, facilityId, timeZone, byCustomer, metric }) {
@@ -1242,6 +1482,32 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
         }
       } catch (err) {
         console.error('All-customer workload yard fetch error:', err.message);
+      }
+
+      try {
+        await applyUnloadedYesterdayWorkloadCounts({
+          headers,
+          accessToken: req.accessToken,
+          tenantId: req.tenantId,
+          timeZone: timeZone || 'America/Los_Angeles',
+          byCustomer,
+          metric,
+        });
+      } catch (err) {
+        console.error('All-customer workload unloaded-yesterday fetch error:', err.message);
+      }
+
+      try {
+        await applyUnloadedYesterdayWorkloadCounts({
+          headers,
+          accessToken: req.accessToken,
+          tenantId: req.tenantId,
+          timeZone: timeZone || 'America/Los_Angeles',
+          byCustomer,
+          metric,
+        });
+      } catch (err) {
+        console.error('Configured workload unloaded-yesterday fetch error:', err.message);
       }
 
       try {
