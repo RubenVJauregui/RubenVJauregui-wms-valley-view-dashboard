@@ -825,7 +825,7 @@
       row.style.display=(selected==='ALL' || key===selected) ? '' : 'none';
     });
 
-    section.querySelectorAll('.equipment-customer-chips').forEach(function(old){ old.remove(); });
+    section.querySelectorAll('.chips, .equipment-customer-chips').forEach(function(old){ old.remove(); });
     var wrap=document.createElement('div');
     wrap.className='chips equipment-customer-chips';
     var total=Object.keys(counts).reduce(function(sum,key){ return sum + counts[key]; },0);
@@ -1894,7 +1894,7 @@
         section = section.parentElement;
       }
       if (!section || section === document.body) return;
-      var chips = Array.from(section.querySelectorAll('.equipment-customer-chips'));
+      var chips = Array.from(section.querySelectorAll('.chips, .equipment-customer-chips'));
       chips.slice(1).forEach(function(chip){ chip.remove(); });
     });
   }
