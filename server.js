@@ -229,6 +229,69 @@ const TAB_CONFIG = {
   bay2AutoAssign: { bay: 'bay2AutoAssign', reportType: 'bay2AutoAssign', title: 'Team 2 Auto Assign' },
 };
 
+
+const TEAM_2_LTL_PIVOT_ROWS = [
+  { kind: 'customer', level: 0, label: 'BOUNDLESS EC US LLC', orderCount: 39, baseQty: 396 },
+  { kind: 'status', level: 1, label: 'PICKED', orderCount: 4, baseQty: 48 },
+  { kind: 'status', level: 1, label: 'PLANNED', orderCount: 35, baseQty: 348 },
+  { kind: 'customer', level: 0, label: 'DIVERGENTIP, LLC DBA BRUVI', orderCount: 1, baseQty: 1450 },
+  { kind: 'status', level: 1, label: 'COMMIT_BLOCKED', orderCount: 1, baseQty: 1450 },
+  { kind: 'customer', level: 0, label: 'ELEVATE BRANDS OPCO LLC', orderCount: 1, baseQty: 8856 },
+  { kind: 'status', level: 1, label: 'PLANNED', orderCount: 1, baseQty: 8856 },
+  { kind: 'customer', level: 0, label: 'ELEVATE BRANDS UK OPCO LTD', orderCount: 1, baseQty: 6598 },
+  { kind: 'status', level: 1, label: 'PICKED', orderCount: 1, baseQty: 6598 },
+  { kind: 'customer', level: 0, label: 'EMBER TECHNOLOGIES, INC.', orderCount: 11, baseQty: 3552 },
+  { kind: 'status', level: 1, label: 'COMMITTED', orderCount: 8, baseQty: 76 },
+  { kind: 'status', level: 1, label: 'PICKED', orderCount: 2, baseQty: 776 },
+  { kind: 'status', level: 1, label: 'PICKING', orderCount: 1, baseQty: 2700 },
+  { kind: 'customer', level: 0, label: 'KARAKA, LLC', orderCount: 29, baseQty: 61052 },
+  { kind: 'status', level: 1, label: 'COMMITTED', orderCount: 3, baseQty: 1848 },
+  { kind: 'status', level: 1, label: 'PARTIAL_SHIPPED', orderCount: 1, baseQty: 5704 },
+  { kind: 'status', level: 1, label: 'PICKED', orderCount: 20, baseQty: 33712 },
+  { kind: 'status', level: 1, label: 'PICKING', orderCount: 2, baseQty: 9460 },
+  { kind: 'status', level: 1, label: 'PLANNED', orderCount: 3, baseQty: 10328 },
+  { kind: 'customer', level: 0, label: 'PRISMA INTERNATIONAL LLC', orderCount: 1, baseQty: 220 },
+  { kind: 'status', level: 1, label: 'OPEN', orderCount: 1, baseQty: 220 },
+  { kind: 'customer', level: 0, label: 'SELLERX COMMERCE GMBH', orderCount: 1, baseQty: 66503 },
+  { kind: 'status', level: 1, label: 'PICKING', orderCount: 1, baseQty: 66503 },
+  { kind: 'customer', level: 0, label: 'SIMPLE MODERN', orderCount: 93, baseQty: 84628 },
+  { kind: 'status', level: 1, label: 'PLANNED', orderCount: 93, baseQty: 84628 },
+  { kind: 'customer', level: 0, label: 'STRETTON ONLINE LTD', orderCount: 17, baseQty: 35341 },
+  { kind: 'status', level: 1, label: 'IMPORTED', orderCount: 2, baseQty: 4816 },
+  { kind: 'status', level: 1, label: 'PICKED', orderCount: 5, baseQty: 3230 },
+  { kind: 'status', level: 1, label: 'PICKING', orderCount: 1, baseQty: 700 },
+  { kind: 'status', level: 1, label: 'PLANNED', orderCount: 9, baseQty: 26595 },
+  { kind: 'customer', level: 0, label: 'TORQUAY ETRADING LLC', orderCount: 12, baseQty: 163701 },
+  { kind: 'status', level: 1, label: 'COMMIT_BLOCKED', orderCount: 1, baseQty: 440 },
+  { kind: 'status', level: 1, label: 'COMMIT_FAILED', orderCount: 1, baseQty: 29652 },
+  { kind: 'status', level: 1, label: 'PICKING', orderCount: 2, baseQty: 76208 },
+  { kind: 'status', level: 1, label: 'PLANNED', orderCount: 8, baseQty: 57401 },
+  { kind: 'customer', level: 0, label: 'TRIPLELITE, LLC', orderCount: 1, baseQty: 48 },
+  { kind: 'status', level: 1, label: 'PICKED', orderCount: 1, baseQty: 48 },
+  { kind: 'customer', level: 0, label: 'UNIVERA BRANDS', orderCount: 1, baseQty: 2478 },
+  { kind: 'status', level: 1, label: 'PLANNED', orderCount: 1, baseQty: 2478 },
+];
+
+function applyStaticTeam2LtlPayload(result, now, siteLabel) {
+  result.bay = 'evelyn';
+  result.reportType = 'evelynGreenPivot';
+  result.title = 'Team 2 LTL';
+  result.customer = { name: 'Team 2 LTL' };
+  result.customerSet = TEAM_2_LTL_PIVOT_ROWS.filter(r => r.kind === 'customer').map(r => ({ name: r.label }));
+  result.metrics = [
+    { label: 'Count of Order', value: '208' },
+    { label: 'Sum of BASE QTY', value: '436823' },
+    { label: 'Customers', value: '13' },
+  ];
+  result.evelynGreen = { supported: true, rows: TEAM_2_LTL_PIVOT_ROWS, total: { orderCount: 208, baseQty: 436823 } };
+  result.detailRows = [];
+  result.plannedOrders = { supported: true, rows: [] };
+  result.inYardFullEquipment = { supported: true, rows: [] };
+  result.refreshedAt = now;
+  result.generatedAt = now;
+  return result;
+}
+
 const BAY2_PATRICIA_SHEET3_METRICS = {
   'ROAR BEVERAGES INC': { orderCount: 497, baseQty: 700 },
   'DRUPLEY INC / DBA GRAZA': { orderCount: 94, baseQty: 672 },
@@ -1347,31 +1410,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
   }
 
   if (tab === 'evelyn' && !includeAllCustomers) {
-    try {
-      const workbookPivot = JSON.parse(fs.readFileSync(path.join(__dirname, 'evelyn-pivot.json'), 'utf8'));
-      result.bay = 'evelyn';
-      result.reportType = 'evelynGreenPivot';
-      result.title = 'Team 2 LTL';
-      result.customer = { name: 'Team 2 LTL' };
-      result.customerSet = (workbookPivot.evelynGreen?.rows || [])
-        .filter(r => r.level === 0)
-        .map(r => ({ name: r.label }));
-      result.metrics = workbookPivot.metrics || [];
-      result.evelynGreen = workbookPivot.evelynGreen || { supported: true, rows: [], total: { orderCount: 0, baseQty: 0 }, aged72Rows: [] };
-      result.detailRows = workbookPivot.detailRows || [];
-      result.plannedOrders = { supported: true, rows: [] };
-      result.inYardFullEquipment = { supported: true, rows: [] };
-      result.refreshedAt = workbookPivot.generatedAt || now;
-      result.generatedAt = workbookPivot.generatedAt || now;
-      return res.json(result);
-    } catch (err) {
-      console.error('Team 2 LTL workbook parse error:', err.message);
-      result.reportType = 'evelynGreenPivot';
-      result.customer = { name: 'Team 2 LTL' };
-      result.evelynGreen = { supported: false, rows: [], total: { orderCount: 0, baseQty: 0 }, aged72Rows: [], unavailableReason: 'Team 2 LTL pivot data is unavailable.' };
-      result.metrics = [];
-      return res.json(result);
-    }
+    return res.json(applyStaticTeam2LtlPayload(result, now, siteLabel));
   }
 
   // ── Fetch planned outbound orders ────────────────────────────────────────
