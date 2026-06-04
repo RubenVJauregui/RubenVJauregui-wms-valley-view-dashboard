@@ -605,3 +605,70 @@ body { min-height: 100vh; }
   z-index: 3;
   background: var(--panel-alt);
 }
+
+/* Team 2 LTL / Evelyn Excel pivot */
+.evelyn-dashboard-body {
+  background: #ffffff !important;
+  color: #000000 !important;
+  padding: 18px !important;
+}
+.evelyn-pivot-sheet {
+  background: #ffffff !important;
+  border: 1px solid #6b6b6b !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  overflow: auto !important;
+  width: fit-content !important;
+  max-width: 100% !important;
+}
+.evelyn-pivot-table {
+  border-collapse: collapse !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+  font-family: Arial, sans-serif !important;
+  font-size: 11px !important;
+  line-height: 1.15 !important;
+  min-width: 520px !important;
+}
+.evelyn-pivot-table th {
+  background: #86ad49 !important;
+  color: #000000 !important;
+  font-family: Arial, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 3px 6px !important;
+  border: 1px solid #6b6b6b !important;
+  text-align: left !important;
+}
+.evelyn-pivot-table td {
+  background: #ffffff !important;
+  color: #000000 !important;
+  font-family: Arial, sans-serif !important;
+  font-size: 11px !important;
+  padding: 2px 6px !important;
+  border: 1px solid #9a9a9a !important;
+  white-space: nowrap !important;
+}
+.evelyn-pivot-table td:nth-child(2),
+.evelyn-pivot-table td:nth-child(3),
+.evelyn-pivot-table th:nth-child(2),
+.evelyn-pivot-table th:nth-child(3) {
+  text-align: right !important;
+}
+.evelyn-pivot-table .evelyn-customer-row td {
+  background: #c5df9b !important;
+  font-weight: 700 !important;
+}
+.evelyn-pivot-table .evelyn-status-row td {
+  background: #ffffff !important;
+  font-weight: 400 !important;
+}
+.evelyn-pivot-table .evelyn-indent {
+  padding-left: 22px !important;
+}
+.evelyn-pivot-table .evelyn-grand-total-row td {
+  background: #ffffff !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+  border-top: 2px solid #6b6b6b !important;
+}

@@ -44,6 +44,13 @@ export interface WmsDashboardData {
     candidateCount?: number;
     unavailableReason?: string;
   };
+  reportType?: string;
+  metrics?: { label: string; value: string; sub?: string }[];
+  evelynGreen?: {
+    supported: boolean;
+    rows: { kind: "customer" | "status"; level: number; label: string; orderCount: number; baseQty: number }[];
+    total: { orderCount: number; baseQty: number };
+  };
 }
 
 function authHeaders(token: string, tenantId: string, facilityId?: string) {
@@ -322,6 +329,78 @@ export async function searchInYardEquipment(
   }
 }
 
+
+const TEAM_2_LTL_PIVOT_ROWS: { kind: "customer" | "status"; level: number; label: string; orderCount: number; baseQty: number }[] = [
+  { kind: "customer", level: 0, label: "BOUNDLESS EC US LLC", orderCount: 39, baseQty: 396 },
+  { kind: "status", level: 1, label: "PICKED", orderCount: 4, baseQty: 48 },
+  { kind: "status", level: 1, label: "PLANNED", orderCount: 35, baseQty: 348 },
+  { kind: "customer", level: 0, label: "DIVERGENTIP, LLC DBA BRUVI", orderCount: 1, baseQty: 1450 },
+  { kind: "status", level: 1, label: "COMMIT_BLOCKED", orderCount: 1, baseQty: 1450 },
+  { kind: "customer", level: 0, label: "ELEVATE BRANDS OPCO LLC", orderCount: 1, baseQty: 8856 },
+  { kind: "status", level: 1, label: "PLANNED", orderCount: 1, baseQty: 8856 },
+  { kind: "customer", level: 0, label: "ELEVATE BRANDS UK OPCO LTD", orderCount: 1, baseQty: 6598 },
+  { kind: "status", level: 1, label: "PICKED", orderCount: 1, baseQty: 6598 },
+  { kind: "customer", level: 0, label: "EMBER TECHNOLOGIES, INC.", orderCount: 11, baseQty: 3552 },
+  { kind: "status", level: 1, label: "COMMITTED", orderCount: 8, baseQty: 76 },
+  { kind: "status", level: 1, label: "PICKED", orderCount: 2, baseQty: 776 },
+  { kind: "status", level: 1, label: "PICKING", orderCount: 1, baseQty: 2700 },
+  { kind: "customer", level: 0, label: "KARAKA, LLC", orderCount: 29, baseQty: 61052 },
+  { kind: "status", level: 1, label: "COMMITTED", orderCount: 3, baseQty: 1848 },
+  { kind: "status", level: 1, label: "PARTIAL_SHIPPED", orderCount: 1, baseQty: 5704 },
+  { kind: "status", level: 1, label: "PICKED", orderCount: 20, baseQty: 33712 },
+  { kind: "status", level: 1, label: "PICKING", orderCount: 2, baseQty: 9460 },
+  { kind: "status", level: 1, label: "PLANNED", orderCount: 3, baseQty: 10328 },
+  { kind: "customer", level: 0, label: "PRISMA INTERNATIONAL LLC", orderCount: 1, baseQty: 220 },
+  { kind: "status", level: 1, label: "OPEN", orderCount: 1, baseQty: 220 },
+  { kind: "customer", level: 0, label: "SELLERX COMMERCE GMBH", orderCount: 1, baseQty: 66503 },
+  { kind: "status", level: 1, label: "PICKING", orderCount: 1, baseQty: 66503 },
+  { kind: "customer", level: 0, label: "SIMPLE MODERN", orderCount: 93, baseQty: 84628 },
+  { kind: "status", level: 1, label: "PLANNED", orderCount: 93, baseQty: 84628 },
+  { kind: "customer", level: 0, label: "STRETTON ONLINE LTD", orderCount: 17, baseQty: 35341 },
+  { kind: "status", level: 1, label: "IMPORTED", orderCount: 2, baseQty: 4816 },
+  { kind: "status", level: 1, label: "PICKED", orderCount: 5, baseQty: 3230 },
+  { kind: "status", level: 1, label: "PICKING", orderCount: 1, baseQty: 700 },
+  { kind: "status", level: 1, label: "PLANNED", orderCount: 9, baseQty: 26595 },
+  { kind: "customer", level: 0, label: "TORQUAY ETRADING LLC", orderCount: 12, baseQty: 163701 },
+  { kind: "status", level: 1, label: "COMMIT_BLOCKED", orderCount: 1, baseQty: 440 },
+  { kind: "status", level: 1, label: "COMMIT_FAILED", orderCount: 1, baseQty: 29652 },
+  { kind: "status", level: 1, label: "PICKING", orderCount: 2, baseQty: 76208 },
+  { kind: "status", level: 1, label: "PLANNED", orderCount: 8, baseQty: 57401 },
+  { kind: "customer", level: 0, label: "TRIPLELITE, LLC", orderCount: 1, baseQty: 48 },
+  { kind: "status", level: 1, label: "PICKED", orderCount: 1, baseQty: 48 },
+  { kind: "customer", level: 0, label: "UNIVERA BRANDS", orderCount: 1, baseQty: 2478 },
+  { kind: "status", level: 1, label: "PLANNED", orderCount: 1, baseQty: 2478 },
+];
+
+function buildStaticTeam2LtlDashboard(facilityName: string): WmsDashboardData {
+  const now = new Date().toISOString();
+  const customerSet = TEAM_2_LTL_PIVOT_ROWS
+    .filter((row) => row.kind === "customer")
+    .map((row) => ({ name: row.label }));
+  return {
+    title: "Team 2 LTL",
+    siteLabel: facilityName,
+    source: "Alfredo.xlsx",
+    refreshedAt: now,
+    generatedAt: now,
+    customer: { name: "Team 2 LTL" },
+    customerSet,
+    reportType: "evelynGreenPivot",
+    metrics: [
+      { label: "Count of Order", value: "208" },
+      { label: "Sum of BASE QTY", value: "436823" },
+      { label: "Customers", value: "13" },
+    ],
+    plannedOrders: { supported: true, rows: [] },
+    inYardFullEquipment: { supported: true, rows: [], candidateCount: 0 },
+    evelynGreen: {
+      supported: true,
+      rows: TEAM_2_LTL_PIVOT_ROWS,
+      total: { orderCount: 208, baseQty: 436823 },
+    },
+  };
+}
+
 export async function loadDashboard(
   token: string,
   tenantId: string,
@@ -331,6 +410,10 @@ export async function loadDashboard(
   includeAllCustomers = false
 ): Promise<WmsDashboardData> {
   const now = new Date().toISOString();
+
+  if (tab === "evelyn") {
+    return buildStaticTeam2LtlDashboard(facilityName);
+  }
 
   const [plannedOrders, inYard] = await Promise.all([
     searchPlannedOrders(token, tenantId, facilityId, [

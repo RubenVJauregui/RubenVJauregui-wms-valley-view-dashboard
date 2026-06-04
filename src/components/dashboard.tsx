@@ -36,6 +36,14 @@ interface InYardEquipment {
   customer: string;
 }
 
+interface EvelynPivotRow {
+  kind: "customer" | "status";
+  level: number;
+  label: string;
+  orderCount: number;
+  baseQty: number;
+}
+
 interface DashboardData {
   title: string;
   siteLabel: string;
@@ -54,6 +62,13 @@ interface DashboardData {
     rows: InYardEquipment[];
     candidateCount?: number;
     unavailableReason?: string;
+  };
+  metrics?: { label: string; value: string; sub?: string }[];
+  reportType?: string;
+  evelynGreen?: {
+    supported: boolean;
+    rows: EvelynPivotRow[];
+    total: { orderCount: number; baseQty: number };
   };
 }
 
@@ -554,6 +569,9 @@ export function Dashboard({
     }
   }, [activeTab, usesFontanaTabs, onChangeTab]);
 
+  const evelynRows = data?.evelynGreen?.rows ?? [];
+  const evelynTotal = data?.evelynGreen?.total ?? { orderCount: 0, baseQty: 0 };
+
   return (
     <main className="dashboard-shell">
       {/* Brand bar */}
@@ -621,6 +639,34 @@ export function Dashboard({
       {loading && !data ? (
         <div className="flex-1 flex items-center justify-center">
           <Loader2 size={32} className="spin" color="var(--accent)" />
+        </div>
+      ) : activeTab === "evelyn" ? (
+        <div className="dashboard-body evelyn-dashboard-body">
+          <section className="evelyn-pivot-sheet">
+            <table className="evelyn-pivot-table">
+              <thead>
+                <tr>
+                  <th>Labels</th>
+                  <th>Count of Order</th>
+                  <th>Sum of BASE QTY</th>
+                </tr>
+              </thead>
+              <tbody>
+                {evelynRows.map((row, index) => (
+                  <tr key={`${row.label}-${index}`} className={row.kind === "customer" ? "evelyn-customer-row" : "evelyn-status-row"}>
+                    <td className={row.level === 1 ? "evelyn-indent" : ""}>{row.label}</td>
+                    <td>{fmtNum(row.orderCount)}</td>
+                    <td>{fmtNum(row.baseQty)}</td>
+                  </tr>
+                ))}
+                <tr className="evelyn-grand-total-row">
+                  <td>Grand Total</td>
+                  <td>{fmtNum(evelynTotal.orderCount)}</td>
+                  <td>{fmtNum(evelynTotal.baseQty)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
         </div>
       ) : (
         <div className="dashboard-body">
