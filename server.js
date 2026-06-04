@@ -339,6 +339,68 @@ function bay2Sheet3MetricFor(customer) {
 }
 
 
+
+function parseWiseNumber(value) {
+  if (value === undefined || value === null || value === '') return 0;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  const cleaned = String(value).replace(/,/g, '').trim();
+  if (!cleaned) return 0;
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function findNumberValueByKey(value, keyMatches, seen = new Set()) {
+  if (!value || typeof value !== 'object' || seen.has(value)) return undefined;
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findNumberValueByKey(item, keyMatches, seen);
+      if (found !== undefined) return found;
+    }
+    return undefined;
+  }
+
+  for (const [key, child] of Object.entries(value)) {
+    if (keyMatches(key) && child !== undefined && child !== null && child !== '') return child;
+
+    const found = findNumberValueByKey(child, keyMatches, seen);
+    if (found !== undefined) return found;
+  }
+
+  return undefined;
+}
+
+function getOrderBaseQty(order) {
+  const directValue =
+    order.baseQty ??
+    order.baseQTY ??
+    order.baseQuantity ??
+    order.totalBaseQty ??
+    order.totalBaseQTY ??
+    order.totalQty ??
+    order.itemLineTotalQty ??
+    order.estPiecePickQty ??
+    order.qty ??
+    order.quantity;
+
+  if (directValue !== undefined && directValue !== null && directValue !== '') {
+    return parseWiseNumber(directValue);
+  }
+
+  return parseWiseNumber(findNumberValueByKey(order, (key) => {
+    const normalized = normalizeWiseCode(key);
+    return normalized === 'BASE_QTY' ||
+      normalized === 'B_G_QTY' ||
+      normalized === 'BG_QTY' ||
+      normalized === 'TOTAL_BASE_QTY' ||
+      normalized === 'BASE_QUANTITY' ||
+      normalized === 'TOTAL_BASE_QUANTITY' ||
+      normalized === 'ITEM_LINE_TOTAL_QTY' ||
+      normalized === 'EST_PIECE_PICK_QTY';
+  }));
+}
+
 function readField(row, names) {
   if (!row) return "";
   for (const name of names) {
@@ -2025,8 +2087,8 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           retailerName: orgNames[o.retailerId] || o.retailerId || '',
           orderType: o.orderType,
           source: o.source,
-          baseQty: Number(o.baseQty ?? o.totalQty ?? o.itemLineTotalQty ?? o.estPiecePickQty ?? o.qty ?? 0) || 0,
-          palletQty: Number(o.palletQty ?? o.estPalletPickQty ?? 0) || 0,
+          baseQty: getOrderBaseQty(o),
+          palletQty: parseWiseNumber(o.palletQty ?? o.estPalletPickQty ?? 0),
           stagingLocation: o.stagingLocation || o.stagingLocationName || '',
           prestatus: o.prestatus || o.preStatus || o.secondaryStatus || '',
           po: o.poNo || o.referenceNo || '',
