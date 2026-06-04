@@ -1,20 +1,30 @@
-FROM node:20-alpine AS builder
+FROM node:20-alpine AS base
+
+FROM base AS deps
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts
+
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_PUBLIC_IAM_BASE_URL=https://id.item.com
+ENV NEXT_PUBLIC_WMS_API_BASE_URL=https://unis.item.com/api
 RUN npm run build
 
-FROM node:20-alpine AS runner
+FROM base AS runner
 WORKDIR /app
-ENV NODE_ENV production
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/.next ./.next
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/server.js ./server.js
-COPY --from=builder /app/evelyn-pivot.json ./evelyn-pivot.json
-COPY --from=builder /app/website-source ./website-source
-
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+USER nextjs
 EXPOSE 3000
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 CMD ["node", "server.js"]
