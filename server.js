@@ -339,53 +339,162 @@ function bay2Sheet3MetricFor(customer) {
 }
 
 
-function bay2Sheet2CustomerLabel(customer) {
-  const normalized = normalizeName(customer);
-  const aliases = [
-    ['BYTE DANCE TIKTOK', 'BYTEDANCE INC.'],
-    ['BYTEDANCE', 'BYTEDANCE INC.'],
-    ['COME READY', 'COME READY FOODS LLC'],
-    ['EMBER', 'EMBER TECHNOLOGIES, INC.'],
-    ['FLAG AND ANTHEM', 'FLAG & ANTHEM'],
-    ['INNOVATIVE HEALTH PARTNERS DBA THE FEELIST', 'INNOVATIVE HEALTH PARTNERS DBA THE FEELIST'],
-    ['THE FEELIST', 'INNOVATIVE HEALTH PARTNERS DBA THE FEELIST'],
-    ['MAMMA CHIA', 'MAMMA CHIA'],
-    ['PUNK BUNNY', 'PUNK BUNNY LLC'],
-    ['RECOVERY', 'RECOVERY SPORTS LLC'],
-    ['RISEANDSHINE', 'RISE BEVERAGES LLC dba RISE BREWING COMPANY'],
-    ['RISE BEVERAGES', 'RISE BEVERAGES LLC dba RISE BREWING COMPANY'],
-    ['SPLENDOR WATER', 'SPLENDOR WATER LLC'],
-    ['THE OUAI', 'THE OUAI'],
-    ['UPTIME ENERGY', 'UPTIME ENERGY INC'],
-    ['VAONIS', 'VAONIS'],
-    ['VITA COCO DTC', 'VITA COCO - DTC'],
-    ['ALL MARKET INC VITA COCO', 'VITA COCO - DTC'],
-    ['ZEN', 'ZEN BEVERAGE LLC'],
-  ];
-  const match = aliases.find(([needle]) => normalized.includes(needle) || needle.includes(normalized));
-  return match ? match[1] : (customer || '(blank)');
+function readField(row, names) {
+  if (!row) return "";
+  for (const name of names) {
+    if (row[name] !== undefined && row[name] !== null && String(row[name]).trim() !== "") return row[name];
+  }
+  const normalized = Object.keys(row).reduce((acc, key) => {
+    acc[String(key).toUpperCase().replace(/[^A-Z0-9]/g, "")] = row[key];
+    return acc;
+  }, {});
+  for (const name of names) {
+    const key = String(name).toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (normalized[key] !== undefined && normalized[key] !== null && String(normalized[key]).trim() !== "") return normalized[key];
+  }
+  return "";
 }
 
-function buildBay2Sheet2Summary(rows) {
-  const byCustomer = new Map();
-  for (const row of rows) {
-    const label = bay2Sheet2CustomerLabel(row.customer || row.customerName || row.label || '');
-    const current = byCustomer.get(label) || { customer: label, orderCount: 0, baseQty: 0 };
-    current.orderCount += 1;
-    current.baseQty += Number(row.baseQty || 0);
-    byCustomer.set(label, current);
+function readNumber(row, names) {
+  const value = readField(row, names);
+  if (value === "" || value === null || value === undefined) return 0;
+  const number = Number(String(value).replace(/,/g, "").trim());
+  return Number.isFinite(number) ? number : 0;
+}
+
+function formatPivotDate(value) {
+  if (!value) return "";
+  const raw = String(value).trim();
+  const date = new Date(raw);
+  if (!Number.isNaN(date.getTime())) {
+    return `${date.getFullYear()} ${String(date.getMonth() + 1).padStart(2, "0")} ${String(date.getDate()).padStart(2, "0")}`;
   }
-  const summaryRows = Array.from(byCustomer.values())
-    .filter(row => normalizeName(row.customer) !== normalizeName('(blank)'))
-    .sort((a, b) => a.customer.localeCompare(b.customer));
+  return raw.replace(/\//g, " ");
+}
+
+function normalizeTeam2DetailRow(row) {
+  const customer = readField(row, ["customer", "customerName", "Customer", "CUSTOMER", "Consignee", "CONSIGNEE", "Ship To", "SHIP_TO", "Retailer", "RETAILER"]);
+  const status = readField(row, ["status", "orderStatus", "Order Status", "ORDER_STATUS", "STATUS", "WISE Status", "WISE_STATUS"]);
+  const orderNumber = readField(row, ["orderNumber", "orderNo", "order", "Order #", "ORDER #", "Order Number", "ORDER_NUMBER", "DN", "dn", "deliveryNumber", "Delivery Number"]);
+  const baseQty = readNumber(row, ["baseQty", "baseQuantity", "BASE QTY", "BASE_QTY", "Base Qty", "base_qty", "sumBaseQty", "Sum of BASE QTY", "qty", "Qty", "quantity", "Quantity", "orderQty", "Order Qty", "pieces", "Pieces"]);
+  const appointmentTime = readField(row, ["appointmentTime", "Appointment Time", "APPOINTMENT_TIME", "apptTime", "appointmentDate", "Appointment Date", "APPOINTMENT_DATE", "scheduledTime", "Scheduled Time"]);
+  const date = readField(row, ["date", "Date", "shipDate", "Ship Date", "SHIP_DATE", "plannedDate", "Planned Date", "appointmentDate", "Appointment Date", "createdDate", "Created Date"]);
+  const sectionRaw = readField(row, ["section", "Section", "bucket", "Bucket", "area", "Area", "type", "Type", "mode", "Mode", "team", "Team"]);
+  const sectionText = String(sectionRaw || "").toUpperCase();
+  const section = sectionText.includes("ALPHA") || sectionText.includes("BFA") ? "Alpha BFA" : sectionText.includes("DELTA") || sectionText.includes("LTL") ? "Delta LTL" : "";
+
   return {
-    rows: summaryRows,
+    ...row,
+    facility: readField(row, ["facility", "Facility", "facilityName", "Facility Name"]) || "Buena Park",
+    customer,
+    customerName: customer,
+    orderNumber,
+    orderNo: orderNumber,
+    dn: orderNumber,
+    status,
+    orderStatus: status,
+    baseQty,
+    baseQuantity: baseQty,
+    appointmentTime,
+    date: formatPivotDate(date || appointmentTime),
+    section,
+    raw: row,
+  };
+}
+
+function buildTeam2DetailRows(rows) {
+  return (Array.isArray(rows) ? rows : [])
+    .map(normalizeTeam2DetailRow)
+    .filter((row) => row.customer || row.orderNumber);
+}
+
+function buildTeam2Sheet2Summary(detailRows) {
+  const customers = new Map();
+
+  for (const row of detailRows) {
+    const customer = row.customer || "UNKNOWN CUSTOMER";
+    const status = row.status || "UNKNOWN";
+    const date = row.date || "";
+
+    if (!customers.has(customer)) {
+      customers.set(customer, { customer, label: customer, orderCount: 0, baseQty: 0, statuses: new Map() });
+    }
+
+    const customerNode = customers.get(customer);
+    customerNode.orderCount += 1;
+    customerNode.baseQty += Number(row.baseQty || 0);
+
+    if (!customerNode.statuses.has(status)) {
+      customerNode.statuses.set(status, { status, label: status, orderCount: 0, baseQty: 0, dates: new Map() });
+    }
+
+    const statusNode = customerNode.statuses.get(status);
+    statusNode.orderCount += 1;
+    statusNode.baseQty += Number(row.baseQty || 0);
+
+    if (date) {
+      if (!statusNode.dates.has(date)) {
+        statusNode.dates.set(date, { date, label: date, orderCount: 0, baseQty: 0 });
+      }
+      const dateNode = statusNode.dates.get(date);
+      dateNode.orderCount += 1;
+      dateNode.baseQty += Number(row.baseQty || 0);
+    }
+  }
+
+  const rows = [];
+  let totalOrders = 0;
+  let totalBaseQty = 0;
+
+  [...customers.values()]
+    .sort((a, b) => b.orderCount - a.orderCount || a.customer.localeCompare(b.customer))
+    .forEach((customerNode) => {
+      totalOrders += customerNode.orderCount;
+      totalBaseQty += customerNode.baseQty;
+
+      rows.push({
+        kind: "customer",
+        customer: customerNode.customer,
+        label: customerNode.label,
+        orderCount: customerNode.orderCount,
+        baseQty: customerNode.baseQty,
+      });
+
+      [...customerNode.statuses.values()]
+        .sort((a, b) => a.status.localeCompare(b.status))
+        .forEach((statusNode) => {
+          rows.push({
+            kind: "status",
+            label: statusNode.label,
+            orderCount: statusNode.orderCount,
+            baseQty: statusNode.baseQty,
+          });
+
+          [...statusNode.dates.values()]
+            .sort((a, b) => a.date.localeCompare(b.date))
+            .forEach((dateNode) => {
+              rows.push({
+                kind: "date",
+                label: dateNode.label,
+                orderCount: dateNode.orderCount,
+                baseQty: dateNode.baseQty,
+              });
+            });
+        });
+    });
+
+  return {
+    rows,
     total: {
-      customer: 'Grand Total',
-      orderCount: summaryRows.reduce((sum, row) => sum + row.orderCount, 0),
-      baseQty: summaryRows.reduce((sum, row) => sum + row.baseQty, 0),
+      orderCount: totalOrders,
+      baseQty: totalBaseQty,
     },
   };
+}
+
+// Backward-compatible function name used by Team 2 payload builder.
+function buildBay2Sheet2Summary(rows) {
+  return buildTeam2Sheet2Summary(buildTeam2DetailRows(rows));
 }
 
 function normalizeName(value) {
@@ -1859,14 +1968,15 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           };
           if (mezzanineRows.length) mezzanineRows.push(mezzanineTotal);
           const pivotRows = [...leftPivotRows, ...mezzanineRows];
-          const sheet2Summary = buildBay2Sheet2Summary(rows);
+          const team2DetailRows = buildTeam2DetailRows(rows);
+          const sheet2Summary = buildTeam2Sheet2Summary(team2DetailRows);
 
           result.bay2 = {
             supported: true,
             pivotRows,
             mezzanineRows,
             sheet2Summary,
-            detailRows: rows,
+            detailRows: team2DetailRows,
             aged24Rows,
             aged48Rows,
             // Bottom Team 2 sections in the original screen.
