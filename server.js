@@ -549,6 +549,8 @@ function getEquipmentCustomer(row) {
     row.customerId ||
     row.customer?.id ||
     row.customerOrgId ||
+    row.organizationId ||
+    row.orgId ||
     'Unknown';
 }
 
@@ -565,7 +567,7 @@ function normalizeWorkloadCustomerName(value) {
 function getWorkloadCustomerKey(value) {
   const normalized = normalizeWorkloadCustomerName(value);
 
-  if (normalized.includes('GURUNANDA')) return 'GURUNANDA';
+  if (normalized.includes('GURUNANDA') || normalized.includes('ORG 655875') || normalized.includes('ORG 738412')) return 'GURUNANDA';
   if (normalized.includes('VITA COCO') || normalized.includes('ALL MARKET')) return 'ALL MARKET VITA COCO';
   if (normalized.includes('SIMPLE MODERN')) return 'SIMPLE MODERN';
 
