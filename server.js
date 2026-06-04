@@ -371,34 +371,98 @@ function findNumberValueByKey(value, keyMatches, seen = new Set()) {
   return undefined;
 }
 
-function getOrderBaseQty(order) {
+function getOrderLineBaseQty(line) {
   const directValue =
-    order.baseQty ??
-    order.baseQTY ??
-    order.baseQuantity ??
-    order.totalBaseQty ??
-    order.totalBaseQTY ??
-    order.totalQty ??
-    order.itemLineTotalQty ??
-    order.estPiecePickQty ??
-    order.qty ??
-    order.quantity;
+    line.baseQty ??
+    line.baseQTY ??
+    line.baseQuantity ??
+    line.totalBaseQty ??
+    line.totalBaseQTY ??
+    line.totalQty ??
+    line.totalQTY ??
+    line.qty ??
+    line.quantity ??
+    line.orderQty ??
+    line.pieces;
+  return parseWiseNumber(directValue);
+}
 
-  if (directValue !== undefined && directValue !== null && directValue !== '') {
-    return parseWiseNumber(directValue);
+function collectNumberValuesByKey(value, keyMatches, seen = new Set(), out = []) {
+  if (!value || typeof value !== 'object' || seen.has(value)) return out;
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    for (const item of value) collectNumberValuesByKey(item, keyMatches, seen, out);
+    return out;
   }
 
-  return parseWiseNumber(findNumberValueByKey(order, (key) => {
+  for (const [key, child] of Object.entries(value)) {
+    if (keyMatches(key) && child !== undefined && child !== null && child !== '') out.push(child);
+    collectNumberValuesByKey(child, keyMatches, seen, out);
+  }
+
+  return out;
+}
+
+function getOrderBaseQty(order) {
+  const directCandidates = [
+    order.baseQty,
+    order.baseQTY,
+    order.baseQuantity,
+    order.totalBaseQty,
+    order.totalBaseQTY,
+    order.totalBaseQuantity,
+    order.totalQty,
+    order.totalQTY,
+    order.totalQuantity,
+    order.itemLineTotalQty,
+    order.estPiecePickQty,
+    order.qty,
+    order.quantity,
+    order.orderQty,
+    order.pieces,
+  ];
+
+  for (const candidate of directCandidates) {
+    const parsed = parseWiseNumber(candidate);
+    if (parsed > 0) return parsed;
+  }
+
+  const lineCollections = [
+    order.itemLines,
+    order.itemLineList,
+    order.orderLines,
+    order.orderLineList,
+    order.lines,
+    order.details,
+    order.skuLines,
+    order.simpleItemLines,
+  ].filter(Array.isArray);
+
+  for (const lines of lineCollections) {
+    const sum = lines.reduce((total, line) => total + getOrderLineBaseQty(line), 0);
+    if (sum > 0) return sum;
+  }
+
+  const allMatches = collectNumberValuesByKey(order, (key) => {
     const normalized = normalizeWiseCode(key);
     return normalized === 'BASE_QTY' ||
       normalized === 'B_G_QTY' ||
       normalized === 'BG_QTY' ||
+      normalized === 'TOTAL_QTY' ||
+      normalized === 'TOTAL_QUANTITY' ||
       normalized === 'TOTAL_BASE_QTY' ||
       normalized === 'BASE_QUANTITY' ||
       normalized === 'TOTAL_BASE_QUANTITY' ||
       normalized === 'ITEM_LINE_TOTAL_QTY' ||
-      normalized === 'EST_PIECE_PICK_QTY';
-  }));
+      normalized === 'EST_PIECE_PICK_QTY' ||
+      normalized === 'ORDER_QTY' ||
+      normalized === 'PIECES';
+  }).map(parseWiseNumber).filter(value => value > 0);
+
+  if (allMatches.length) return Math.max(...allMatches);
+
+  return 0;
 }
 
 function readField(row, names) {
