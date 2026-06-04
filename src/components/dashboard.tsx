@@ -899,7 +899,7 @@ export function Dashboard({
                       {filteredPlanned.map((r) => (
                         <tr key={r.orderNumber}>
                           <td className="strong">{r.orderNumber}</td>
-                          <td>{r.customer} <span className="customer-order-count">({getCustomerOrderCount(r.customer)})</span></td>
+                          <td>{r.customer}</td>
                           <td>{r.status}</td>
                           <td>{r.reference}</td>
                           <td>{fmtDate(r.created)}</td>

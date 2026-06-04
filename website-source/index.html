@@ -655,15 +655,9 @@
     var counts=latestCounts[activeTab()]||latestCounts.default;
     if(!counts || !Object.keys(counts).length) return;
     document.querySelectorAll('.chips button,.chip').forEach(function(chip){ chip.textContent=labelWithCount(chip.textContent, counts); });
-    document.querySelectorAll('table').forEach(function(table){
-      var ths=Array.from(table.querySelectorAll('thead th'));
-      var idx=ths.findIndex(function(th){ return /customer/i.test(th.textContent||''); });
-      if(idx<0) return;
-      table.querySelectorAll('tbody tr').forEach(function(tr){
-        var tds=tr.querySelectorAll('td'); if(!tds[idx]) return;
-        tds[idx].textContent=labelWithCount(tds[idx].textContent, counts);
-      });
-    });
+    // Keep counts on customer chips only. Do not append counts inside Section 2 table customer cells.
+    // Rewriting table cells caused labels like "Customer (12)" next to every planned order customer name.
+
   }
   window.__setRubenDashboardCounts=function(payload){ var c=buildCounts(payload); latestCounts[activeTab()]=c; latestCounts.default=c; setTimeout(applyCounts,50); setTimeout(applyCounts,500); setTimeout(applyCounts,1500); };
   var oldFetch=window.fetch;
@@ -1843,6 +1837,43 @@
   function applyAll(){section1Sections().forEach(applySection);}
   document.addEventListener('click',function(e){var chip=e.target&&e.target.closest?e.target.closest('.section1-equipment-filter-buttons .section1-filter-chip'):null;if(!chip)return;var section=chip.closest('section,.report-section')||chip.parentElement;while(section&&section!==document.body&&!(section.querySelector&&section.querySelector('table')&&section.querySelector('.section1-equipment-filter-buttons'))){section=section.parentElement;}if(!section)return;var key=chip.dataset.customerKey||'ALL';selectedBySection.set(section,selectedBySection.get(section)===key?'ALL':key);setTimeout(function(){applySection(section);},0);},true);
   applyAll();document.addEventListener('click',function(){setTimeout(applyAll,250);},true);setInterval(applyAll,1000);
+})();
+</script>
+
+
+<script id="remove-section2-customer-inline-counts">
+(function(){
+  if (window.__removeSection2CustomerInlineCounts) return;
+  window.__removeSection2CustomerInlineCounts = true;
+  function isSection2Title(text){
+    text = String(text || '').toUpperCase();
+    return text.indexOf('SECTION 2') >= 0 && text.indexOf('PLANNED OUTBOUND ORDERS') >= 0;
+  }
+  function cleanCounts(){
+    document.querySelectorAll('.customer-order-count').forEach(function(node){ node.remove(); });
+    Array.from(document.querySelectorAll('h2,h3')).forEach(function(head){
+      if (!isSection2Title(head.textContent)) return;
+      var section = head;
+      while (section && section !== document.body) {
+        if (section.querySelector && section.querySelector('table')) break;
+        section = section.parentElement;
+      }
+      if (!section || section === document.body) return;
+      var table = section.querySelector('table');
+      if (!table) return;
+      var headers = Array.from(table.querySelectorAll('thead th'));
+      var idx = headers.findIndex(function(th){ return /customer/i.test(th.textContent || ''); });
+      if (idx < 0) return;
+      table.querySelectorAll('tbody tr').forEach(function(tr){
+        var td = tr.querySelectorAll('td')[idx];
+        if (!td) return;
+        td.textContent = String(td.textContent || '').replace(/\s*\(\d+\)\s*$/, '').trim();
+      });
+    });
+  }
+  cleanCounts();
+  document.addEventListener('click', function(){ setTimeout(cleanCounts, 250); }, true);
+  setInterval(cleanCounts, 1000);
 })();
 </script>
 
