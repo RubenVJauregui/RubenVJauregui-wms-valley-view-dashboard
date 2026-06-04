@@ -825,8 +825,7 @@
       row.style.display=(selected==='ALL' || key===selected) ? '' : 'none';
     });
 
-    var old=section.querySelector('.equipment-customer-chips');
-    if(old) old.remove();
+    section.querySelectorAll('.equipment-customer-chips').forEach(function(old){ old.remove(); });
     var wrap=document.createElement('div');
     wrap.className='chips equipment-customer-chips';
     var total=Object.keys(counts).reduce(function(sum,key){ return sum + counts[key]; },0);
@@ -1874,6 +1873,34 @@
   cleanCounts();
   document.addEventListener('click', function(){ setTimeout(cleanCounts, 250); }, true);
   setInterval(cleanCounts, 1000);
+})();
+</script>
+
+
+<script id="dedupe-section1-equipment-customer-chips">
+(function(){
+  if (window.__dedupeSection1EquipmentCustomerChips) return;
+  window.__dedupeSection1EquipmentCustomerChips = true;
+  function isSection1Title(text){
+    text = String(text || '').toUpperCase();
+    return text.indexOf('SECTION 1') >= 0 && text.indexOf('IN-YARD FULL EQUIPMENT') >= 0;
+  }
+  function dedupe(){
+    Array.from(document.querySelectorAll('h2,h3')).forEach(function(head){
+      if (!isSection1Title(head.textContent)) return;
+      var section = head;
+      while (section && section !== document.body) {
+        if (section.querySelector && section.querySelector('table')) break;
+        section = section.parentElement;
+      }
+      if (!section || section === document.body) return;
+      var chips = Array.from(section.querySelectorAll('.equipment-customer-chips'));
+      chips.slice(1).forEach(function(chip){ chip.remove(); });
+    });
+  }
+  dedupe();
+  document.addEventListener('click', function(){ setTimeout(dedupe, 100); }, true);
+  setInterval(dedupe, 500);
 })();
 </script>
 
