@@ -548,9 +548,13 @@ function getEquipmentCustomer(row) {
     row.orgName ||
     row.customerId ||
     row.customer?.id ||
+    row.customer?.organizationId ||
     row.customerOrgId ||
     row.organizationId ||
     row.orgId ||
+    row.organization?.id ||
+    row.organization?.name ||
+    row.ownerId ||
     'Unknown';
 }
 
@@ -594,6 +598,70 @@ function applyTeam4ContainersFullCountsToWorkload(workloadRows, team4FullRows) {
   }
 
   return workloadRows;
+}
+
+function isTeam4GurunandaFullToOffloadEquipment(row) {
+  const customerFields = [
+    row.customerId,
+    row.customer?.id,
+    row.customer?.organizationId,
+    row.customerOrgId,
+    row.organizationId,
+    row.orgId,
+    row.customerName,
+    row.customer?.name,
+    getEquipmentCustomer(row),
+  ].map(value => normalizeName(value));
+
+  const isGurunanda = customerFields.some(value =>
+    value === 'ORG 655875' ||
+    value === 'ORG 738412' ||
+    value.includes('GURUNANDA')
+  );
+
+  return isGurunanda && isFullToOffloadContainer(row);
+}
+
+async function applyTeam4GurunandaFullCountToWorkload({ headers, workloadRows, metric }) {
+  const result = await fetchAllEquipmentPages(headers, {
+    currentPage: 1,
+    page: 1,
+    pageNo: 1,
+    pageSize: 500,
+    statuses: ['FULL'],
+    customerId: 'ORG-655875',
+  });
+
+  let equipment = result.ok ? result.equipment : [];
+
+  // Some WISE equipment searches ignore customerId; keep an all-FULL fallback and apply the
+  // exact same Team 4 Gurunanda + FULL_TO_OFFLOAD filter locally.
+  if (!equipment.length) {
+    const fallback = await fetchAllEquipmentPages(headers, {
+      currentPage: 1,
+      page: 1,
+      pageNo: 1,
+      pageSize: 500,
+      statuses: ['FULL'],
+    });
+    equipment = fallback.ok ? fallback.equipment : [];
+  }
+
+  const seen = new Set();
+  const count = equipment.filter(isTeam4GurunandaFullToOffloadEquipment).filter(row => {
+    const id = row.id || row.equipmentId || row.equipmentNo || row.equipmentNumber || row.barcode || JSON.stringify(row);
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  }).length;
+
+  for (const row of workloadRows || []) {
+    if (getWorkloadCustomerKey(row.customer) === 'GURUNANDA') {
+      row.containersFull = metric(count);
+    }
+  }
+
+  return count;
 }
 
 
@@ -1739,6 +1807,11 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
 
       const rows = Array.from(byCustomer.values()).sort((a, b) => a.customer.localeCompare(b.customer));
       applyTeam4ContainersFullCountsToWorkload(rows, team4FullRows);
+      try {
+        await applyTeam4GurunandaFullCountToWorkload({ headers, workloadRows: rows, metric });
+      } catch (err) {
+        console.error('All-customer workload Team 4 Gurunanda full count fetch error:', err.message);
+      }
       const totals = ['unloadedYesterday', 'containersFull', 'ordersPickedYesterday', 'newOrders', 'fillableOrders'].reduce((acc, key) => {
         acc[key] = metric(rows.reduce((sum, row) => sum + (row[key]?.value || 0), 0));
         return acc;
@@ -1813,6 +1886,12 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
       applyTeam4ContainersFullCountsToWorkload(rows, team4FullRows);
     } catch (err) {
       console.error('Configured workload containers-full fetch error:', err.message);
+    }
+
+    try {
+      await applyTeam4GurunandaFullCountToWorkload({ headers, workloadRows: rows, metric });
+    } catch (err) {
+      console.error('Configured workload Team 4 Gurunanda full count fetch error:', err.message);
     }
 
     const totals = ['unloadedYesterday', 'containersFull', 'ordersPickedYesterday', 'newOrders', 'fillableOrders'].reduce((acc, key) => {
