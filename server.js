@@ -927,6 +927,67 @@ async function fetchAllEquipmentPages(headers, body) {
   return { ok: true, equipment, total: total || equipment.length };
 }
 
+
+async function fetchReceiptPage(headers, body) {
+  const res = await fetch(`${WMS_API_BASE_URL}/wms-bam/inbound/receipt/search-by-paging`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body)
+  });
+
+  if (!res.ok) return { ok: false, status: res.status, receipts: [], total: 0 };
+
+  const json = await res.json().catch(() => ({}));
+
+  if (!(json.code === 0 || String(json.code) === '0')) {
+    return { ok: false, status: res.status, receipts: [], total: 0 };
+  }
+
+  return {
+    ok: true,
+    receipts: json.data?.list || json.data?.records || json.data || [],
+    total: json.data?.total || json.data?.totalCount || 0
+  };
+}
+
+async function fetchAllReceiptPages(headers, body) {
+  const pageSize = body.pageSize || 500;
+  const receipts = [];
+  const seen = new Set();
+  let total = 0;
+
+  for (let currentPage = 1; currentPage <= 50; currentPage += 1) {
+    const page = await fetchReceiptPage(headers, {
+      ...body,
+      currentPage,
+      page: currentPage,
+      pageNo: currentPage,
+      pageSize
+    });
+
+    if (!page.ok) {
+      if (currentPage === 1) return page;
+      break;
+    }
+
+    total = page.total || total;
+    const pageReceipts = Array.isArray(page.receipts) ? page.receipts : [];
+
+    for (const row of pageReceipts) {
+      const id = row.id || row.receiptId || row.receiptNo || row.receiptNumber || row.containerNo || row.trailerNo || JSON.stringify(row);
+      if (!seen.has(id)) {
+        seen.add(id);
+        receipts.push(row);
+      }
+    }
+
+    if (pageReceipts.length < pageSize) break;
+    if (total && receipts.length >= total) break;
+  }
+
+  return { ok: true, receipts, total: total || receipts.length };
+}
+
 async function fetchOrdersForTab(headers, cfg, includeAllCustomers = false) {
   const base = {
     currentPage: 1,
@@ -961,6 +1022,8 @@ function addCustomerMetricRow(byCustomer, customer, metric) {
     if (candidateNorm === normalized || candidateNorm.includes(normalized) || normalized.includes(candidateNorm)) return true;
     if ((candidateNorm.includes('VITA COCO') || candidateNorm.includes('ALL MARKET')) &&
       (normalized.includes('VITA COCO') || normalized.includes('ALL MARKET'))) return true;
+    if ((candidateNorm.includes('MAMA CHIA') || candidateNorm.includes('MAMMA CHIA')) &&
+      (normalized.includes('MAMA CHIA') || normalized.includes('MAMMA CHIA'))) return true;
     if (candidateNorm.includes('KING') && candidateNorm.includes('HAWAIIAN') && normalized.includes('KING') && normalized.includes('HAWAIIAN')) return true;
     return false;
   });
@@ -1068,29 +1131,29 @@ async function fetchAllClosedPickTasks(headers, window, facilityId) {
 
 async function applyUnloadedYesterdayWorkloadCounts({ headers, accessToken, tenantId, timeZone, byCustomer, metric }) {
   const window = getYesterdayWindow(timeZone || 'America/Los_Angeles');
-
+  // The authoritative WISE signal for "unloaded/devanned yesterday" is inbound receipt devannedTime.
+  // Yard/equipment EMPTY status is current-state oriented and does not reliably preserve the historical customer event.
   const body = {
     currentPage: 1,
+    page: 1,
+    pageNo: 1,
     pageSize: 500,
-    statuses: ['EMPTY'],
-    statusChangedTimeStart: window.start.toISOString(),
-    statusChangedTimeEnd: window.end.toISOString(),
-    updateTimeStart: window.start.toISOString(),
-    updateTimeEnd: window.end.toISOString(),
-    unloadTimeStart: window.start.toISOString(),
-    unloadTimeEnd: window.end.toISOString(),
-    sortingFields: [{ field: 'updatedTime', orderBy: 'DESC' }],
+    devannedTimeFrom: `${window.key}T00:00:00`,
+    devannedTimeTo: `${window.key}T23:59:59`,
+    sortingFields: [{ field: 'devannedTime', orderBy: 'DESC' }],
   };
 
-  const result = await fetchAllEquipmentPages(headers, body);
-  const equipment = result.ok ? result.equipment : [];
-  const matchingEquipment = equipment.filter(row =>
-    isFullToEmptyEquipmentChange(row, window.start, window.end)
-  );
+  const result = await fetchAllReceiptPages(headers, body);
+  const receipts = result.ok ? result.receipts : [];
+
+  const devannedReceipts = receipts.filter(row => {
+    const devannedTime = row.devannedTime || row.devanningTime || row.devannedAt || row.devanningEndTime || '';
+    const containerOrTrailer = row.containerNo || row.trailerNo || row.containerNumber || row.trailerNumber || row.equipmentNo || row.equipmentNumber;
+    return devannedTime && containerOrTrailer;
+  });
 
   const orgIds = new Set();
-
-  for (const row of matchingEquipment) {
+  for (const row of devannedReceipts) {
     const customerId = row.customerId || row.customer?.id || row.customerOrgId || row.organizationId;
     if (customerId) orgIds.add(customerId);
   }
@@ -1098,28 +1161,26 @@ async function applyUnloadedYesterdayWorkloadCounts({ headers, accessToken, tena
   const orgNames = await resolveOrgNames([...orgIds], accessToken, tenantId);
   const seen = new Set();
 
-  for (const row of matchingEquipment) {
-    const equipmentId =
+  for (const row of devannedReceipts) {
+    const receiptId =
       row.id ||
-      row.equipmentId ||
-      row.equipmentNo ||
-      row.equipmentNumber ||
-      row.barcode ||
-      `${getEquipmentCustomer(row)}-${getEquipmentUnloadTime(row)}`;
+      row.receiptId ||
+      row.receiptNo ||
+      row.receiptNumber ||
+      `${row.containerNo || row.trailerNo || row.equipmentNo || row.equipmentNumber || ''}-${row.devannedTime || row.devanningTime || row.devannedAt || ''}-${row.customerId || row.customerName || ''}`;
 
-    if (seen.has(equipmentId)) continue;
-    seen.add(equipmentId);
+    if (seen.has(receiptId)) continue;
+    seen.add(receiptId);
 
     const customerId = row.customerId || row.customer?.id || row.customerOrgId || row.organizationId;
-    const customer = orgNames[customerId] || getEquipmentCustomer(row);
-
+    const customer = orgNames[customerId] || row.customerName || row.customer?.name || customerId || 'Unknown';
     addCustomerMetricRow(byCustomer, customer, metric).unloadedYesterday.value += 1;
   }
 
   return {
     windowKey: window.key,
     count: seen.size,
-    fetched: equipment.length
+    fetched: receipts.length
   };
 }
 
