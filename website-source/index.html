@@ -1904,4 +1904,47 @@
 })();
 </script>
 
+
+<script id="force-single-section1-chip-row">
+(function(){
+  if (window.__forceSingleSection1ChipRow) return;
+  window.__forceSingleSection1ChipRow = true;
+  function isSection1Title(text){
+    text = String(text || '').toUpperCase();
+    return text.indexOf('SECTION 1') >= 0 && text.indexOf('IN-YARD FULL EQUIPMENT') >= 0;
+  }
+  function looksLikeChipRow(node){
+    if (!node || !node.querySelectorAll) return false;
+    var buttons = Array.from(node.querySelectorAll('button,.chip'));
+    if (!buttons.length) return false;
+    return buttons.some(function(btn){ return /^\s*All\b/i.test(btn.textContent || ''); });
+  }
+  function forceSingle(){
+    Array.from(document.querySelectorAll('h2,h3')).forEach(function(head){
+      if (!isSection1Title(head.textContent)) return;
+      var section = head;
+      while (section && section !== document.body) {
+        if (section.querySelector && section.querySelector('table')) break;
+        section = section.parentElement;
+      }
+      if (!section || section === document.body) return;
+      var table = section.querySelector('table');
+      if (!table) return;
+      var candidates = Array.from(section.querySelectorAll('div,section')).filter(function(node){
+        if (node === section || node.contains(table)) return false;
+        return looksLikeChipRow(node);
+      });
+      // Prefer the first visible chip row closest to the heading; remove every duplicate below it.
+      candidates.forEach(function(node, idx){
+        if (idx > 0) node.remove();
+      });
+    });
+  }
+  forceSingle();
+  document.addEventListener('click', function(){ setTimeout(forceSingle, 50); setTimeout(forceSingle, 250); }, true);
+  document.addEventListener('change', function(){ setTimeout(forceSingle, 50); setTimeout(forceSingle, 250); }, true);
+  setInterval(forceSingle, 150);
+})();
+</script>
+
 </body></html>
