@@ -502,73 +502,6 @@
   var timer = setInterval(updateBay4Table, 500);
   setTimeout(function(){ clearInterval(timer); }, 30000);
 })();
-</script><script id="bay3-lennox-table">
-(function(){
-  window.__latestDashboardData = window.__latestDashboardData || null;
-
-  function updateBay3Table(){
-    var active = document.querySelector('.report-tab.active');
-    if (!active || active.textContent.trim() !== 'Team 3') return;
-    var data = window.__latestDashboardData;
-    if (!data || data.bay !== 'bay3' || !data.plannedOrders || !data.plannedOrders.rows) return;
-
-    document.querySelectorAll('section, article, div').forEach(function(node){
-      var h3 = node.querySelector && node.querySelector('h3');
-      if (!h3 || (h3.textContent || '').trim() !== 'Section 2 - PLANNED Outbound Orders') return;
-      var table = node.querySelector('table');
-      if (!table) return;
-      var thead = table.querySelector('thead tr');
-      if (thead && !thead.querySelector('[data-bay3-header="1"]')) {
-        thead.innerHTML = '';
-        ['Customer', 'Order Number', 'Load #', 'Order Status', 'AppointmentDate', 'AppointmentTime', 'Schedule Date', 'Staging Location', 'Total Base QTY', 'Pallet Qty'].forEach(function(h){
-          var th = document.createElement('th');
-          th.textContent = h;
-          th.setAttribute('data-bay3-header', '1');
-          thead.appendChild(th);
-        });
-      }
-      
-      table.querySelectorAll('tbody tr').forEach(function(row){
-        if (row.querySelector('[data-bay3-cell="1"]')) return;
-        var cells = row.querySelectorAll('td');
-        if (!cells.length) return;
-        var orderNum = cells[0].textContent.trim();
-        
-        var rowData = data.plannedOrders.rows.find(function(r) { return r.orderNumber === orderNum; });
-        if (!rowData) return;
-        
-        row.innerHTML = '';
-        var cols = [
-          rowData.customer || '',
-          rowData.orderNumber || '',
-          rowData.loadNo || '',
-          rowData.status || '',
-          rowData.scheduleDate || '', // AppointmentDate
-          rowData.appointmentTime || '',
-          rowData.scheduleDate || '',
-          rowData.stagingLocation || '',
-          rowData.baseQty || '0',
-          rowData.palletQty || '0'
-        ];
-        
-        cols.forEach(function(v){
-          var td = document.createElement('td');
-          td.textContent = v;
-          td.setAttribute('data-bay3-cell', '1');
-          row.appendChild(td);
-        });
-      });
-    });
-  }
-  
-  window.addEventListener("dashboardDataLoaded", function(e) {
-    window.__latestDashboardData = e.detail;
-    updateBay3Table();
-  });
-
-  var timer = setInterval(updateBay3Table, 500);
-  setTimeout(function(){ clearInterval(timer); }, 30000);
-})();
 </script><script id="bay4-force-excel-layout">
 (function(){
   var lastFetchAt = 0;
@@ -660,87 +593,7 @@
   setInterval(function(){ if(isBay4()) { fetchBay4(); render(); } }, 1000);
   document.addEventListener('click', function(){ setTimeout(function(){ if(isBay4()) fetchBay4(); }, 300); }, true);
 })();
-</script><script id="bay3-force-excel-layout">
-(function(){
-  var lastFetchAt = 0;
-  var bay3Rows = null;
-  var fetching = false;
-
-  function isBay3(){
-    var active = document.querySelector('.report-tab.active');
-    return active && (active.textContent || '').trim() === 'Team 3';
-  }
-  function dateOnly(v){
-    if(!v) return '';
-    var s=String(v);
-    if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(5,7)+'/'+s.slice(8,10)+'/'+s.slice(0,4);
-    return s.slice(0,10);
-  }
-  function timeOnly(v){
-    if(!v) return '';
-    try { var d=new Date(v); if(!isNaN(d.getTime())) return d.toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'}); } catch(e){}
-    var s=String(v); return (s.split('T')[1]||s).slice(0,8);
-  }
-  function findSection(){
-    var heads = Array.from(document.querySelectorAll('h2,h3'));
-    var head = heads.find(function(h){ return (h.textContent||'').trim() === 'Section 2 - PLANNED Outbound Orders'; });
-    if(!head) return null;
-    var node=head;
-    while(node && node!==document.body){
-      if(node.querySelector && node.querySelector('table')) return node;
-      node=node.parentElement;
-    }
-    return null;
-  }
-  function esc(v){ return String(v==null?'':v).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
-  function render(){
-    if(!isBay3() || !bay3Rows) return;
-    var section=findSection(); if(!section) return;
-    var table=section.querySelector('table'); if(!table) return;
-    var thead=table.querySelector('thead'); var tbody=table.querySelector('tbody'); if(!thead||!tbody) return;
-    var headers=['Customer','Order Number','Load #','Order Status','AppointmentDate','AppointmentTime','Schedule Date','Staging Location','Total Base QTY','Pallet Qty'];
-    thead.innerHTML='<tr>'+headers.map(function(h){return '<th data-bay3-excel="1">'+h+'</th>';}).join('')+'</tr>';
-    tbody.innerHTML=bay3Rows.map(function(r){
-      var appt=r.appointmentTime||'';
-      var vals=[
-        r.customer||'',
-        r.orderNumber||'',
-        r.loadNo||'',
-        r.status||'',
-        dateOnly(appt || r.scheduleDate),
-        timeOnly(appt),
-        dateOnly(r.scheduleDate),
-        r.stagingLocation||'',
-        r.baseQty||0,
-        r.palletQty||0
-      ];
-      return '<tr data-bay3-excel-row="1">'+vals.map(function(v){return '<td>'+esc(v)+'</td>';}).join('')+'</tr>';
-    }).join('');
-  }
-  async function fetchBay3(){
-    if(!isBay3()||fetching) return;
-    if(Date.now()-lastFetchAt<8000 && bay3Rows){ render(); return; }
-    var raw=localStorage.getItem('bay4-wms-session'); if(!raw) return;
-    var session; try{session=JSON.parse(raw);}catch(e){return;}
-    var facilityId=localStorage.getItem('bay4-wms-facility')||(session.defaultFacility&&session.defaultFacility.id)||'LT_F1';
-    var facility=(session.facilities||[]).find(function(f){return f.id===facilityId;})||{id:facilityId,timeZone:'America/Los_Angeles'};
-    fetching=true;
-    try{
-      var res=await fetch('/api/dashboard/bay3',{method:'POST',cache:'no-store',headers:{'content-type':'application/json','authorization':'Bearer '+session.accessToken,'x-tenant-id':(session.identity&&(session.identity.tenantId||session.identity.tenant_id))||'LT'},body:JSON.stringify({facilityId:facility.id,facilityName:facility.name,includeAllCustomers:/fontana|aless/i.test((facility.id||'')+' '+(facility.name||'')),timeZone:facility.timeZone||'America/Los_Angeles',tab:'bay3'})});
-      var json=await res.json();
-      if(json&&json.plannedOrders&&Array.isArray(json.plannedOrders.rows)){
-        bay3Rows=json.plannedOrders.rows;
-        lastFetchAt=Date.now();
-        render();
-      }
-    }catch(e){console.warn('Team 3 table refresh failed',e);}
-    fetching=false;
-  }
-  setInterval(function(){ if(isBay3()){ fetchBay3(); render(); } },1000);
-  document.addEventListener('click',function(){ setTimeout(function(){ if(isBay3()) fetchBay3(); },300);},true);
-})();
-</script>
-<style id="ruben-live-dashboard-color-fix">
+</script><style id="ruben-live-dashboard-color-fix">
   :root { color-scheme: dark; }
   body, .dashboard-shell, main { background: linear-gradient(135deg,#071126 0%,#12183a 55%,#090f24 100%) !important; color:#f4f7ff !important; }
   .brand-bar,.tab-bar,.report-section,.stat-card,.kpi-card,.section-heading,.table-frame thead,.search-box,.facility-select select {
@@ -1374,6 +1227,7 @@
   var bay3Rows = null;
   var lastFetchAt = 0;
   var fetching = false;
+  var lastRenderedHtml = '';
 
   function isBay3(){
     var active = document.querySelector('.report-tab.active');
@@ -1424,8 +1278,11 @@
     if(!thead || !tbody) return;
 
     var headers = ['Customer','Order Number','Load #','Order Status','AppointmentDate','AppointmentTime','Schedule Date','Staging Location','Total Base QTY','Pallet Qty'];
-    thead.innerHTML = '<tr>' + headers.map(function(h){ return '<th data-bay3-exact="1">'+h+'</th>'; }).join('') + '</tr>';
-    tbody.innerHTML = bay3Rows.map(function(r){
+    var nextHeadHtml = '<tr>' + headers.map(function(h){
+      return '<th data-bay3-exact="1">' + h + '</th>';
+    }).join('') + '</tr>';
+
+    var nextBodyHtml = bay3Rows.map(function(r){
       var appt = value(r, ['appointmentTime','appointmentDate','appointment']);
       var vals = [
         value(r, ['customer','customerName']),
@@ -1439,8 +1296,17 @@
         value(r, ['baseQty','totalBaseQty','totalBaseQTY']),
         value(r, ['palletQty','palletQTY','palletQuantity'])
       ];
-      return '<tr data-bay3-exact-row="1">' + vals.map(function(v){ return '<td>'+esc(v || '')+'</td>'; }).join('') + '</tr>';
+      return '<tr data-bay3-exact-row="1">' + vals.map(function(v){
+        return '<td>' + esc(v || '') + '</td>';
+      }).join('') + '</tr>';
     }).join('');
+
+    var nextHtml = nextHeadHtml + '||' + nextBodyHtml;
+    if (nextHtml === lastRenderedHtml) return;
+
+    lastRenderedHtml = nextHtml;
+    thead.innerHTML = nextHeadHtml;
+    tbody.innerHTML = nextBodyHtml;
   }
   async function fetchBay3(){
     if(!isBay3() || fetching) return;
@@ -1470,7 +1336,9 @@
     } catch(e) { console.warn('Team 3 exact layout refresh failed', e); }
     fetching = false;
   }
-  setInterval(function(){ if(isBay3()){ fetchBay3(); render(); } }, 900);
+  setInterval(function(){
+    if (isBay3()) fetchBay3();
+  }, 3000);
   document.addEventListener('click', function(){ setTimeout(function(){ if(isBay3()) fetchBay3(); }, 250); }, true);
 })();
 </script>
