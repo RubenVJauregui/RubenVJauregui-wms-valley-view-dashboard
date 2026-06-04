@@ -1879,6 +1879,10 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
               return tabCustomerMatch && isTeam1ExcelFullToOffloadContainer(e);
             }
 
+            if (tab === 'bay3' && (isEuromarketCustomer(customerName) || isEuromarketCustomer(customerId))) {
+              return false;
+            }
+
             if (useFullToOffloadMetric) {
               // Valley View Night Shift, Fontana, and Alessandro follow the Full-to-Offload metric:
               // CONTAINER + FULL + FULL_TO_OFFLOAD, excluding Euromarket / Crate & Barrel only.
