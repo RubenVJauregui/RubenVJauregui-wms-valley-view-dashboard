@@ -2547,9 +2547,12 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           ];
         }
         if (tab === 'nightShift') {
-          const nightShiftRows = result.inYardFullEquipment.rows.filter(e => normalizeName(e.customer) !== normalizeName('Night Shift — All FULL Trailers & Containers'));
-          result.inYardFullEquipment.rows = nightShiftRows;
-          result.inYardFullEquipment.candidateCount = nightShiftRows.length;
+          // Night Shift visible table: only rows with a non-blank resolved customer name.
+          // This matches the customer chip buttons shown in the UI.
+          const nightShiftRows = result.inYardFullEquipment.rows.filter(e => {
+            const c = String(e.customer || '').trim();
+            return c && normalizeName(c) !== normalizeName('Night Shift — All FULL Trailers & Containers');
+          });
           const sortedNightShiftRows = [...nightShiftRows].sort((a, b) => {
             const at = new Date(a.checkIn || a.gateCheckInTime || a.createdTime || 0).getTime();
             const bt = new Date(b.checkIn || b.gateCheckInTime || b.createdTime || 0).getTime();
@@ -2558,12 +2561,10 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           result.inYardFullEquipment.rows = sortedNightShiftRows;
           result.inYardFullEquipment.candidateCount = sortedNightShiftRows.length;
           const nightShiftCustomerCounts = buildCustomerCounts(sortedNightShiftRows);
-          result.customerSet = nightShiftCustomerCounts.length
-            ? nightShiftCustomerCounts
-            : NIGHT_SHIFT_CUSTOMERS.map(name => ({ name, count: 0 }));
+          result.customerSet = nightShiftCustomerCounts;
           result.customer = { name: 'Night Shift' };
           result.metrics = [
-            { label: 'Customers', value: String(result.customerSet.length), sub: 'Valley View Night Shift set' },
+            { label: 'Customers', value: String(nightShiftCustomerCounts.length), sub: 'Night Shift customer set' },
             { label: 'FULL Containers', value: String(sortedNightShiftRows.length), sub: 'Not yet devanned' },
           ];
           result.nightShift = {
