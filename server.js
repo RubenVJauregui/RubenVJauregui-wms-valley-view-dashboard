@@ -1805,6 +1805,9 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
         pickTasks: [],
         historyTasks: [],
         pickAssigneeCounts: {},
+        totalAssignedOrders: 0,
+        inProgressCount: 0,
+        allAssigneeNames: [],
       };
 
       try {
@@ -1972,6 +1975,24 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
                 b2a.pickAssigneeCounts[key] = { orders: 0, pieces: 0 };
               }
             }
+
+            // KPI: Total Assigned = total unique orders auto-assigned today
+            const totalAssignedOrderIds = new Set();
+            for (const t of assignedTodayTasks) {
+              for (const oid of (t.orderIds || [])) totalAssignedOrderIds.add(oid);
+            }
+            b2a.totalAssignedOrders = totalAssignedOrderIds.size;
+
+            // KPI: In Progress = tasks currently IN_PROGRESS
+            b2a.inProgressCount = allTasks.filter((t) => String(t.status || '').toUpperCase() === 'IN_PROGRESS').length;
+
+            // All assignee names from today's assigned tasks
+            const allAssigneeSet = new Set();
+            for (const t of assignedTodayTasks) {
+              const name = canonicalAssignee(t.assigneeUserName || '');
+              if (name) allAssigneeSet.add(name);
+            }
+            b2a.allAssigneeNames = Array.from(allAssigneeSet).sort();
           }
         }
       } catch (err) {
