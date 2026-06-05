@@ -2284,7 +2284,12 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             return Array.from(byCustomer.values()).sort((a, b) => b.orderCount - a.orderCount);
           }
 
-          const leftPivotRows = buildPivot(dropshipRows, BAY2_LEFT_DROPSHIP_CUSTOMERS, 'left');
+          const dropshipOrderRows = rows.filter((row) => {
+            const type = normalizeName(row.orderType || row.order_type || row.orderTypeName || '');
+            return type === 'DROPSHIP ORDER';
+          });
+
+          const leftPivotRows = buildPivot(dropshipOrderRows, BAY2_LEFT_DROPSHIP_CUSTOMERS, 'left');
           const grandTotal = {
             kind: 'grandTotal', side: 'left', level: 0, label: 'Grand Total',
             orderCount: leftPivotRows.reduce((sum, r) => sum + r.orderCount, 0),
@@ -2292,11 +2297,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           };
           if (leftPivotRows.length) leftPivotRows.push(grandTotal);
 
-          const mezzanineSourceRows = rows.filter((row) => {
-            const type = normalizeName(row.orderType || row.order_type || row.orderTypeName || '');
-            return type === 'DROPSHIP ORDER';
-          });
-          const mezzanineRows = buildPivot(mezzanineSourceRows, BAY2_MEZZANINE_DROPSHIP_CUSTOMERS, 'right');
+          const mezzanineRows = buildPivot(dropshipOrderRows, BAY2_MEZZANINE_DROPSHIP_CUSTOMERS, 'right');
           const mezzanineTotal = {
             kind: 'grandTotal', side: 'right', level: 0, label: 'Grand Total',
             orderCount: mezzanineRows.reduce((sum, r) => sum + r.orderCount, 0),
