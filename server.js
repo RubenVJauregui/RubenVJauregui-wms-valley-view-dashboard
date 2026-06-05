@@ -1606,45 +1606,49 @@ async function applyUnloadedYesterdayWorkloadCounts({ headers, accessToken, tena
 async function applyPickedYesterdayWorkloadCounts({ headers, accessToken, tenantId, facilityId, timeZone, byCustomer, metric }) {
   const window = getYesterdayWindow(timeZone || 'America/Los_Angeles');
 
-  // Use the order's own pickedTime field to determine if it was picked yesterday.
-  // Fetch all orders whose status qualifies, then filter client-side by pickedTime
-  // falling within yesterday's business date. Exclude orders with null/missing pickedTime.
-  const result = await fetchAllOrderPages(headers, {
-    statuses: WORKLOAD_PICKED_STATUSES.flatMap((s) => [s, s.replace(/ /g, '_')]),
-    pageSize: 500,
-  });
-  const allOrders = result.ok ? (result.orders || []) : [];
-
-  const matchingOrders = allOrders.filter((order) => {
-    if (!isWorkloadPickedStatus(getOrderStatus(order))) return false;
-    const pickedTime = getOrderPickedTime(order);
-    if (!pickedTime) return false;
-    return isWithinRange(pickedTime, window.start, window.end);
-  });
-
-  const orgIds = new Set();
-  for (const order of matchingOrders) {
-    if (order.customerId) orgIds.add(order.customerId);
-    if (order.customer?.id) orgIds.add(order.customer.id);
-    if (order.customer?.organizationId) orgIds.add(order.customer.organizationId);
+  // Use pick-task endTime (PICKED TIME in Excel column AE) as the date source.
+  // Fetch CLOSED pick tasks whose endTime falls in yesterday's LA business day,
+  // then count unique order IDs (DNs) per customer.
+  const tasks = [];
+  const pageSize = 500;
+  for (let currentPage = 1; currentPage <= 50; currentPage += 1) {
+    const res = await fetch(`${WMS_API_BASE_URL}/wms-bam/outbound/pick-task/search-by-paging`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        currentPage,
+        pageSize,
+        statuses: ['CLOSED'],
+        endTimeFrom: window.start.toISOString(),
+        endTimeTo: window.end.toISOString(),
+      }),
+    });
+    if (!res.ok) { if (currentPage === 1) break; else break; }
+    const json = await res.json().catch(() => ({}));
+    if (!(json.code === 0 || String(json.code) === '0')) break;
+    const list = json.data?.list || json.data?.records || [];
+    if (!Array.isArray(list) || !list.length) break;
+    tasks.push(...list);
+    const total = Number(json.data?.total || json.data?.totalCount || 0);
+    if (list.length < pageSize || (total && tasks.length >= total)) break;
   }
-  const orgNames = await resolveOrgNames([...orgIds], accessToken, tenantId);
 
+  // Count unique orders per customer from pick tasks
   const seen = new Set();
-  for (const order of matchingOrders) {
-    const orderId = order.id || order.orderId || order.orderNumber || order.referenceNo;
-    if (!orderId || seen.has(orderId)) continue;
-    seen.add(orderId);
-    const customer =
-      orgNames[order.customerId || order.customer?.id || order.customer?.organizationId] ||
-      order.customerName ||
-      order.customer?.name ||
-      order.customerId ||
-      order.customer?.id ||
-      'Unknown';
-    addCustomerMetricRow(byCustomer, customer, metric).ordersPickedYesterday.value += 1;
+  for (const task of tasks) {
+    const endTime = task.endTime || task.updatedTime || '';
+    if (!endTime || !isWithinRange(endTime, window.start, window.end)) continue;
+    const customerNames = task.customerNames || [];
+    const customer = customerNames[0] || 'Unknown';
+    const orderIds = Array.isArray(task.orderIds) ? task.orderIds : [task.orderId || task.orderNo].filter(Boolean);
+    for (const orderId of orderIds) {
+      if (!orderId || seen.has(orderId)) continue;
+      seen.add(orderId);
+      addCustomerMetricRow(byCustomer, customer, metric).ordersPickedYesterday.value += 1;
+    }
   }
-  return { windowKey: window.key, count: seen.size, fetched: allOrders.length };
+
+  return { windowKey: window.key, count: seen.size, fetched: tasks.length };
 }
 
 // URL variant mapping: /api/dashboard/bay2-auto-assign etc.
