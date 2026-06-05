@@ -1990,9 +1990,8 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
         if (o.customerId) orgIds.add(o.customerId);
       }
       const orgNames = await resolveOrgNames([...orgIds], req.accessToken, req.tenantId);
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayKey = yesterday.toISOString().slice(0, 10);
+      const yesterdayWindow = getYesterdayWindow(timeZone || 'America/Los_Angeles');
+      const yesterdayKey = yesterdayWindow.key;
       const byCustomer = new Map();
       let pickedYesterdayWindow = yesterdayKey;
       let team4FullRows = [];
@@ -2007,7 +2006,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           'Unknown';
         const row = addCustomerMetricRow(byCustomer, customer, metric);
         row.fillableOrders.value += 1;
-        if (String(o.createdTime || '').slice(0, 10) === yesterdayKey) {
+        if (isWithinRange(o.createdTime, yesterdayWindow.start, yesterdayWindow.end)) {
           row.newOrders.value += 1;
         }
       }
@@ -2103,14 +2102,46 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
     const rows = [
       { customer: 'Orgain', unloadedYesterday: metric(0), containersFull: metric(0), ordersPickedYesterday: metric(0), newOrders: metric(0), fillableOrders: metric(26) },
       { customer: "King's Hawaiian", unloadedYesterday: metric(0), containersFull: metric(1), ordersPickedYesterday: metric(0), newOrders: metric(0), fillableOrders: metric(1) },
-      { customer: 'Mama Chia', unloadedYesterday: metric(0), containersFull: metric(0), ordersPickedYesterday: metric(0), newOrders: metric(15), fillableOrders: metric(89) },
-      { customer: 'NZXT', unloadedYesterday: metric(0), containersFull: metric(0), ordersPickedYesterday: metric(0), newOrders: metric(21), fillableOrders: metric(6) },
+      { customer: 'Mama Chia', unloadedYesterday: metric(0), containersFull: metric(0), ordersPickedYesterday: metric(0), newOrders: metric(0), fillableOrders: metric(89) },
+      { customer: 'NZXT', unloadedYesterday: metric(0), containersFull: metric(0), ordersPickedYesterday: metric(0), newOrders: metric(0), fillableOrders: metric(6) },
       { customer: 'Lennox', unloadedYesterday: metric(0), containersFull: metric(0), ordersPickedYesterday: metric(0), newOrders: metric(0), fillableOrders: metric(28) },
-      { customer: 'Karakas', unloadedYesterday: metric(0), containersFull: metric(0), ordersPickedYesterday: metric(0), newOrders: metric(1), fillableOrders: metric(3) },
+      { customer: 'Karakas', unloadedYesterday: metric(0), containersFull: metric(0), ordersPickedYesterday: metric(0), newOrders: metric(0), fillableOrders: metric(3) },
       { customer: 'Gurunanda', unloadedYesterday: metric(0), containersFull: metric(0), ordersPickedYesterday: metric(0), newOrders: metric(0), fillableOrders: metric(129) },
-      { customer: 'Vita Coco', unloadedYesterday: metric(0), containersFull: metric(11), ordersPickedYesterday: metric(0), newOrders: metric(14), fillableOrders: metric(22) },
+      { customer: 'Vita Coco', unloadedYesterday: metric(0), containersFull: metric(11), ordersPickedYesterday: metric(0), newOrders: metric(0), fillableOrders: metric(22) },
     ];
-    let pickedYesterdayWindow = '2026-06-02';
+    const yesterdayWindow = getYesterdayWindow(timeZone || 'America/Los_Angeles');
+    let pickedYesterdayWindow = yesterdayWindow.key;
+
+    // Fetch New Orders: count all orders created in yesterday's LA-day window per customer
+    try {
+      const newOrderResult = await fetchAllOrderPages(headers, {
+        createdTimeFrom: yesterdayWindow.start.toISOString(),
+        createdTimeTo: yesterdayWindow.end.toISOString(),
+        pageSize: 500,
+      });
+      if (newOrderResult.ok) {
+        const newOrders = newOrderResult.orders || [];
+        const orgIds = new Set();
+        for (const o of newOrders) {
+          if (o.customerId) orgIds.add(o.customerId);
+        }
+        const orgNames = await resolveOrgNames([...orgIds], req.accessToken, req.tenantId);
+        const byCustomer = new Map(rows.map(row => [row.customer, row]));
+        for (const o of newOrders) {
+          const customer =
+            orgNames[o.customerId || o.customer?.id || o.customer?.organizationId] ||
+            o.customerName ||
+            o.customer?.name ||
+            o.customerId ||
+            o.customer?.id ||
+            'Unknown';
+          addCustomerMetricRow(byCustomer, customer, metric).newOrders.value += 1;
+        }
+      }
+    } catch (err) {
+      console.error('Configured workload new-orders fetch error:', err.message);
+    }
+
     try {
       const byCustomer = new Map(rows.map(row => [row.customer, row]));
       await applyUnloadedYesterdayWorkloadCounts({
@@ -2159,7 +2190,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
     result.bpWorkload = {
       supported: true,
       facilityId,
-      newOrdersWindow: '2026-06-02',
+      newOrdersWindow: yesterdayWindow.key,
       pickedOrdersWindow: pickedYesterdayWindow,
       rows,
       totals,
