@@ -1841,4 +1841,75 @@
 .mezzanine-column .excel-pivot-table-right .pivot-filter:after{content:" ▾"!important;color:#000!important;font-size:9px!important}
 .mezzanine-column .mezzanine-title{color:#000!important;font-family:Calibri,Arial,sans-serif!important;font-size:12px!important;font-weight:700!important;text-decoration:none!important;margin:0 0 4px!important}
 </style>
+
+<script id="team2-autoassign-customer-column">
+(function(){
+  if (window.__team2AutoAssignCustomerColumnApplied) return;
+  window.__team2AutoAssignCustomerColumnApplied = true;
+  var taskCustomerById = {};
+  function activeTab(){ var a=document.querySelector('.report-tab.active'); return a && a.textContent ? a.textContent.trim() : ''; }
+  function isTeam2AutoAssign(){ var t=activeTab(); return t==='Team 2 Auto Assign' || t==='E-Comm Auto Assign'; }
+  function remember(json){
+    var data = json && json.bay2AutoAssign;
+    if(!data) return;
+    var rows = [];
+    if(Array.isArray(data.pickTasks)) rows = rows.concat(data.pickTasks);
+    if(Array.isArray(data.assignments)) rows = rows.concat(data.assignments);
+    if(Array.isArray(data.historyTasks)) rows = rows.concat(data.historyTasks);
+    rows.forEach(function(r){
+      var id = r.taskId || r.taskNumber || r.id;
+      var customer = r.customer || r.customerName || (Array.isArray(r.customerNames) ? r.customerNames[0] : '');
+      if(id && customer) taskCustomerById[String(id)] = String(customer);
+    });
+  }
+  function findActiveAssignedSections(){
+    return Array.from(document.querySelectorAll('section,article,div')).filter(function(node){
+      var h = node.querySelector && node.querySelector('h3,h2');
+      if(!h) return false;
+      var t=(h.textContent||'').trim();
+      return /Active Assigned Tasks|Assigned Activity|Dupray \/ Univera \/ Triplelite Assigned Pick Tasks/i.test(t) && node.querySelector('table');
+    });
+  }
+  function addCustomerColumn(){
+    if(!isTeam2AutoAssign()) return;
+    findActiveAssignedSections().forEach(function(section){
+      var table=section.querySelector('table'); if(!table) return;
+      var ths=Array.from(table.querySelectorAll('thead th'));
+      if(!ths.length) return;
+      var labels=ths.map(function(th){return (th.textContent||'').trim().toLowerCase();});
+      if(labels.indexOf('customer')>=0) return;
+      var assigneeIdx=labels.indexOf('assignee');
+      if(assigneeIdx<0) return;
+      var tr=table.querySelector('thead tr'); if(!tr) return;
+      var th=document.createElement('th'); th.textContent='Customer'; th.setAttribute('data-team2-customer-col','1');
+      tr.insertBefore(th, ths[assigneeIdx]);
+      table.querySelectorAll('tbody tr').forEach(function(row){
+        var cells=Array.from(row.querySelectorAll('td'));
+        if(!cells.length || row.querySelector('td[data-team2-customer-col="1"]')) return;
+        var taskId=(cells[0] && cells[0].textContent || '').trim();
+        // In the Dupray table Source is first and Task is third.
+        if(labels[0]==='source' && cells[2]) taskId=(cells[2].textContent||'').trim();
+        var td=document.createElement('td'); td.setAttribute('data-team2-customer-col','1');
+        td.textContent=taskCustomerById[taskId] || 'Pending';
+        row.insertBefore(td, cells[assigneeIdx]);
+      });
+    });
+  }
+  var oldFetch = window.fetch;
+  window.fetch = function(){
+    return oldFetch.apply(this, arguments).then(function(res){
+      try{
+        var url=String((arguments[0]&&arguments[0].url)||arguments[0]||'');
+        if(url.indexOf('/api/dashboard')>=0){
+          res.clone().json().then(function(json){ remember(json); setTimeout(addCustomerColumn,50); setTimeout(addCustomerColumn,500); }).catch(function(){});
+        }
+      }catch(e){}
+      return res;
+    }.bind(arguments));
+  };
+  document.addEventListener('click', function(){ setTimeout(addCustomerColumn,250); }, true);
+  setInterval(addCustomerColumn,1000);
+})();
+</script>
+
 </body></html>
