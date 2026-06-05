@@ -150,16 +150,12 @@
 </script><script id="hide-autoassign-squares">
 (function(){
   function hideSquares(){
-    var labelsToHide = ['Doors Used'];
+    var labelsToHide = ['ETs', 'Doors Used'];
     document.querySelectorAll('.bay4-assign-kpis article, .bay4-reference-kpis article').forEach(function(card){
       var labelEl = card.querySelector('span');
       var label = labelEl && labelEl.textContent ? labelEl.textContent.trim() : '';
       if (labelsToHide.indexOf(label) >= 0) {
         card.style.display = 'none';
-      }
-      // Rename ETs to Total Assigned
-      if (label === 'ETs') {
-        labelEl.textContent = 'Total Assigned';
       }
     });
   }
@@ -191,34 +187,20 @@
     var activeLabel = activeTabLabel();
     if ((activeLabel !== 'Team 2 Auto Assign' && activeLabel !== 'E-Comm Auto Assign') || !latestBay2AutoAssign) return;
     var data = latestBay2AutoAssign.bay2AutoAssign || {};
-    // Total Assignments = orders currently in progress
-    var inProgress = data.inProgressCount || 0;
-    setCardValue('Total Assignments', inProgress);
-    // Total Assigned = total orders auto-assigned today
-    var totalAssigned = data.totalAssignedOrders || 0;
-    setCardValue('Total Assigned', totalAssigned);
-    // Active Assignees = count of unique assignees
-    var assigneeNames = data.allAssigneeNames || [];
-    setCardValue('Active Assignees', assigneeNames.length);
+    var history = Array.isArray(data.historyTasks) ? data.historyTasks : [];
+    var active = Array.isArray(data.pickTasks) ? data.pickTasks : [];
+    var allAssignmentsToday = history.length || active.length || (Array.isArray(data.assignments) ? data.assignments.length : 0);
+    var inProgress = active.filter(function(t){
+      return String(t.status || '').toUpperCase() === 'IN_PROGRESS';
+    }).length;
+    if (!inProgress && history.length) {
+      inProgress = history.filter(function(t){ return String(t.status || '').toUpperCase() === 'IN_PROGRESS'; }).length;
+    }
+    setCardValue('Total Assignments', allAssignmentsToday);
+    setCardValue('Active Assignees', inProgress);
   }
 
-  var oldFetch2 = window.fetch;
-  window.fetch = function(){
-    return oldFetch2.apply(this, arguments).then(function(res){
-      try {
-        var url = String((arguments[0] && arguments[0].url) || arguments[0] || '');
-        if (url.indexOf('/api/dashboard') >= 0) {
-          res.clone().json().then(function(json){
-            if (json && json.bay2AutoAssign) {
-              latestBay2AutoAssign = json;
-              setTimeout(applyBay2AutoAssignKpis, 50);
-            }
-          }).catch(function(){});
-        }
-      } catch(e){}
-      return res;
-    }.bind(arguments));
-  };
+  
   setInterval(applyBay2AutoAssignKpis, 1500);
 })();
 </script><script id="assigned-activity-scroll">
@@ -1760,9 +1742,7 @@
   function norm(v){return String(v||'').toUpperCase().replace(/\s*\(\d+\)\s*$/,'').replace(/[^A-Z0-9]+/g,' ').trim();}
   function clean(v){return String(v||'').replace(/\s*\(\d+\)\s*$/,'').trim();}
   function isSection1Title(text){text=String(text||'').toUpperCase();return text.indexOf('SECTION 1')>=0&&text.indexOf('IN-YARD FULL EQUIPMENT')>=0;}
-  function activeTab(){var a=document.querySelector('.report-tab.active');return a&&a.textContent?a.textContent.trim():'';}
-  function isAutoAssignTab(){var t=activeTab();return t==='Team 2 Auto Assign'||t==='E-Comm Auto Assign'||t==='Rear Guard Shack'||t==='Front Guard Shack';}
-  function section1Sections(){if(isAutoAssignTab())return [];return Array.from(document.querySelectorAll('h2,h3')).map(function(head){if(!isSection1Title(head.textContent))return null;var n=head;while(n&&n!==document.body){if(n.querySelector&&n.querySelector('table'))return n;n=n.parentElement;}return null;}).filter(Boolean);}
+  function section1Sections(){return Array.from(document.querySelectorAll('h2,h3')).map(function(head){if(!isSection1Title(head.textContent))return null;var n=head;while(n&&n!==document.body){if(n.querySelector&&n.querySelector('table'))return n;n=n.parentElement;}return null;}).filter(Boolean);}
   function customerColumn(table){return Array.from(table.querySelectorAll('thead th')).findIndex(function(th){return /customer/i.test(th.textContent||'');});}
   function applySection(section){
     var table=section.querySelector('table');if(!table)return;var idx=customerColumn(table);if(idx<0)return;
@@ -1780,8 +1760,7 @@
     Object.keys(counts).sort(function(a,b){return counts[b]-counts[a]||names[a].localeCompare(names[b]);}).forEach(function(key){wrap.appendChild(button(names[key],key,counts[key]));});
     var heading=section.querySelector('.section-heading')||section.querySelector('h2,h3');if(heading&&heading.parentNode)heading.parentNode.insertBefore(wrap,heading.nextSibling);
   }
-  function removeAllChips(){document.querySelectorAll('.section1-equipment-filter-buttons').forEach(function(el){el.remove();});}
-  function applyAll(){if(isAutoAssignTab()){removeAllChips();return;}section1Sections().forEach(applySection);}
+  function applyAll(){section1Sections().forEach(applySection);}
   document.addEventListener('click',function(e){var chip=e.target&&e.target.closest?e.target.closest('.section1-equipment-filter-buttons .section1-filter-chip'):null;if(!chip)return;var section=chip.closest('section,.report-section')||chip.parentElement;while(section&&section!==document.body&&!(section.querySelector&&section.querySelector('table')&&section.querySelector('.section1-equipment-filter-buttons'))){section=section.parentElement;}if(!section)return;var key=chip.dataset.customerKey||'ALL';selectedBySection.set(section,selectedBySection.get(section)===key?'ALL':key);setTimeout(function(){applySection(section);},0);},true);
   applyAll();document.addEventListener('click',function(){setTimeout(applyAll,250);},true);setInterval(applyAll,1000);
 })();
