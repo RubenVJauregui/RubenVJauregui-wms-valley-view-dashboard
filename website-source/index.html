@@ -1598,6 +1598,26 @@
 })();
 </script>
 
+
+<script id="nightshift-chip-scope-guard">
+(function(){
+  if (window.__nightShiftChipScopeGuardApplied) return;
+  window.__nightShiftChipScopeGuardApplied = true;
+  function isNightShift(){
+    var active = document.querySelector('.report-tab.active');
+    return !!(active && /Night Shift/i.test(active.textContent || ''));
+  }
+  function removeNightShiftChipsWhenNotActive(){
+    if (isNightShift()) return;
+    document.querySelectorAll('.nightshift-customer-summary').forEach(function(node){ node.remove(); });
+  }
+  removeNightShiftChipsWhenNotActive();
+  document.addEventListener('click', function(){ setTimeout(removeNightShiftChipsWhenNotActive, 0); setTimeout(removeNightShiftChipsWhenNotActive, 250); }, true);
+  document.addEventListener('change', function(){ setTimeout(removeNightShiftChipsWhenNotActive, 0); setTimeout(removeNightShiftChipsWhenNotActive, 250); }, true);
+  setInterval(removeNightShiftChipsWhenNotActive, 500);
+})();
+</script>
+
 <script id="nightshift-sort-oldest-newest">
 (function(){
   if (window.__nightShiftSortOldestNewestV2) return;
