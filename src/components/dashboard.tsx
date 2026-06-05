@@ -390,8 +390,6 @@ export function Dashboard({
     fetchData();
     setCountdown(300);
 
-    if (activeTab === "bpWorkload") return;
-
     intervalRef.current = setInterval(() => {
       setCountdown((c) => {
         if (c <= 1) {
