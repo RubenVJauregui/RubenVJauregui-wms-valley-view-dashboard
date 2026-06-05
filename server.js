@@ -2344,7 +2344,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
 
           const dropshipOrderRows = rows.filter((row) => {
             const type = normalizeName(row.orderType || row.order_type || row.orderTypeName || '');
-            return type === 'DROPSHIP ORDER';
+            return type === 'DS' || type === 'DROPSHIP ORDER';
           });
 
           const leftPivotRows = buildPivot(dropshipOrderRows, BAY2_LEFT_DROPSHIP_CUSTOMERS, 'left');
