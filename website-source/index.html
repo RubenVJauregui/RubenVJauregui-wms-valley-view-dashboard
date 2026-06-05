@@ -1821,102 +1821,68 @@
 .mezzanine-column .mezzanine-title{color:#000!important;font-family:Calibri,Arial,sans-serif!important;font-size:12px!important;font-weight:700!important;text-decoration:none!important;margin:0 0 4px!important}
 </style>
 
-<script id="team2-autoassign-final-fix">
+
+
+
+<script id="team2-autoassign-final-fix-v2">
 (function(){
-  if (window.__team2AutoAssignFinalFixApplied) return;
-  window.__team2AutoAssignFinalFixApplied = true;
+  if (window.__team2AutoAssignFinalFixV2Applied) return;
+  window.__team2AutoAssignFinalFixV2Applied = true;
   var latest = null;
-  var taskCustomer = {};
   function activeTab(){ var a=document.querySelector('.report-tab.active'); return a && a.textContent ? a.textContent.trim() : ''; }
   function isTeam2AA(){ var t=activeTab(); return t==='Team 2 Auto Assign' || t==='E-Comm Auto Assign'; }
-  function normStatus(v){ return String(v||'').toUpperCase().replace(/[^A-Z0-9]+/g,'_'); }
+  function esc(v){ return String(v==null?'':v).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
+  function fmt(v){ var n=Number(v||0); return Number.isFinite(n)?Math.round(n).toLocaleString('en-US'):esc(v); }
   function orderIds(row){ return Array.isArray(row && row.orderIds) ? row.orderIds.filter(Boolean).map(String) : []; }
   function uniqOrders(rows){ var set=new Set(); (rows||[]).forEach(function(r){ orderIds(r).forEach(function(id){set.add(id);}); }); return set.size; }
-  function allRows(data){ var out=[]; ['pickTasks','historyTasks','assignments'].forEach(function(k){ if(Array.isArray(data&&data[k])) out=out.concat(data[k]); }); return out; }
-  function remember(json){
-    if(!json || !json.bay2AutoAssign) return;
-    latest=json.bay2AutoAssign;
-    allRows(latest).forEach(function(r){
-      var ids=[r.taskId,r.originalTaskId,r.id].filter(Boolean).map(String);
-      var c=r.customer || r.customerName || (Array.isArray(r.customerNames)?r.customerNames[0]:'');
-      ids.forEach(function(id){ if(id && c) taskCustomer[id]=String(c); });
-    });
-  }
-  function setCard(label, value){
-    document.querySelectorAll('.bay4-assign-kpis article,.bay4-reference-kpis article').forEach(function(card){
-      var span=card.querySelector('span'); if(!span) return;
-      if((span.textContent||'').trim()===label){ var strong=card.querySelector('strong'); if(strong) strong.textContent=String(value); card.style.display=''; }
-    });
-  }
+  function status(v){ return String(v||'').toUpperCase().replace(/[^A-Z0-9]+/g,'_'); }
+  function parseDate(v){ var d=new Date(v); return isNaN(d.getTime())?null:d; }
+  function fmtDate(v){ var d=parseDate(v); return d?d.toLocaleString('en-US',{timeZone:'America/Los_Angeles',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}):'Pending'; }
+  function workingTime(v){ var d=parseDate(v); if(!d) return 'Pending'; var mins=Math.max(0,Math.floor((Date.now()-d.getTime())/60000)); var h=Math.floor(mins/60); return h? h+'h '+(mins%60)+'m' : mins+'m'; }
+  function allRows(){ var d=latest||{}, out=[]; ['pickTasks','historyTasks','assignments'].forEach(function(k){ if(Array.isArray(d[k])) out=out.concat(d[k]); }); return out; }
+  function remember(json){ if(json && json.bay2AutoAssign) latest=json.bay2AutoAssign; }
+  function setCard(label,value){ document.querySelectorAll('.bay4-assign-kpis article,.bay4-reference-kpis article').forEach(function(card){ var span=card.querySelector('span'); if(!span) return; if((span.textContent||'').trim()===label){ var strong=card.querySelector('strong'); if(strong) strong.textContent=String(value); card.style.display=''; }}); }
   function fixKpis(){
     if(!isTeam2AA()) return;
     document.querySelectorAll('.bay4-assign-kpis article,.bay4-reference-kpis article').forEach(function(card){
-      var span=card.querySelector('span'); if(!span) return;
-      var label=(span.textContent||'').trim();
+      var span=card.querySelector('span'); if(!span) return; var label=(span.textContent||'').trim();
       if(label==='Doors Used') card.style.display='none';
       if(label==='ETs'){ span.textContent='Total Assigned'; card.style.display=''; }
     });
-    var data=latest||{};
-    var pick=Array.isArray(data.pickTasks)?data.pickTasks:[];
-    var hist=Array.isArray(data.historyTasks)?data.historyTasks:[];
-    var inProcessRows=pick.filter(function(r){ return normStatus(r.status)==='IN_PROGRESS'; });
-    // Total Assignments = current orders assigned and in process.
-    setCard('Total Assignments', uniqOrders(inProcessRows) || inProcessRows.length || 0);
-    // Total Assigned = total unique orders auto-assigned today.
-    setCard('Total Assigned', uniqOrders(hist.concat(pick)) || (data.assignedTodayTaskCount||0));
+    var d=latest||{}, picks=Array.isArray(d.pickTasks)?d.pickTasks:[], hist=Array.isArray(d.historyTasks)?d.historyTasks:[];
+    var inProcess=picks.filter(function(r){ return status(r.status)==='IN_PROGRESS'; });
+    setCard('Total Assignments', uniqOrders(inProcess) || inProcess.length || 0);
+    setCard('Total Assigned', uniqOrders(hist.concat(picks)) || d.assignedTodayTaskCount || 0);
   }
-  function findTables(){
-    return Array.from(document.querySelectorAll('section,article,div')).filter(function(node){
-      var h=node.querySelector&&node.querySelector('h2,h3'); if(!h) return false;
-      var t=(h.textContent||'').trim();
-      return /Active Assigned Tasks|Assigned Activity|Dupray \/ Univera \/ Triplelite Assigned Pick Tasks/i.test(t) && node.querySelector('table');
-    }).map(function(n){ return n.querySelector('table'); });
+  function findActiveAssignedPanel(){
+    var panels=Array.from(document.querySelectorAll('section,article,div')).filter(function(node){ var h=node.querySelector&&node.querySelector('h2,h3'); return h && /Active Assigned Tasks|Assigned Activity/i.test(h.textContent||'') && node.querySelector('table'); });
+    return panels[0] || null;
   }
-  function addCustomerColumns(){
-    if(!isTeam2AA()) return;
-    findTables().forEach(function(table){
-      var ths=Array.from(table.querySelectorAll('thead th')); if(!ths.length) return;
-      var labels=ths.map(function(th){ return (th.textContent||'').trim().toLowerCase(); });
-      var assigneeIdx=labels.indexOf('assignee'); if(assigneeIdx<0) return;
-      if(labels.indexOf('customer')<0){
-        var tr=table.querySelector('thead tr'); var th=document.createElement('th'); th.textContent='Customer'; th.setAttribute('data-team2-aa-customer','1'); tr.insertBefore(th, ths[assigneeIdx]);
-      }
-      var newLabels=Array.from(table.querySelectorAll('thead th')).map(function(th){ return (th.textContent||'').trim().toLowerCase(); });
-      var custIdx=newLabels.indexOf('customer'); assigneeIdx=newLabels.indexOf('assignee');
-      table.querySelectorAll('tbody tr').forEach(function(row){
-        var cells=Array.from(row.querySelectorAll('td')); if(!cells.length) return;
-        if(cells[custIdx] && cells[custIdx].getAttribute('data-team2-aa-customer')==='1') return;
-        var taskId='';
-        var taskIdx=newLabels.indexOf('task number'); if(taskIdx<0) taskIdx=newLabels.indexOf('task');
-        if(taskIdx>=0 && cells[taskIdx]) taskId=(cells[taskIdx].textContent||'').trim();
-        var c=taskCustomer[taskId] || 'Pending';
-        var td=document.createElement('td'); td.textContent=c; td.setAttribute('data-team2-aa-customer','1');
-        row.insertBefore(td, cells[assigneeIdx]);
-      });
-    });
+  function renderActiveTable(){
+    if(!isTeam2AA() || !latest) return;
+    var panel=findActiveAssignedPanel(); if(!panel) return;
+    var table=panel.querySelector('table'); if(!table) return;
+    table.setAttribute('data-team2-aa-rendered','1');
+    var rows=Array.isArray(latest.pickTasks)?latest.pickTasks:[];
+    var html='<thead><tr><th>Task Number</th><th>Customer</th><th>Assignee</th><th>Started</th><th>Working Time</th><th>Pieces</th><th>DN</th></tr></thead><tbody>'+
+      rows.map(function(r){
+        return '<tr><td class="strong">'+esc(r.originalTaskId||r.taskId||'')+'</td><td>'+esc(r.customer||r.customerName||'Pending')+'</td><td>'+esc(r.assignee||'Pending')+'</td><td>'+esc(fmtDate(r.createdTime||r.assignedTime))+'</td><td>'+esc(workingTime(r.createdTime||r.assignedTime))+'</td><td>'+fmt(r.pickedPieces||r.pieces||0)+'</td><td>'+esc(orderIds(r).join(', ')||'Pending')+'</td></tr>';
+      }).join('')+'</tbody>';
+    table.innerHTML=html;
   }
-  function assigneesBottom(){
-    if(!isTeam2AA()) return;
+  function renderAssigneesBottom(){
+    if(!isTeam2AA() || !latest) return;
     var names=new Set();
-    allRows(latest||{}).forEach(function(r){ var a=r.assignee || r.assigneeUserName || ''; if(a && a!=='Pending') names.add(String(a)); });
+    allRows().forEach(function(r){ var a=r.assignee||r.assigneeUserName||''; if(a && a!=='Pending') names.add(String(a)); });
     if(!names.size) return;
     var existing=document.getElementById('team2-aa-all-assignees');
-    if(!existing){
-      existing=document.createElement('section'); existing.id='team2-aa-all-assignees'; existing.className='bay4-assign-panel bay4-assignee-bottom';
-      existing.innerHTML='<div class="bay4-panel-title"><h3>All Assignees</h3><span></span></div><div class="bay4-assignee-list"></div>';
-      var shell=document.querySelector('.bay4-assign-shell'); if(shell) shell.appendChild(existing);
-    }
+    if(!existing){ existing=document.createElement('section'); existing.id='team2-aa-all-assignees'; existing.className='bay4-assign-panel bay4-assignee-bottom'; existing.innerHTML='<div class="bay4-panel-title"><h3>All Assignees</h3><span></span></div><div class="bay4-assignee-list"></div>'; var shell=document.querySelector('.bay4-assign-shell'); if(shell) shell.appendChild(existing); }
     existing.querySelector('.bay4-panel-title span').textContent=names.size+' assignees';
-    existing.querySelector('.bay4-assignee-list').innerHTML=Array.from(names).sort().map(function(n){return '<div class="bay4-assignee-row"><span>'+n+'</span><strong> </strong></div>';}).join('');
+    existing.querySelector('.bay4-assignee-list').innerHTML=Array.from(names).sort().map(function(n){return '<div class="bay4-assignee-row"><span>'+esc(n)+'</span><strong></strong></div>';}).join('');
   }
-  function apply(){ if(!isTeam2AA()) return; fixKpis(); addCustomerColumns(); assigneesBottom(); }
+  function apply(){ if(!isTeam2AA()) return; fixKpis(); renderActiveTable(); renderAssigneesBottom(); }
   var oldFetch=window.fetch;
-  window.fetch=function(){
-    return oldFetch.apply(this,arguments).then(function(res){
-      try{ var url=String((arguments[0]&&arguments[0].url)||arguments[0]||''); if(url.indexOf('/api/dashboard')>=0){ res.clone().json().then(function(json){ remember(json); setTimeout(apply,50); setTimeout(apply,500); setTimeout(apply,1500); }).catch(function(){}); } }catch(e){}
-      return res;
-    }.bind(arguments));
-  };
+  window.fetch=function(){ return oldFetch.apply(this,arguments).then(function(res){ try{ var url=String((arguments[0]&&arguments[0].url)||arguments[0]||''); if(url.indexOf('/api/dashboard')>=0){ res.clone().json().then(function(json){ remember(json); setTimeout(apply,50); setTimeout(apply,500); setTimeout(apply,1500); }).catch(function(){}); } }catch(e){} return res; }.bind(arguments)); };
   document.addEventListener('click',function(){ setTimeout(apply,100); setTimeout(apply,500); },true);
   setInterval(apply,700);
 })();
