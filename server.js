@@ -1606,22 +1606,21 @@ async function applyUnloadedYesterdayWorkloadCounts({ headers, accessToken, tena
 async function applyPickedYesterdayWorkloadCounts({ headers, accessToken, tenantId, facilityId, timeZone, byCustomer, metric }) {
   const window = getYesterdayWindow(timeZone || 'America/Los_Angeles');
 
-  // Workload tab only: order.pickedTime is blank in WISE order responses.
-  // The operational "PICKED TIME" for this dashboard is the completed pick-task endTime.
-  // Count every unique order from CLOSED PICK tasks whose endTime was yesterday in the
-  // facility timezone, then keep only orders whose current status is in the allowed list.
-  const pickResult = await fetchAllClosedPickTasks(headers, window, facilityId);
-  const pickTasks = pickResult.tasks || [];
-  const pickedOrderIds = Array.from(new Set(pickTasks
-    .filter((task) => isWithinRange(task.endTime || task.updatedTime, window.start, window.end))
-    .flatMap((task) => Array.isArray(task.orderIds) ? task.orderIds : [task.orderId || task.orderNo || task.orderNumber])
-    .filter(Boolean)
-    .map((id) => String(id))));
+  // Use the order's own pickedTime field to determine if it was picked yesterday.
+  // Fetch all orders whose status qualifies, then filter client-side by pickedTime
+  // falling within yesterday's business date. Exclude orders with null/missing pickedTime.
+  const result = await fetchAllOrderPages(headers, {
+    statuses: WORKLOAD_PICKED_STATUSES.flatMap((s) => [s, s.replace(/ /g, '_')]),
+    pageSize: 500,
+  });
+  const allOrders = result.ok ? (result.orders || []) : [];
 
-  if (!pickedOrderIds.length) return { windowKey: window.key, count: 0, fetched: pickTasks.length };
-
-  const orders = await fetchOrdersByIds(headers, pickedOrderIds);
-  const matchingOrders = orders.filter((order) => isWorkloadPickedStatus(getOrderStatus(order)));
+  const matchingOrders = allOrders.filter((order) => {
+    if (!isWorkloadPickedStatus(getOrderStatus(order))) return false;
+    const pickedTime = getOrderPickedTime(order);
+    if (!pickedTime) return false;
+    return isWithinRange(pickedTime, window.start, window.end);
+  });
 
   const orgIds = new Set();
   for (const order of matchingOrders) {
@@ -1645,7 +1644,7 @@ async function applyPickedYesterdayWorkloadCounts({ headers, accessToken, tenant
       'Unknown';
     addCustomerMetricRow(byCustomer, customer, metric).ordersPickedYesterday.value += 1;
   }
-  return { windowKey: window.key, count: seen.size, fetched: pickTasks.length };
+  return { windowKey: window.key, count: seen.size, fetched: allOrders.length };
 }
 
 // URL variant mapping: /api/dashboard/bay2-auto-assign etc.
