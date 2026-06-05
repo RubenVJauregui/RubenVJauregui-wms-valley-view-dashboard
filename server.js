@@ -1674,6 +1674,49 @@ function resolveTab(req) {
   return 'bay4';
 }
 
+// ── Confirm Auto Assign (defensive: only NEW tasks accepted) ─────────────
+
+app.post(['/api/dashboard/:variant/confirm-auto-assign'], requireAuth, async (req, res) => {
+  const { rows, facilityId, timeZone } = req.body || {};
+  if (!Array.isArray(rows) || !rows.length) {
+    return res.status(400).json({ message: 'No assignment rows provided.' });
+  }
+  if (!facilityId) {
+    return res.status(400).json({ message: 'Facility is required.' });
+  }
+
+  // Defensive server-side filter: only NEW tasks may be auto-assigned.
+  // IN_PROGRESS tasks are explicitly rejected to prevent re-assignment.
+  const accepted = [];
+  const rejected = [];
+  for (const row of rows) {
+    const status = String(row.status || '').toUpperCase();
+    if (status === 'NEW') {
+      accepted.push(row);
+    } else {
+      rejected.push({ taskId: row.taskId || row.originalTaskId || 'unknown', status });
+    }
+  }
+
+  if (!accepted.length) {
+    return res.status(422).json({
+      message: 'No assignable tasks. Only pick tasks with status NEW can be auto-assigned. IN_PROGRESS tasks were excluded.',
+      rejected,
+      accepted: [],
+    });
+  }
+
+  // Return the accepted queue. Actual WMS assignment mutation would go here
+  // when wired to the WMS pick-task assign API.
+  return res.json({
+    message: `Auto Assign queued ${accepted.length} NEW task(s).${rejected.length ? ` ${rejected.length} non-NEW task(s) were excluded.` : ''}`,
+    accepted,
+    rejected,
+    facilityId,
+    timeZone: timeZone || 'America/Los_Angeles',
+  });
+});
+
 // ── Dashboard data route ───────────────────────────────────────────────────
 
 app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req, res) => {
@@ -1854,6 +1897,21 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
                 pickType: t.pickType || '',
               };
             };
+
+            // Assignable queue: only NEW tasks are eligible for auto-assignment.
+            // IN_PROGRESS tasks must never be re-assigned.
+            const newTasksForAssignment = allTasks.filter((t) => {
+              const status = String(t.status || '').toUpperCase();
+              if (status !== 'NEW') return false;
+              const customer = (t.customerNames && t.customerNames[0]) || '';
+              return Boolean(excelCustomerAssigneeMap[customer]);
+            });
+            b2a.assignments = newTasksForAssignment.map((t) => {
+              const customer = (t.customerNames && t.customerNames[0]) || '';
+              const mapped = mapTask(t, false);
+              mapped.suggestedAssignee = excelCustomerAssigneeMap[customer] || '';
+              return mapped;
+            });
 
             b2a.pickTasks = excelAssignedTasks.map((t) => mapTask(t, false));
 
