@@ -401,6 +401,148 @@ function buildStaticTeam2LtlDashboard(facilityName: string): WmsDashboardData {
   };
 }
 
+async function buildBay2AutoAssignDashboard(
+  facilityName: string,
+  token: string,
+  tenantId: string,
+  facilityId: string
+): Promise<WmsDashboardData> {
+  const now = new Date().toISOString();
+
+  // Fetch latest Graza order plans from WMS
+  let grazaPlans: Array<{
+    orderPlanId: string;
+    planStatus: string;
+    pickMethod: string;
+    taskIds: string[];
+    orderCount: number;
+    assigneeName: string;
+    planCreated: string;
+    tags: string[];
+  }> = [];
+  let totalOrders = 0;
+  let totalWaves = 0;
+  let totalBatches = 0;
+
+  try {
+    const planResult = await wmsPost<{
+      list?: Array<{
+        id: string;
+        status: string;
+        pickMethod: string;
+        pickTaskIds: string[];
+        orderIds: string[];
+        createdTime: string;
+        defaultAssigneeUserId: string;
+        taskTags: string[];
+      }>;
+    }>(
+      "/wms-bam/outbound/order-plan/search-by-paging",
+      {
+        customerIds: ["ORG-747717"],
+        pageSize: 30,
+        currentPage: 1,
+        sortingFields: [{ field: "createdTime", orderBy: "DESC" }],
+      },
+      token,
+      tenantId,
+      facilityId
+    );
+
+    const plans = planResult.list ?? [];
+
+    // Resolve assignee user names
+    const userIds = new Set(
+      plans.map((p) => p.defaultAssigneeUserId).filter(Boolean)
+    );
+    const userNameMap = new Map<string, string>();
+    for (const uid of userIds) {
+      try {
+        const userRes = await wmsGet<{
+          firstName?: string;
+          lastName?: string;
+          userName?: string;
+        }>(`/wms-bam/user/${uid}`, token, tenantId);
+        if (userRes) {
+          userNameMap.set(
+            uid,
+            [userRes.firstName, userRes.lastName].filter(Boolean).join(" ") ||
+              userRes.userName ||
+              uid
+          );
+        }
+      } catch {
+        userNameMap.set(uid, uid);
+      }
+    }
+
+    grazaPlans = plans.map((p) => {
+      const isWave = (p.pickMethod || "").includes("WAVE");
+      if (isWave) totalWaves++;
+      else totalBatches++;
+      totalOrders += (p.orderIds || []).length;
+      return {
+        orderPlanId: p.id,
+        planStatus: p.status,
+        pickMethod: p.pickMethod || "",
+        taskIds: p.pickTaskIds || [],
+        orderCount: (p.orderIds || []).length,
+        assigneeName: userNameMap.get(p.defaultAssigneeUserId) || p.defaultAssigneeUserId || "",
+        planCreated: p.createdTime || "",
+        tags: p.taskTags || [],
+      };
+    });
+  } catch {
+    // If fetching fails, show empty state
+  }
+
+  // Build metrics
+  const metrics: { label: string; value: string; sub?: string }[] = [
+    { label: "Graza Orders Batched", value: String(totalOrders) },
+    { label: "Wave Groups", value: String(totalWaves) },
+    { label: "Batches", value: String(totalBatches) },
+  ];
+
+  // Convert plans to planned order rows for display
+  const plannedRows: WmsPlannedOrder[] = grazaPlans.map((p) => ({
+    orderNumber: p.orderPlanId,
+    customer: "DRUPLEY INC / DBA GRAZA",
+    customerId: "ORG-747717",
+    status: `${p.planStatus} · ${p.pickMethod}`,
+    reference: p.tags.join(", ") || "Graza Auto",
+    created: p.planCreated,
+    shipMethod: `${p.orderCount} orders`,
+    carrier: `Tasks: ${p.taskIds.join(", ")}`,
+    carrierId: "",
+    scheduleDate: p.assigneeName,
+    mabd: "",
+    orderType: "DS",
+    source: "Auto Assign",
+  }));
+
+  const customerSet = [{ name: "DRUPLEY INC / DBA GRAZA" }];
+
+  return {
+    title: "Team 2 Auto Assign",
+    siteLabel: facilityName,
+    source: "WMS Auto Assign",
+    refreshedAt: now,
+    generatedAt: now,
+    customer: { name: "DRUPLEY INC / DBA GRAZA" },
+    customerSet,
+    metrics,
+    plannedOrders: {
+      supported: true,
+      rows: plannedRows,
+    },
+    inYardFullEquipment: {
+      supported: true,
+      rows: [],
+      candidateCount: 0,
+    },
+  };
+}
+
 export async function loadDashboard(
   token: string,
   tenantId: string,
@@ -413,6 +555,10 @@ export async function loadDashboard(
 
   if (tab === "evelyn") {
     return buildStaticTeam2LtlDashboard(facilityName);
+  }
+
+  if (tab === "bay2AutoAssign") {
+    return buildBay2AutoAssignDashboard(facilityName, token, tenantId, facilityId);
   }
 
   const [plannedOrders, inYard] = await Promise.all([
