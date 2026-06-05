@@ -2292,7 +2292,11 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           };
           if (leftPivotRows.length) leftPivotRows.push(grandTotal);
 
-          const mezzanineRows = buildPivot(dropshipRows, BAY2_MEZZANINE_DROPSHIP_CUSTOMERS, 'right');
+          const mezzanineSourceRows = rows.filter((row) => {
+            const type = normalizeName(row.orderType || row.order_type || row.orderTypeName || '');
+            return type === 'DROPSHIP ORDER';
+          });
+          const mezzanineRows = buildPivot(mezzanineSourceRows, BAY2_MEZZANINE_DROPSHIP_CUSTOMERS, 'right');
           const mezzanineTotal = {
             kind: 'grandTotal', side: 'right', level: 0, label: 'Grand Total',
             orderCount: mezzanineRows.reduce((sum, r) => sum + r.orderCount, 0),
