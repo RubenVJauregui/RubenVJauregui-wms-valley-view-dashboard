@@ -2006,9 +2006,35 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           'Unknown';
         const row = addCustomerMetricRow(byCustomer, customer, metric);
         row.fillableOrders.value += 1;
-        if (isWithinRange(o.createdTime, yesterdayWindow.start, yesterdayWindow.end)) {
-          row.newOrders.value += 1;
+      }
+
+      // New Orders: fetch all orders created in yesterday's LA-day window regardless of status
+      try {
+        const newOrderResult = await fetchAllOrderPages(headers, {
+          createdTimeFrom: yesterdayWindow.start.toISOString(),
+          createdTimeTo: yesterdayWindow.end.toISOString(),
+          pageSize: 500,
+        });
+        if (newOrderResult.ok) {
+          const newOrders = newOrderResult.orders || [];
+          const newOrgIds = new Set();
+          for (const o of newOrders) {
+            if (o.customerId) newOrgIds.add(o.customerId);
+          }
+          const newOrgNames = await resolveOrgNames([...newOrgIds], req.accessToken, req.tenantId);
+          for (const o of newOrders) {
+            const customer =
+              newOrgNames[o.customerId || o.customer?.id || o.customer?.organizationId] ||
+              o.customerName ||
+              o.customer?.name ||
+              o.customerId ||
+              o.customer?.id ||
+              'Unknown';
+            addCustomerMetricRow(byCustomer, customer, metric).newOrders.value += 1;
+          }
         }
+      } catch (err) {
+        console.error('All-customer workload new-orders fetch error:', err.message);
       }
 
       try {
