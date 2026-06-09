@@ -128,8 +128,6 @@ const TABS = [
   { key: "crateBarrel", label: "Crate & Barrel" },
   { key: "bpWorkload", label: "B.P. Workload" },
   { key: "nightShift", label: "Night Shift" },
-  { key: "bay4AutoAssign", label: "Rear Guard Shack" },
-  { key: "frontGuardShack", label: "Front Guard Shack" },
   { key: "bay2AutoAssign", label: "Team 2 Auto Assign" },
 ];
 
@@ -142,8 +140,6 @@ const FONTANA_STYLE_TAB_LABELS: Record<string, string> = {
 const FONTANA_STYLE_HIDDEN_TABS = new Set([
   "bay5",
   "crateBarrel",
-  "bay4AutoAssign",
-  "frontGuardShack",
 ]);
 
 const SPEAK_TABS = new Set(["bay1", "bay4", "bay5"]);
