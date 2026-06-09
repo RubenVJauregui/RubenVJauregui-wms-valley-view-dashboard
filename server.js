@@ -82,8 +82,23 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const profile = userData.profile;
-    const facilities = profile.facilities || [];
-    const defaultFacility = profile.defaultFacility || facilities[0];
+    const allFacilities = profile.facilities || [];
+    const valleyViewFacility =
+      allFacilities.find((f) => String(f.id || '').toUpperCase() === 'LT_F1') ||
+      allFacilities.find((f) => String(f.name || '').toLowerCase().includes('valley view')) ||
+      allFacilities.find((f) => String(f.name || '').toLowerCase().includes('valleyview'));
+
+    if (!valleyViewFacility) {
+      return res.status(401).json({ message: 'Valley View access is not available for this account.' });
+    }
+
+    const facilities = [{
+      ...valleyViewFacility,
+      id: 'LT_F1',
+      name: valleyViewFacility.name || 'Valley View',
+      timeZone: valleyViewFacility.timeZone || 'America/Los_Angeles',
+    }];
+    const defaultFacility = facilities[0];
 
     return res.json({
       accessToken,

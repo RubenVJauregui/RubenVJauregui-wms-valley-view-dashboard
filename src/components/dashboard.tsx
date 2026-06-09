@@ -579,23 +579,9 @@ export function Dashboard({
           <span className="brand-title">{data?.title ?? facility.name}</span>
         </div>
         <div className="brand-right">
-          <div className="facility-select">
+          <div className="facility-select" aria-label="Facility">
             <MapPin size={13} color="var(--muted-2)" />
-            <select
-              value={facility.id}
-              onChange={(e) => {
-                const f = session.facilities.find(
-                  (x) => x.id === e.target.value
-                );
-                if (f) onChangeFacility(f);
-              }}
-            >
-              {session.facilities.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name} ({f.id})
-                </option>
-              ))}
-            </select>
+            <span>Valley View (LT_F1)</span>
           </div>
           <span className="user-tag">{session.identity.user_name}</span>
           <button className="sign-out-btn" onClick={onLogout} type="button">

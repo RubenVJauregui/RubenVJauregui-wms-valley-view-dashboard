@@ -59,6 +59,23 @@ function clearSession() {
   localStorage.removeItem(FACILITY_KEY);
 }
 
+function valleyViewOnlySession(s: Session): Session {
+  const valleyView =
+    s.facilities.find((f) => f.id === 'LT_F1') ??
+    s.facilities.find((f) => f.name.toLowerCase().includes('valley view')) ??
+    s.facilities.find((f) => f.name.toLowerCase().includes('valleyview'));
+
+  const facility = valleyView
+    ? { ...valleyView, id: 'LT_F1', name: valleyView.name || 'Valley View', timeZone: valleyView.timeZone || 'America/Los_Angeles' }
+    : { id: 'LT_F1', name: 'Valley View', timeZone: 'America/Los_Angeles' };
+
+  return {
+    ...s,
+    facilities: [facility],
+    defaultFacility: { id: facility.id, name: facility.name },
+  };
+}
+
 export default function Home() {
   const [session, setSession] = useState<Session | null>(null);
   const [facility, setFacility] = useState<Facility | null>(null);
@@ -68,15 +85,11 @@ export default function Home() {
   useEffect(() => {
     const s = loadSession();
     if (s) {
-      setSession(s);
-      const savedFid = localStorage.getItem(FACILITY_KEY);
-      const fac =
-        s.facilities.find((f) => f.id === savedFid) ??
-        (s.defaultFacility
-          ? s.facilities.find((f) => f.id === s.defaultFacility!.id)
-          : null) ??
-        s.facilities[0] ??
-        null;
+      const vvSession = valleyViewOnlySession(s);
+      saveSession(vvSession);
+      setSession(vvSession);
+      const fac = vvSession.facilities[0] ?? null;
+      if (fac) localStorage.setItem(FACILITY_KEY, fac.id);
       setFacility(fac);
     }
     const savedTab = localStorage.getItem(TAB_KEY);
@@ -85,14 +98,10 @@ export default function Home() {
   }, []);
 
   const onLogin = useCallback((s: Session) => {
-    saveSession(s);
-    setSession(s);
-    const fac =
-      s.facilities.find(
-        (f) => f.id === s.defaultFacility?.id
-      ) ??
-      s.facilities[0] ??
-      null;
+    const vvSession = valleyViewOnlySession(s);
+    saveSession(vvSession);
+    setSession(vvSession);
+    const fac = vvSession.facilities[0] ?? null;
     if (fac) {
       localStorage.setItem(FACILITY_KEY, fac.id);
       setFacility(fac);
