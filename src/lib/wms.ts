@@ -372,31 +372,107 @@ const TEAM_2_LTL_PIVOT_ROWS: { kind: "customer" | "status"; level: number; label
   { kind: "status", level: 1, label: "PLANNED", orderCount: 1, baseQty: 2478 },
 ];
 
-function buildStaticTeam2LtlDashboard(facilityName: string): WmsDashboardData {
+async function buildLiveTeam2LtlDashboard(
+  facilityName: string,
+  token: string,
+  tenantId: string,
+  facilityId: string
+): Promise<WmsDashboardData> {
   const now = new Date().toISOString();
-  const customerSet = TEAM_2_LTL_PIVOT_ROWS
-    .filter((row) => row.kind === "customer")
-    .map((row) => ({ name: row.label }));
+
+  const LTL_STATUSES = [
+    "OPEN", "IMPORTED", "PLANNED", "COMMITTED", "COMMIT_BLOCKED",
+    "COMMIT_FAILED", "PICKING", "PICKED", "PACKING", "PACKED",
+    "STAGING", "STAGED", "LOADING", "LOADED", "PARTIAL_SHIPPED",
+  ];
+
+  const orders = await wmsSearchAllPages<WmsOrderRecord>(
+    "/wms/outbound/order/search-by-paging",
+    { statuses: LTL_STATUSES, shipMethods: ["LTL"] },
+    token,
+    tenantId,
+    facilityId
+  );
+
+  const orgIds = new Set<string>();
+  for (const o of orders) {
+    if (o.customerId) orgIds.add(o.customerId);
+  }
+  const orgMap = await batchResolveOrgNames(orgIds, token, tenantId);
+
+  const LTL_CUSTOMER_NAMES = TEAM_2_LTL_PIVOT_ROWS
+    .filter((r) => r.kind === "customer")
+    .map((r) => normalizeName(r.label));
+
+  const customerOrders = new Map<string, Map<string, { orderCount: number; baseQty: number }>>();
+
+  for (const o of orders) {
+    const customerName = resolveCustomerName(o, orgMap);
+    const normalizedCustomer = normalizeName(customerName);
+    const matchesTeam2 = LTL_CUSTOMER_NAMES.some(
+      (name) => normalizedCustomer === name ||
+        normalizedCustomer.includes(name) ||
+        name.includes(normalizedCustomer)
+    );
+    if (!matchesTeam2 && LTL_CUSTOMER_NAMES.length > 0) continue;
+
+    if (!customerOrders.has(customerName)) {
+      customerOrders.set(customerName, new Map());
+    }
+    const statusMap = customerOrders.get(customerName)!;
+    const status = o.status || "UNKNOWN";
+    if (!statusMap.has(status)) {
+      statusMap.set(status, { orderCount: 0, baseQty: 0 });
+    }
+    const entry = statusMap.get(status)!;
+    entry.orderCount += 1;
+  }
+
+  const pivotRows: { kind: "customer" | "status"; level: number; label: string; orderCount: number; baseQty: number }[] = [];
+  let totalOrderCount = 0;
+  let totalBaseQty = 0;
+
+  const sortedCustomers = [...customerOrders.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+
+  for (const [customer, statusMap] of sortedCustomers) {
+    let custOrderCount = 0;
+    let custBaseQty = 0;
+    const statusRows: typeof pivotRows = [];
+
+    for (const [status, data] of [...statusMap.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+      custOrderCount += data.orderCount;
+      custBaseQty += data.baseQty;
+      statusRows.push({ kind: "status", level: 1, label: status, orderCount: data.orderCount, baseQty: data.baseQty });
+    }
+
+    pivotRows.push({ kind: "customer", level: 0, label: customer, orderCount: custOrderCount, baseQty: custBaseQty });
+    pivotRows.push(...statusRows);
+    totalOrderCount += custOrderCount;
+    totalBaseQty += custBaseQty;
+  }
+
+  const customerSet = sortedCustomers.map(([name]) => ({ name }));
+
   return {
     title: "Team 2 LTL",
     siteLabel: facilityName,
-    source: "Alfredo.xlsx",
+    source: "WISE",
     refreshedAt: now,
     generatedAt: now,
     customer: { name: "Team 2 LTL" },
     customerSet,
     reportType: "evelynGreenPivot",
     metrics: [
-      { label: "Count of Order", value: "208" },
-      { label: "Sum of BASE QTY", value: "436823" },
-      { label: "Customers", value: "13" },
+      { label: "Count of Order", value: String(totalOrderCount) },
+      { label: "Sum of BASE QTY", value: String(totalBaseQty) },
+      { label: "Customers", value: String(sortedCustomers.length) },
     ],
     plannedOrders: { supported: true, rows: [] },
     inYardFullEquipment: { supported: true, rows: [], candidateCount: 0 },
     evelynGreen: {
       supported: true,
-      rows: TEAM_2_LTL_PIVOT_ROWS,
-      total: { orderCount: 208, baseQty: 436823 },
+      rows: pivotRows,
+      total: { orderCount: totalOrderCount, baseQty: totalBaseQty },
     },
   };
 }
@@ -554,7 +630,7 @@ export async function loadDashboard(
   const now = new Date().toISOString();
 
   if (tab === "evelyn") {
-    return buildStaticTeam2LtlDashboard(facilityName);
+    return buildLiveTeam2LtlDashboard(facilityName, token, tenantId, facilityId);
   }
 
   if (tab === "bay2AutoAssign") {

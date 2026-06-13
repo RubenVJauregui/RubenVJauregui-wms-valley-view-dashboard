@@ -2314,7 +2314,77 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
   }
 
   if (tab === 'evelyn' && !includeAllCustomers) {
-    return res.json(applyStaticTeam2LtlPayload(result, now, siteLabel));
+    // Live Team 2 LTL: fetch LTL orders and build pivot dynamically
+    try {
+      const ltlStatuses = ['OPEN','IMPORTED','PLANNED','COMMITTED','COMMIT_BLOCKED','COMMIT_FAILED','PICKING','PICKED','PACKING','PACKED','STAGING','STAGED','LOADING','LOADED','PARTIAL_SHIPPED'];
+      const ltlResult = await fetchAllOrderPages(headers, {
+        currentPage: 1, pageSize: 500, statuses: ltlStatuses, shipMethods: ['LTL'],
+        sortingFields: [{ field: 'createdTime', orderBy: 'DESC' }],
+      });
+
+      const ltlOrders = ltlResult.ok ? ltlResult.orders : [];
+      const ltlOrgIds = new Set();
+      for (const o of ltlOrders) { if (o.customerId) ltlOrgIds.add(o.customerId); }
+      const ltlOrgNames = await resolveOrgNames([...ltlOrgIds], req.accessToken, req.tenantId);
+
+      const ltlCustomerNames = TEAM_2_LTL_PIVOT_ROWS.filter(r => r.kind === 'customer').map(r => normalizeName(r.label));
+
+      const customerOrders = new Map();
+      for (const o of ltlOrders) {
+        const customerName = ltlOrgNames[o.customerId] || o.customerName || o.customerId || 'Unknown';
+        const normalized = normalizeName(customerName);
+        const matches = ltlCustomerNames.some(name => normalized === name || normalized.includes(name) || name.includes(normalized));
+        if (!matches && ltlCustomerNames.length > 0) continue;
+
+        if (!customerOrders.has(customerName)) customerOrders.set(customerName, new Map());
+        const statusMap = customerOrders.get(customerName);
+        const status = o.status || 'UNKNOWN';
+        if (!statusMap.has(status)) statusMap.set(status, { orderCount: 0, baseQty: 0 });
+        statusMap.get(status).orderCount += 1;
+      }
+
+      const pivotRows = [];
+      let totalOrderCount = 0;
+      let totalBaseQty = 0;
+      const sortedCustomers = [...customerOrders.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+
+      for (const [customer, statusMap] of sortedCustomers) {
+        let custOrderCount = 0;
+        let custBaseQty = 0;
+        const statusRows = [];
+        for (const [status, data] of [...statusMap.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+          custOrderCount += data.orderCount;
+          custBaseQty += data.baseQty;
+          statusRows.push({ kind: 'status', level: 1, label: status, orderCount: data.orderCount, baseQty: data.baseQty });
+        }
+        pivotRows.push({ kind: 'customer', level: 0, label: customer, orderCount: custOrderCount, baseQty: custBaseQty });
+        pivotRows.push(...statusRows);
+        totalOrderCount += custOrderCount;
+        totalBaseQty += custBaseQty;
+      }
+
+      result.bay = 'evelyn';
+      result.reportType = 'evelynGreenPivot';
+      result.title = 'Team 2 LTL';
+      result.customer = { name: 'Team 2 LTL' };
+      result.customerSet = sortedCustomers.map(([name]) => ({ name }));
+      result.metrics = [
+        { label: 'Count of Order', value: String(totalOrderCount) },
+        { label: 'Sum of BASE QTY', value: String(totalBaseQty) },
+        { label: 'Customers', value: String(sortedCustomers.length) },
+      ];
+      result.evelynGreen = { supported: true, rows: pivotRows, total: { orderCount: totalOrderCount, baseQty: totalBaseQty } };
+      result.detailRows = [];
+      result.plannedOrders = { supported: true, rows: [] };
+      result.inYardFullEquipment = { supported: true, rows: [] };
+      result.refreshedAt = now;
+      result.generatedAt = now;
+      result.source = 'WISE';
+      return res.json(result);
+    } catch (ltlErr) {
+      console.error('Live Team 2 LTL fetch failed, falling back to static:', ltlErr.message);
+      return res.json(applyStaticTeam2LtlPayload(result, now, siteLabel));
+    }
   }
 
   // ── Fetch planned outbound orders ────────────────────────────────────────
