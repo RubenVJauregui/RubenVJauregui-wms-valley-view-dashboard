@@ -1871,6 +1871,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
               'SUN NINJA LLC': 'maperez',
               'TRIPLELITE, LLC': 'maperez',
               'NZXT': 'diasorto',
+              'DRUPLEY INC / DBA GRAZA': 'molvera',
             };
 
             const canonicalAssignee = (value) => {
@@ -1879,6 +1880,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
               if (v.includes('vgutierrez') || v.includes('vielka')) return 'vgutierrez';
               if (v.includes('maperez') || v.includes('maria')) return 'maperez';
               if (v.includes('diasorto') || v.includes('diana')) return 'diasorto';
+              if (v.includes('molvera') || v.includes('martha')) return 'molvera';
               return value || '';
             };
 
@@ -1967,6 +1969,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
               vgutierrez: ['VIELKA GUTIERREZ', 'Vielka Gutierrez', 'vgutierrez'],
               maperez: ['MARIA PEREZ', 'Maria Perez', 'maperez'],
               diasorto: ['DIANA SORTO', 'Diana Sorto', 'diasorto'],
+              molvera: ['MARTHA OLVERA', 'Martha Olvera', 'molvera'],
             };
 
             b2a.pickAssigneeCounts = {};
@@ -1994,6 +1997,33 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
       }
 
       result.bay2AutoAssign = b2a;
+
+      // ── Graza DS Dispatch Results ──────────────────────────────────────
+      result.bay2AutoAssign.grazaDispatch = {
+        lastRun: '2026-06-19T08:15:00-07:00',
+        planId: 'PLAN-5073064',
+        planStatus: 'RELEASED',
+        planUrl: 'https://unis.item.com/wms/order-plan/general-plan/edit/PLAN-5073064',
+        taskId: 'TASK-5296057',
+        taskStatus: 'NEW',
+        taskUrl: 'https://unis.item.com/wms/task/general-task/edit/TASK-5296057',
+        assignee: { userId: '4419', name: 'MARTHA OLVERA' },
+        pickMethod: 'WAVE_PICK_BY_ITEM',
+        skipPackingScanForItem: true,
+        orderCount: 6,
+        orders: [
+          { id: 'DN-5195623', customer: 'madison nairne', items: 'Sizzle x6' },
+          { id: 'DN-5195624', customer: 'Beth Protass', items: 'Drizzle:1 + Sizzle:1' },
+          { id: 'DN-5195625', customer: 'Dylan Thomas', items: 'Sizzle x1' },
+          { id: 'DN-5195626', customer: 'Julie Bermudez', items: 'Drizzle x1' },
+          { id: 'DN-5195627', customer: 'Ryan Reich', items: 'Drizzle:1 + Sizzle:1' },
+          { id: 'DN-5195628', customer: 'Sara Pittman', items: 'Drizzle:1 + Sizzle:1' },
+        ],
+        exceptions: 0,
+        inventoryFailures: 0,
+        labelNotes: 0,
+        notes: 'All 6 orders dispatched via Setting 1247 Graza DS Wave. No label notes, no exceptions.',
+      };
     }
 
     return res.json(result);
