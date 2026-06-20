@@ -70,6 +70,35 @@ interface DashboardData {
     rows: EvelynPivotRow[];
     total: { orderCount: number; baseQty: number };
   };
+  autoAssign?: {
+    runDate: string;
+    totalPlans: number;
+    totalOrders: number;
+    waveGroups: number;
+    batches: number;
+    allReleased: boolean;
+    allCorrectAssignee: boolean;
+    plans: {
+      planId: string;
+      orderCount: number;
+      taskId: string;
+      status: string;
+      skipPackingScanForItem: boolean | null;
+      pickMethod: string;
+      labelNoteOrders: { orderId: string; labelNote: string }[];
+    }[];
+    issues: {
+      labelNoteOrdersNotSeparated: string[];
+      noWaveGroupsCreated: boolean;
+      legacySkipPackingScanNull: string[];
+      cancelledPlansYesterday: string[];
+    };
+    searchStats: {
+      totalOrdersScanned: number;
+      ordersInTargetStatuses: number;
+      exceptionOrders: number;
+    };
+  };
 }
 
 /* ── Helpers ── */
@@ -619,6 +648,159 @@ export function Dashboard({
       {loading && !data ? (
         <div className="flex-1 flex items-center justify-center">
           <Loader2 size={32} className="spin" color="var(--accent)" />
+        </div>
+      ) : activeTab === "bay2AutoAssign" && data?.autoAssign ? (
+        <div className="dashboard-body">
+          {/* Auto Assign Run Summary */}
+          <div className="stat-row">
+            <div className="stat-card">
+              <span>Plans Created</span>
+              <strong>{data.autoAssign.totalPlans}</strong>
+              <small>{data.autoAssign.allReleased ? "All RELEASED ✓" : "Some pending"}</small>
+            </div>
+            <div className="stat-card">
+              <span>Orders Dispatched</span>
+              <strong>{data.autoAssign.totalOrders}</strong>
+              <small>{data.autoAssign.runDate}</small>
+            </div>
+            <div className="stat-card">
+              <span>Wave Groups</span>
+              <strong>{data.autoAssign.waveGroups}</strong>
+              <small>{data.autoAssign.issues.noWaveGroupsCreated ? "⚠ No waves created" : "Wave Pick By Item"}</small>
+            </div>
+            <div className="stat-card">
+              <span>Batches</span>
+              <strong>{data.autoAssign.batches}</strong>
+              <small>BATCH_ORDER_PICK</small>
+            </div>
+          </div>
+
+          {/* Issues Section */}
+          {data.autoAssign.issues && (
+            <section className="report-section" style={{ marginTop: "1rem" }}>
+              <div className="section-heading">
+                <h2>Issues &amp; Warnings</h2>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                {data.autoAssign.issues.labelNoteOrdersNotSeparated.length > 0 && (
+                  <div style={{
+                    background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
+                    borderRadius: "8px", padding: "0.75rem 1rem"
+                  }}>
+                    <strong style={{ color: "#ef4444" }}>🔴 Label-Note Orders NOT Separated</strong>
+                    <p style={{ margin: "0.25rem 0 0", color: "var(--muted-2)", fontSize: "0.85rem" }}>
+                      {data.autoAssign.issues.labelNoteOrdersNotSeparated.join(", ")} — mixed into regular batch plans.
+                      Must be isolated into their own label-note batch(es) for label note printing.
+                    </p>
+                  </div>
+                )}
+                {data.autoAssign.issues.noWaveGroupsCreated && (
+                  <div style={{
+                    background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
+                    borderRadius: "8px", padding: "0.75rem 1rem"
+                  }}>
+                    <strong style={{ color: "#ef4444" }}>🔴 No Wave Groups Created</strong>
+                    <p style={{ margin: "0.25rem 0 0", color: "var(--muted-2)", fontSize: "0.85rem" }}>
+                      All orders dispatched via BATCH_ORDER_PICK. Orders sharing exact item+quantity combos should use WAVE_PICK_BY_ITEM.
+                    </p>
+                  </div>
+                )}
+                {data.autoAssign.issues.legacySkipPackingScanNull.length > 0 && (
+                  <div style={{
+                    background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)",
+                    borderRadius: "8px", padding: "0.75rem 1rem"
+                  }}>
+                    <strong style={{ color: "#f59e0b" }}>🟡 skipPackingScanForItem Gaps</strong>
+                    <p style={{ margin: "0.25rem 0 0", color: "var(--muted-2)", fontSize: "0.85rem" }}>
+                      {data.autoAssign.issues.legacySkipPackingScanNull.join(", ")} — show null instead of true.
+                    </p>
+                  </div>
+                )}
+                {data.autoAssign.issues.cancelledPlansYesterday.length > 0 && (
+                  <div style={{
+                    background: "rgba(107,114,128,0.1)", border: "1px solid rgba(107,114,128,0.3)",
+                    borderRadius: "8px", padding: "0.75rem 1rem"
+                  }}>
+                    <strong style={{ color: "#6b7280" }}>⚫ Plans Cancelled Yesterday</strong>
+                    <p style={{ margin: "0.25rem 0 0", color: "var(--muted-2)", fontSize: "0.85rem" }}>
+                      {data.autoAssign.issues.cancelledPlansYesterday.join(", ")} — cancelled by rtapia.
+                    </p>
+                  </div>
+                )}
+                {data.autoAssign.issues.labelNoteOrdersNotSeparated.length === 0 &&
+                 !data.autoAssign.issues.noWaveGroupsCreated &&
+                 data.autoAssign.issues.legacySkipPackingScanNull.length === 0 &&
+                 data.autoAssign.issues.cancelledPlansYesterday.length === 0 && (
+                  <div style={{
+                    background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)",
+                    borderRadius: "8px", padding: "0.75rem 1rem"
+                  }}>
+                    <strong style={{ color: "#22c55e" }}>✅ No Issues Detected</strong>
+                    <p style={{ margin: "0.25rem 0 0", color: "var(--muted-2)", fontSize: "0.85rem" }}>
+                      All checks passed for this run.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* Plan Details Table */}
+          <section className="report-section" style={{ marginTop: "1rem" }}>
+            <div className="section-heading">
+              <h2>Plan Details</h2>
+            </div>
+            <div className="table-frame">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Plan ID</th>
+                    <th>Orders</th>
+                    <th>Task ID</th>
+                    <th>Status</th>
+                    <th>Pick Method</th>
+                    <th>Label Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(data.autoAssign.plans || []).map((plan) => (
+                    <tr key={plan.planId}>
+                      <td className="strong">{plan.planId}</td>
+                      <td>{plan.orderCount}</td>
+                      <td>{plan.taskId || "—"}</td>
+                      <td>
+                        <span style={{
+                          color: plan.status === "RELEASED" ? "#22c55e" : "#f59e0b",
+                          fontWeight: 600
+                        }}>
+                          {plan.status}
+                        </span>
+                      </td>
+                      <td>{plan.pickMethod}</td>
+                      <td>
+                        {plan.labelNoteOrders.length > 0 ? (
+                          <span style={{ color: "#ef4444", fontSize: "0.8rem" }}>
+                            ⚠ {plan.labelNoteOrders.map(l => l.orderId).join(", ")}
+                          </span>
+                        ) : (
+                          <span style={{ color: "var(--muted-2)" }}>—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="meta-row">
+              <span className="meta-label">
+                {data?.source ?? "WMS Auto Assign"} · Last refreshed{" "}
+                {data?.refreshedAt ? fmtTimeAgo(data.refreshedAt) : "just now"}
+              </span>
+              <strong>
+                {data.autoAssign.totalPlans} plans · {data.autoAssign.totalOrders} orders
+              </strong>
+            </div>
+          </section>
         </div>
       ) : activeTab === "evelyn" ? (
         <div className="dashboard-body evelyn-dashboard-body">

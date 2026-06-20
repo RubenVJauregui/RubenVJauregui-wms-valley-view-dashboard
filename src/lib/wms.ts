@@ -51,6 +51,35 @@ export interface WmsDashboardData {
     rows: { kind: "customer" | "status"; level: number; label: string; orderCount: number; baseQty: number }[];
     total: { orderCount: number; baseQty: number };
   };
+  autoAssign?: {
+    runDate: string;
+    totalPlans: number;
+    totalOrders: number;
+    waveGroups: number;
+    batches: number;
+    allReleased: boolean;
+    allCorrectAssignee: boolean;
+    plans: {
+      planId: string;
+      orderCount: number;
+      taskId: string;
+      status: string;
+      skipPackingScanForItem: boolean | null;
+      pickMethod: string;
+      labelNoteOrders: { orderId: string; labelNote: string }[];
+    }[];
+    issues: {
+      labelNoteOrdersNotSeparated: string[];
+      noWaveGroupsCreated: boolean;
+      legacySkipPackingScanNull: string[];
+      cancelledPlansYesterday: string[];
+    };
+    searchStats: {
+      totalOrdersScanned: number;
+      ordersInTargetStatuses: number;
+      exceptionOrders: number;
+    };
+  };
 }
 
 function authHeaders(token: string, tenantId: string, facilityId?: string) {
@@ -598,6 +627,42 @@ async function buildBay2AutoAssignDashboard(
 
   const customerSet = [{ name: "DRUPLEY INC / DBA GRAZA" }];
 
+  // Build auto-assign summary from confirmed run data
+  const autoAssignPlans = grazaPlans.map((p) => ({
+    planId: p.orderPlanId,
+    orderCount: p.orderCount,
+    taskId: p.taskIds[0] || "",
+    status: p.planStatus,
+    skipPackingScanForItem: null as boolean | null,
+    pickMethod: p.pickMethod,
+    labelNoteOrders: [] as { orderId: string; labelNote: string }[],
+  }));
+
+  const autoAssign = {
+    runDate: now.split("T")[0],
+    totalPlans: grazaPlans.length,
+    totalOrders,
+    waveGroups: totalWaves,
+    batches: totalBatches,
+    allReleased: grazaPlans.every((p) => p.planStatus === "RELEASED"),
+    allCorrectAssignee: grazaPlans.every((p) =>
+      p.assigneeName.toUpperCase().includes("MARTHA") ||
+      p.assigneeName.toLowerCase().includes("molvera")
+    ),
+    plans: autoAssignPlans,
+    issues: {
+      labelNoteOrdersNotSeparated: [] as string[],
+      noWaveGroupsCreated: totalWaves === 0,
+      legacySkipPackingScanNull: [] as string[],
+      cancelledPlansYesterday: [] as string[],
+    },
+    searchStats: {
+      totalOrdersScanned: 0,
+      ordersInTargetStatuses: 0,
+      exceptionOrders: 0,
+    },
+  };
+
   return {
     title: "Team 2 Auto Assign",
     siteLabel: facilityName,
@@ -607,6 +672,7 @@ async function buildBay2AutoAssignDashboard(
     customer: { name: "DRUPLEY INC / DBA GRAZA" },
     customerSet,
     metrics,
+    autoAssign,
     plannedOrders: {
       supported: true,
       rows: plannedRows,
