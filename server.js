@@ -1998,28 +1998,63 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
 
       result.bay2AutoAssign = b2a;
 
+      // ── Auto Assign (for dashboard.tsx autoAssign section) ────────────
+      result.autoAssign = {
+        runDate: '2026-06-20T12:47:00-07:00',
+        totalPlans: 1,
+        totalOrders: 3,
+        waveGroups: 0,
+        batches: 1,
+        allReleased: true,
+        allCorrectAssignee: true,
+        plans: [
+          {
+            planId: 'PLAN-5073254',
+            orderCount: 3,
+            taskId: 'TASK-5296818',
+            status: 'RELEASED',
+            skipPackingScanForItem: true,
+            pickMethod: 'BATCH_ORDER_PICK',
+            labelNoteOrders: [],
+          },
+        ],
+        issues: {
+          labelNoteOrdersNotSeparated: [],
+          noWaveGroupsCreated: true,
+          legacySkipPackingScanNull: [],
+          cancelledPlansYesterday: [],
+        },
+        searchStats: {
+          totalOrdersScanned: 3,
+          ordersInTargetStatuses: 3,
+          exceptionOrders: 0,
+        },
+      };
+
       // ── Graza DS Dispatch Results ──────────────────────────────────────
       result.bay2AutoAssign.grazaDispatch = {
-        lastRun: '2026-06-19T19:47:18-07:00',
-        planId: 'PLAN-5073223',
+        lastRun: '2026-06-20T12:47:18-07:00',
+        planId: 'PLAN-5073254',
         planStatus: 'RELEASED',
-        planUrl: 'https://unis.item.com/wms/order-plan/general-plan/edit/PLAN-5073223',
-        taskId: 'TASK-5296736',
+        planUrl: 'https://unis.item.com/wms/order-plan/general-plan/edit/PLAN-5073254',
+        taskId: 'TASK-5296818',
         taskStatus: 'NEW',
-        taskUrl: 'https://unis.item.com/wms/task/general-task/edit/TASK-5296736',
+        taskUrl: 'https://unis.item.com/wms/task/general-task/edit/TASK-5296818',
         assignee: { userId: '4419', name: 'MARTHA OLVERA' },
         pickMethod: 'BATCH_ORDER_PICK',
         skipPackingScanForItem: true,
         settingId: 1246,
         settingName: 'Graza DS Batch',
-        orderCount: 1,
+        orderCount: 3,
         orders: [
-          { id: 'DN-5196037', referenceNo: '743280', customer: 'Terry Welliver', shipTo: '106 Nacional Ave #7463, Spreckels, CA 93962', items: 'Sizzle Refill Can x2 + Drizzle Refill Can x1 + Surprise Kitchen Tool! x1' },
+          { id: 'DN-5196446', referenceNo: '', customer: 'Becky Thomas', shipTo: '', items: 'ITEM-2352264 x1' },
+          { id: 'DN-5196447', referenceNo: '', customer: 'Tiffani Schmidt', shipTo: '', items: 'ITEM-2352262 x2, ITEM-2352263 x2' },
+          { id: 'DN-5196448', referenceNo: '', customer: 'Kathleen Angelo', shipTo: '', items: 'ITEM-2352257 x1, ITEM-2352266 x1, ITEM-2352258 x1, ITEM-2352265 x1' },
         ],
         exceptions: 0,
         inventoryFailures: 0,
         labelNotes: 0,
-        notes: '1 Graza DS order found (DN-5196037). Dispatched via Setting 1246 Graza DS Batch. Plan PLAN-5073223 RELEASED, task TASK-5296736 assigned to MARTHA OLVERA (4419). No waves (single order), no label notes, no exceptions.',
+        notes: '3 Graza DS orders found (DN-5196446, DN-5196447, DN-5196448). All 3 dispatched via Setting 1246 Graza DS Batch. Plan PLAN-5073254 RELEASED, task TASK-5296818 assigned to MARTHA OLVERA (4419). No waves (all 3 have different item sets), no label notes, no exceptions.',
       };
     }
 
