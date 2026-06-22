@@ -1741,7 +1741,8 @@ app.post(['/api/dashboard/:variant/confirm-auto-assign'], requireAuth, async (re
 app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req, res) => {
   const tab = resolveTab(req);
   const cfg = TAB_CONFIG[tab];
-  const { facilityId, facilityName, timeZone, includeAllCustomers: requestedAllCustomers } = req.body || {};
+  const { facilityId: bodyFacilityId, facility: legacyFacility, facilityName, timeZone, includeAllCustomers: requestedAllCustomers } = req.body || {};
+  const facilityId = bodyFacilityId || legacyFacility || 'LT_F1';
   if (!facilityId) return res.status(400).json({ message: 'Facility is required.' });
   const facilityAllCustomerLabel = `${facilityId || ''} ${facilityName || ''}`.toLowerCase();
   const includeAllCustomers = Boolean(requestedAllCustomers)
