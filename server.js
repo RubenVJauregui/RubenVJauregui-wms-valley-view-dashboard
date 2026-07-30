@@ -2535,10 +2535,11 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
 
             if (useFullToOffloadMetric) {
               if (tab === 'nightShift') {
-                // Night Shift shows all FULL trailer/container equipment not yet devanned.
+                // Night Shift shows only FULL containers not yet devanned.
                 // The only customer exclusion is Euromarket / Crate & Barrel.
                 const fullStatus = normalizeWiseCode(status) === 'FULL';
-                return isTrailerOrContainerEquipment(e)
+                const containerType = normalizeWiseCode(type).includes('CONTAINER');
+                return containerType
                   && fullStatus
                   && !isEuromarketCustomer(customerName)
                   && !isEuromarketCustomer(customerId);
