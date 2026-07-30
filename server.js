@@ -2536,11 +2536,14 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             if (useFullToOffloadMetric) {
               if (tab === 'nightShift') {
                 // Night Shift shows only FULL containers not yet devanned.
+                // Not devanned means the WISE operation/detail status is FULL_TO_OFFLOAD.
                 // The only customer exclusion is Euromarket / Crate & Barrel.
                 const fullStatus = normalizeWiseCode(status) === 'FULL';
                 const containerType = normalizeWiseCode(type).includes('CONTAINER');
+                const notDevanned = normalizeWiseCode(opStatus) === 'FULL_TO_OFFLOAD';
                 return containerType
                   && fullStatus
+                  && notDevanned
                   && !isEuromarketCustomer(customerName)
                   && !isEuromarketCustomer(customerId);
               }
