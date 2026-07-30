@@ -2534,7 +2534,17 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             }
 
             if (useFullToOffloadMetric) {
-              // Valley View Night Shift, Fontana, and Alessandro follow the Full-to-Offload metric:
+              if (tab === 'nightShift') {
+                // Night Shift shows all FULL trailer/container equipment not yet devanned.
+                // The only customer exclusion is Euromarket / Crate & Barrel.
+                const fullStatus = normalizeWiseCode(status) === 'FULL';
+                return isTrailerOrContainerEquipment(e)
+                  && fullStatus
+                  && !isEuromarketCustomer(customerName)
+                  && !isEuromarketCustomer(customerId);
+              }
+
+              // Fontana and Alessandro follow the Full-to-Offload metric:
               // CONTAINER + FULL + FULL_TO_OFFLOAD, excluding Euromarket / Crate & Barrel only.
               return fullToOffloadMatch && !isEuromarketCustomer(customerName) && !isEuromarketCustomer(customerId);
             }
