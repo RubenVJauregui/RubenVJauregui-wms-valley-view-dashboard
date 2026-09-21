@@ -658,6 +658,23 @@ function isFullToOffloadContainer(row) {
   return type === 'CONTAINER' && status === 'FULL' && detail === 'FULL_TO_OFFLOAD';
 }
 
+function isUnassignedEquipment(row) {
+  const customerName = String(row.customerName || row.customer?.name || '').trim();
+  const customerId = String(row.customerId || row.customer?.id || row.customerOrgId || '').trim();
+  const normalizedName = normalizeWiseCode(customerName);
+  return (!customerName && !customerId) || ['PENDING', 'UNASSIGNED', 'UNKNOWN'].includes(normalizedName);
+}
+
+function isNightShiftFullToOffloadEquipment(row) {
+  if (isFullToOffloadContainer(row)) return true;
+  if (!isUnassignedEquipment(row)) return false;
+
+  const type = normalizeWiseCode(row.equipmentType || row.type || '');
+  const status = normalizeWiseCode(row.equipmentStatus || row.status || '');
+  const detail = normalizeWiseCode(row.equipmentOperationStatus || row.details || row.operationStatus || '');
+  return type.includes('TRAILER') && status === 'FULL' && detail === 'FULL_TO_OFFLOAD';
+}
+
 function isTrailerOrContainerEquipment(row) {
   const type = normalizeWiseCode(row.equipmentType || row.type || row.equipmentTypeName || '');
   return !type || type.includes('CONTAINER') || type.includes('TRAILER');
@@ -965,6 +982,12 @@ function nightShiftCustomerName(customer, customerId = '') {
   }
   if (normalizeName(customer).includes('SIMPLE MODERN')) return 'SIMPLE MODERN';
   return String(customer || customerId || '').trim();
+}
+
+function nightShiftDisplayCustomer(customer, customerId = '') {
+  const resolved = nightShiftCustomerName(customer, customerId);
+  const normalized = normalizeWiseCode(resolved);
+  return !resolved || ['PENDING', 'UNASSIGNED', 'UNKNOWN'].includes(normalized) ? 'Pending' : resolved;
 }
 
 function getTaskAssignedAt(task) {
@@ -2621,7 +2644,9 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
               || (!cfg.customerIds?.length && !cfg.customerNames?.length)
               || (cfg.customerIds || []).includes(customerId)
               || rowMatchesTab({ customer: customerName, customerId }, cfg);
-            const fullToOffloadMatch = isFullToOffloadContainer(e);
+            const fullToOffloadMatch = tab === 'nightShift'
+              ? isNightShiftFullToOffloadEquipment(e)
+              : isFullToOffloadContainer(e);
 
             if (tab === 'bay1') {
               return tabCustomerMatch && isTeam1ExcelFullToOffloadContainer(e);
@@ -2645,7 +2670,9 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             checkIn: e.gateCheckInTime || e.checkIn || e.checkInTime || e.createdTime || '',
             timeInYard: e.inYardTime || e.timeInYard || '',
             customer: useFullToOffloadMetric
-              ? nightShiftCustomerName(e.customerName || e.customer?.name || '', e.customerId || e.customer?.id || e.customerOrgId || '')
+              ? (tab === 'nightShift'
+                ? nightShiftDisplayCustomer(e.customerName || e.customer?.name || '', e.customerId || e.customer?.id || e.customerOrgId || '')
+                : nightShiftCustomerName(e.customerName || e.customer?.name || '', e.customerId || e.customer?.id || e.customerOrgId || ''))
               : (e.customerName || e.customer?.name || e.customerId || ''),
             location: e.locationName || e.location || '',
             status: e.equipmentStatus || e.status || '',
@@ -2664,11 +2691,10 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
           ];
         }
         if (tab === 'nightShift') {
-          // Night Shift visible table: only rows with a non-blank resolved customer name.
-          // This matches the customer chip buttons shown in the UI.
+          // Keep unassigned equipment in the Night Shift table, labeled as Pending.
           const nightShiftRows = result.inYardFullEquipment.rows.filter(e => {
             const c = String(e.customer || '').trim();
-            return c && normalizeName(c) !== normalizeName('Night Shift — All FULL Trailers & Containers');
+            return normalizeName(c) !== normalizeName('Night Shift — All FULL Trailers & Containers');
           });
           const sortedNightShiftRows = [...nightShiftRows].sort((a, b) => {
             const at = new Date(a.checkIn || a.gateCheckInTime || a.createdTime || 0).getTime();
