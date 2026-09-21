@@ -651,6 +651,30 @@ function normalizeWiseCode(value) {
   return String(value || '').toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 }
 
+function equipmentFieldText(value) {
+  if (Array.isArray(value)) return value.filter(Boolean).map((item) => String(item).trim()).filter(Boolean).join(', ');
+  return String(value || '').trim();
+}
+
+function equipmentCustomerName(row) {
+  return equipmentFieldText(row.customerNames) ||
+    equipmentFieldText(row.customerName) ||
+    equipmentFieldText(row.customer?.name);
+}
+
+function equipmentCustomerId(row) {
+  return equipmentFieldText(row.customerIds) ||
+    equipmentFieldText(row.customerId) ||
+    equipmentFieldText(row.customerOrgId) ||
+    equipmentFieldText(row.customer?.id);
+}
+
+function isFullToOffloadStatus(row) {
+  const status = normalizeWiseCode(row.equipmentStatus || row.status || '');
+  const detail = normalizeWiseCode(row.equipmentOperationStatus || row.details || row.operationStatus || '');
+  return status === 'FULL_TO_OFFLOAD' || detail === 'FULL_TO_OFFLOAD' || (status === 'FULL' && detail === 'FULL_TO_OFFLOAD');
+}
+
 function isFullToOffloadContainer(row) {
   const type = normalizeWiseCode(row.equipmentType || row.type || '');
   const status = normalizeWiseCode(row.equipmentStatus || row.status || '');
@@ -659,20 +683,17 @@ function isFullToOffloadContainer(row) {
 }
 
 function isUnassignedEquipment(row) {
-  const customerName = String(row.customerName || row.customer?.name || '').trim();
-  const customerId = String(row.customerId || row.customer?.id || row.customerOrgId || '').trim();
+  const customerName = equipmentCustomerName(row);
+  const customerId = equipmentCustomerId(row);
   const normalizedName = normalizeWiseCode(customerName);
   return (!customerName && !customerId) || ['PENDING', 'UNASSIGNED', 'UNKNOWN'].includes(normalizedName);
 }
 
 function isNightShiftFullToOffloadEquipment(row) {
-  if (isFullToOffloadContainer(row)) return true;
-  if (!isUnassignedEquipment(row)) return false;
-
   const type = normalizeWiseCode(row.equipmentType || row.type || '');
-  const status = normalizeWiseCode(row.equipmentStatus || row.status || '');
-  const detail = normalizeWiseCode(row.equipmentOperationStatus || row.details || row.operationStatus || '');
-  return type.includes('TRAILER') && status === 'FULL' && detail === 'FULL_TO_OFFLOAD';
+  if (!isFullToOffloadStatus(row)) return false;
+  if (type === 'CONTAINER') return true;
+  return type.includes('TRAILER') && isUnassignedEquipment(row);
 }
 
 function isTrailerOrContainerEquipment(row) {
@@ -2624,8 +2645,8 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
     if (Array.isArray(equipment)) {
         result.inYardFullEquipment.rows = equipment
           .filter(e => {
-            const customerId = e.customerId || e.customer?.id || e.customerOrgId || '';
-            const customerName = e.customerName || e.customer?.name || '';
+            const customerId = tab === 'nightShift' ? equipmentCustomerId(e) : (e.customerId || e.customer?.id || e.customerOrgId || '');
+            const customerName = tab === 'nightShift' ? equipmentCustomerName(e) : (e.customerName || e.customer?.name || '');
             const status = e.equipmentStatus || e.status || '';
             const opStatus = e.equipmentOperationStatus || e.details || e.operationStatus || '';
             const type = e.equipmentType || e.type || '';
@@ -2671,7 +2692,7 @@ app.post(['/api/dashboard', '/api/dashboard/:variant'], requireAuth, async (req,
             timeInYard: e.inYardTime || e.timeInYard || '',
             customer: useFullToOffloadMetric
               ? (tab === 'nightShift'
-                ? nightShiftDisplayCustomer(e.customerName || e.customer?.name || '', e.customerId || e.customer?.id || e.customerOrgId || '')
+                ? nightShiftDisplayCustomer(equipmentCustomerName(e), equipmentCustomerId(e))
                 : nightShiftCustomerName(e.customerName || e.customer?.name || '', e.customerId || e.customer?.id || e.customerOrgId || ''))
               : (e.customerName || e.customer?.name || e.customerId || ''),
             location: e.locationName || e.location || '',
