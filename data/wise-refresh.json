@@ -7,18 +7,18 @@
   "facilityId": "LT_F1",
   "facilityName": "Valley View",
   "timeZone": "America/Los_Angeles",
-  "pulledAt": "2026-11-16T14:26:07Z",
-  "latestRefreshedAt": "2026-11-16T14:27:23.654Z",
+  "pulledAt": "2026-11-18T14:26:12Z",
+  "latestRefreshedAt": "2026-11-18T14:24:48.030Z",
   "tabs": {
     "bay1": {
       "title": "Team 1",
       "reportType": "bay1",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-16T14:26:07.491Z",
+      "refreshedAt": "2026-11-18T14:24:24.281Z",
       "metrics": [
         {
           "label": "Total Planned",
-          "value": 1395
+          "value": 486
         },
         {
           "label": "Customers",
@@ -27,85 +27,85 @@
       ],
       "plannedOrders": {
         "supported": true,
-        "rowCount": 1395
+        "rowCount": 486
       },
       "inYardFullEquipment": {
         "supported": true,
         "rowCount": 0
       },
-      "payloadSha256": "0103c03401c4c5f33209895b34e8c25eefca9b7e22e53051ec0d4880630fb128"
+      "payloadSha256": "c748239b6e8ba5603a9562fff8eda0b8643e83728aa738367005e451138e88af"
     },
     "bay2": {
       "title": "Team 2",
       "reportType": "bay2Ecomm",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-16T14:26:10.795Z",
+      "refreshedAt": "2026-11-18T14:24:27.356Z",
       "metrics": [
         {
           "label": "Count of Order #",
-          "value": "1879",
+          "value": "653",
           "sub": "WISE planned orders"
         },
         {
           "label": "Sum of BASE QTY",
-          "value": "75237",
+          "value": "108564",
           "sub": "WISE base quantity"
         },
         {
           "label": "Past SLA",
-          "value": "1291",
+          "value": "467",
           "sub": "Orders older than 24 hours"
         },
         {
           "label": "Customers",
-          "value": "17",
+          "value": "14",
           "sub": "Team 2 customer set"
         }
       ],
       "plannedOrders": {
         "supported": true,
-        "rowCount": 1879
+        "rowCount": 653
       },
       "inYardFullEquipment": {
         "supported": true,
         "rowCount": 1
       },
-      "payloadSha256": "63f20dd9c3288173aeb106d5c20301e617917620597138fb54f1489eefe0d089"
+      "payloadSha256": "f669fdcca16ec06f8317dcdaf2471140808699e10d5531bc48d3afc6532324ba"
     },
     "bay3": {
       "title": "Team 3",
       "reportType": "bay3",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-16T14:26:17.512Z",
+      "refreshedAt": "2026-11-18T14:24:30.665Z",
       "metrics": [
         {
           "label": "Total Planned",
-          "value": 204
+          "value": 237
         },
         {
           "label": "Customers",
-          "value": 10
+          "value": 7
         }
       ],
       "plannedOrders": {
         "supported": true,
-        "rowCount": 204
+        "rowCount": 237
       },
       "inYardFullEquipment": {
         "supported": true,
-        "rowCount": 6
+        "rowCount": 4
       },
-      "payloadSha256": "56729e435fdb672239264e44c91d9f0e0f203acf62e815bcb5e254ddfdf0de5a"
+      "payloadSha256": "7c01660ec598631a66e78f2392c3fdf3ecd092d89f9f93773fcea3e046d206c2"
     },
     "bay4": {
       "title": "Team 4",
       "reportType": "bay4",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-16T14:26:23.096Z",
+      "refreshedAt": "2026-11-18T14:24:33.680Z",
       "metrics": [
         {
           "label": "Total Planned",
-          "value": 163
+          "value": 175
         },
         {
           "label": "Customers",
@@ -114,23 +114,23 @@
       ],
       "plannedOrders": {
         "supported": true,
-        "rowCount": 163
+        "rowCount": 175
       },
       "inYardFullEquipment": {
         "supported": true,
-        "rowCount": 4
+        "rowCount": 3
       },
-      "payloadSha256": "64d9552740552e66408d4ccc76495a19c54458eaa321cfc6abab905a88a7ed83"
+      "payloadSha256": "655e7b79f022cb5be8b81797ca902c481184bee30cb3b64bd857640724963897"
     },
     "bay5": {
       "title": "Team 5",
       "reportType": "bay5",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-16T14:26:25.564Z",
+      "refreshedAt": "2026-11-18T14:24:35.683Z",
       "metrics": [
         {
           "label": "Total Planned",
-          "value": 1286
+          "value": 357
         },
         {
           "label": "Customers",
@@ -139,19 +139,19 @@
       ],
       "plannedOrders": {
         "supported": true,
-        "rowCount": 1286
+        "rowCount": 357
       },
       "inYardFullEquipment": {
         "supported": true,
-        "rowCount": 1
+        "rowCount": 0
       },
-      "payloadSha256": "ce9683f10c8e6891631546eed6f4ca80fd8c1d580421ad3c2775ae3aef927252"
+      "payloadSha256": "429e85f7c32586fa16c65557f9f97918cf8567e10b2c87571265979404177410"
     },
     "evelyn": {
       "title": "Team 2 LTL",
       "reportType": "evelynGreenPivot",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-16T14:26:29.191Z",
+      "refreshedAt": "2026-11-18T14:24:37.731Z",
       "metrics": [
         {
           "label": "Count of Order",
@@ -174,7 +174,7 @@
         "supported": true,
         "rowCount": 0
       },
-      "payloadSha256": "b47381a01e94997664e6bd670a914f7f800eb0aee7abe34c3e9c563034e08f5b",
+      "payloadSha256": "c4738d844313e663a06f6e87c66c1c0d77a11f74206a55e607181e8dc122a3ad",
       "evelynGreenTotal": {
         "orderCount": 208,
         "baseQty": 436823
@@ -184,16 +184,16 @@
       "title": "Crate & Barrel Equipment",
       "reportType": "crateEquipment",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-16T14:26:29.251Z",
+      "refreshedAt": "2026-11-18T14:24:37.747Z",
       "metrics": [
         {
           "label": "Equipment History",
-          "value": "120",
+          "value": "104",
           "sub": "WISE yard equipment"
         },
         {
           "label": "Latest Activity",
-          "value": "119",
+          "value": "104",
           "sub": "Rows with gate check-in"
         },
         {
@@ -210,16 +210,16 @@
         "supported": true,
         "rowCount": 0
       },
-      "payloadSha256": "8f92d623482bf1b24a73ddc092212b9da6d6110c116e9619601815b13d1e2503",
+      "payloadSha256": "7e59b8cee672b981ebaa882d6f43ec4f41fd29fd8a04162147a689880b4cf1c4",
       "crateEquipment": {
-        "rowCount": 120
+        "rowCount": 104
       }
     },
     "bpWorkload": {
       "title": "B.P. Workload",
       "reportType": "bpWorkload",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-16T14:26:30.523Z",
+      "refreshedAt": "2026-11-18T14:24:38.504Z",
       "metrics": [
         {
           "label": "Customers",
@@ -228,13 +228,13 @@
         },
         {
           "label": "Containers FULL",
-          "value": "6",
+          "value": "4",
           "sub": "Current WISE yard read"
         },
         {
           "label": "New Orders",
-          "value": "12",
-          "sub": "2026-11-15"
+          "value": "248",
+          "sub": "2026-11-17"
         },
         {
           "label": "Fillable Orders",
@@ -250,7 +250,7 @@
         "supported": true,
         "rowCount": 0
       },
-      "payloadSha256": "47d4942e979e90bb0f1aa21f692e3a7903db827b12aed776befad895e9a8cb91",
+      "payloadSha256": "3bdfc0258d06f815e673eefc1017460523c285a263e527fb9160a0404829f3b5",
       "bpWorkload": {
         "keys": [
           "definitions",
@@ -267,38 +267,38 @@
       "title": "Night Shift",
       "reportType": "nightShift",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-16T14:27:14.656Z",
+      "refreshedAt": "2026-11-18T14:24:44.550Z",
       "metrics": [
         {
           "label": "Customers",
-          "value": "4",
+          "value": "2",
           "sub": "Night Shift customer set"
         },
         {
           "label": "FULL Containers",
-          "value": "7",
+          "value": "4",
           "sub": "Not yet devanned"
         }
       ],
       "plannedOrders": {
         "supported": true,
-        "rowCount": 3038
+        "rowCount": 1264
       },
       "inYardFullEquipment": {
         "supported": true,
-        "rowCount": 7
+        "rowCount": 4
       },
-      "payloadSha256": "f91b5669adb3583c4f66f9aa7d2d3ce6768efa62024d4700e811918cd74f9f84",
+      "payloadSha256": "1569c79ba5dcf0f6b8d4aa866e9b4cf9dcef738b35c164b6f245658b8c927619",
       "nightShift": {
-        "rowCount": 7,
-        "customerCount": 4
+        "rowCount": 4,
+        "customerCount": 2
       }
     },
     "bay4AutoAssign": {
       "title": "Rear Guard Shack",
       "reportType": "bay4AutoAssign",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-16T14:27:23.518Z",
+      "refreshedAt": "2026-11-18T14:24:47.857Z",
       "metrics": [],
       "plannedOrders": {
         "supported": true,
@@ -308,13 +308,13 @@
         "supported": true,
         "rowCount": 0
       },
-      "payloadSha256": "296172219539db75a208d18337385248daaf292c049809bb3960740ce20af603"
+      "payloadSha256": "131b3d0e689e84fe5ca324e340d180ffe37e7bb2c2a8222e56941fd6bcd34209"
     },
     "frontGuardShack": {
       "title": "Front Guard Shack",
       "reportType": "frontGuardPaused",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-16T14:27:23.585Z",
+      "refreshedAt": "2026-11-18T14:24:48.015Z",
       "metrics": [],
       "plannedOrders": {
         "supported": true,
@@ -324,13 +324,13 @@
         "supported": true,
         "rowCount": 0
       },
-      "payloadSha256": "e28d75bd9c81381c2555ccc7c7d8b12fa46f238a4f527763c654ddd1215df5dc"
+      "payloadSha256": "6a4dc20b25e697b87177846e78c799adcf1c05e719974bb53f7d5c448d663987"
     },
     "bay2AutoAssign": {
       "title": "Team 2 Auto Assign",
       "reportType": "bay2AutoAssign",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-16T14:27:23.654Z",
+      "refreshedAt": "2026-11-18T14:24:48.030Z",
       "metrics": [],
       "plannedOrders": {
         "supported": true,
@@ -340,7 +340,7 @@
         "supported": true,
         "rowCount": 0
       },
-      "payloadSha256": "f864b63962021b734b1ea1114ec8d1214e352f17aeeb6e3d2823f62d459131bc"
+      "payloadSha256": "dddeec9401609745de45b6db50c5a5c85cc23f53011282d028c82f0caabd03ba"
     }
   }
 }
