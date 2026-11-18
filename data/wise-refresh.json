@@ -7,76 +7,76 @@
   "facilityId": "LT_F1",
   "facilityName": "Valley View",
   "timeZone": "America/Los_Angeles",
-  "pulledAt": "2026-11-18T14:26:12Z",
-  "latestRefreshedAt": "2026-11-18T14:24:48.030Z",
+  "pulledAt": "2026-11-18T14:43:52Z",
+  "latestRefreshedAt": "2026-11-18T14:43:11.722Z",
   "tabs": {
     "bay1": {
       "title": "Team 1",
       "reportType": "bay1",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-18T14:24:24.281Z",
+      "refreshedAt": "2026-11-18T14:42:34.741Z",
       "metrics": [
         {
           "label": "Total Planned",
-          "value": 486
+          "value": 495
         },
         {
           "label": "Customers",
-          "value": 8
+          "value": 10
         }
       ],
       "plannedOrders": {
         "supported": true,
-        "rowCount": 486
+        "rowCount": 495
       },
       "inYardFullEquipment": {
         "supported": true,
         "rowCount": 0
       },
-      "payloadSha256": "c748239b6e8ba5603a9562fff8eda0b8643e83728aa738367005e451138e88af"
+      "payloadSha256": "98eb2282adb93c5e3f3ebc6ee3ffb3563a9834474df57b3ca6b59492d4fd68a5"
     },
     "bay2": {
       "title": "Team 2",
       "reportType": "bay2Ecomm",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-18T14:24:27.356Z",
+      "refreshedAt": "2026-11-18T14:42:37.559Z",
       "metrics": [
         {
           "label": "Count of Order #",
-          "value": "653",
+          "value": "890",
           "sub": "WISE planned orders"
         },
         {
           "label": "Sum of BASE QTY",
-          "value": "108564",
+          "value": "109570",
           "sub": "WISE base quantity"
         },
         {
           "label": "Past SLA",
-          "value": "467",
+          "value": "511",
           "sub": "Orders older than 24 hours"
         },
         {
           "label": "Customers",
-          "value": "14",
+          "value": "18",
           "sub": "Team 2 customer set"
         }
       ],
       "plannedOrders": {
         "supported": true,
-        "rowCount": 653
+        "rowCount": 890
       },
       "inYardFullEquipment": {
         "supported": true,
         "rowCount": 1
       },
-      "payloadSha256": "f669fdcca16ec06f8317dcdaf2471140808699e10d5531bc48d3afc6532324ba"
+      "payloadSha256": "89062cffef9e82918520ae93c09a49e1ada342a2a62eb59f9228ff880fe29184"
     },
     "bay3": {
       "title": "Team 3",
       "reportType": "bay3",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-18T14:24:30.665Z",
+      "refreshedAt": "2026-11-18T14:42:41.578Z",
       "metrics": [
         {
           "label": "Total Planned",
@@ -95,13 +95,13 @@
         "supported": true,
         "rowCount": 4
       },
-      "payloadSha256": "7c01660ec598631a66e78f2392c3fdf3ecd092d89f9f93773fcea3e046d206c2"
+      "payloadSha256": "67334da810f3e22686c2e0974c0d2676945de07a82a8fb2a074c32447e319b89"
     },
     "bay4": {
       "title": "Team 4",
       "reportType": "bay4",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-18T14:24:33.680Z",
+      "refreshedAt": "2026-11-18T14:42:44.979Z",
       "metrics": [
         {
           "label": "Total Planned",
@@ -120,38 +120,38 @@
         "supported": true,
         "rowCount": 3
       },
-      "payloadSha256": "655e7b79f022cb5be8b81797ca902c481184bee30cb3b64bd857640724963897"
+      "payloadSha256": "8e16da4a8975ad864c7c3fdc138cf6ba295e3736aafbd4c37a911afdfc15efa2"
     },
     "bay5": {
       "title": "Team 5",
       "reportType": "bay5",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-18T14:24:35.683Z",
+      "refreshedAt": "2026-11-18T14:42:47.178Z",
       "metrics": [
         {
           "label": "Total Planned",
-          "value": 357
+          "value": 362
         },
         {
           "label": "Customers",
-          "value": 5
+          "value": 6
         }
       ],
       "plannedOrders": {
         "supported": true,
-        "rowCount": 357
+        "rowCount": 362
       },
       "inYardFullEquipment": {
         "supported": true,
         "rowCount": 0
       },
-      "payloadSha256": "429e85f7c32586fa16c65557f9f97918cf8567e10b2c87571265979404177410"
+      "payloadSha256": "844331753956c0d9324779fa67212a54223158608005b02ecac705d5b88c0f76"
     },
     "evelyn": {
       "title": "Team 2 LTL",
       "reportType": "evelynGreenPivot",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-18T14:24:37.731Z",
+      "refreshedAt": "2026-11-18T14:42:49.229Z",
       "metrics": [
         {
           "label": "Count of Order",
@@ -174,7 +174,7 @@
         "supported": true,
         "rowCount": 0
       },
-      "payloadSha256": "c4738d844313e663a06f6e87c66c1c0d77a11f74206a55e607181e8dc122a3ad",
+      "payloadSha256": "74734e7467e747cf3574cc32bddfd21de95f3207cbad51b802289551feeef14a",
       "evelynGreenTotal": {
         "orderCount": 208,
         "baseQty": 436823
@@ -184,16 +184,16 @@
       "title": "Crate & Barrel Equipment",
       "reportType": "crateEquipment",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-18T14:24:37.747Z",
+      "refreshedAt": "2026-11-18T14:42:49.247Z",
       "metrics": [
         {
           "label": "Equipment History",
-          "value": "104",
+          "value": "105",
           "sub": "WISE yard equipment"
         },
         {
           "label": "Latest Activity",
-          "value": "104",
+          "value": "105",
           "sub": "Rows with gate check-in"
         },
         {
@@ -210,16 +210,16 @@
         "supported": true,
         "rowCount": 0
       },
-      "payloadSha256": "7e59b8cee672b981ebaa882d6f43ec4f41fd29fd8a04162147a689880b4cf1c4",
+      "payloadSha256": "e83466084d55a0f15eeaa37c18b7df7cb80cbae3b813e87f225e3ba6e7229f63",
       "crateEquipment": {
-        "rowCount": 104
+        "rowCount": 105
       }
     },
     "bpWorkload": {
       "title": "B.P. Workload",
       "reportType": "bpWorkload",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-18T14:24:38.504Z",
+      "refreshedAt": "2026-11-18T14:42:50.072Z",
       "metrics": [
         {
           "label": "Customers",
@@ -250,7 +250,7 @@
         "supported": true,
         "rowCount": 0
       },
-      "payloadSha256": "3bdfc0258d06f815e673eefc1017460523c285a263e527fb9160a0404829f3b5",
+      "payloadSha256": "8c481a82969325467727cf80a48ce4f53ec25c0665975e2426180ddd077654e7",
       "bpWorkload": {
         "keys": [
           "definitions",
@@ -267,7 +267,7 @@
       "title": "Night Shift",
       "reportType": "nightShift",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-18T14:24:44.550Z",
+      "refreshedAt": "2026-11-18T14:42:56.593Z",
       "metrics": [
         {
           "label": "Customers",
@@ -282,13 +282,13 @@
       ],
       "plannedOrders": {
         "supported": true,
-        "rowCount": 1264
+        "rowCount": 1500
       },
       "inYardFullEquipment": {
         "supported": true,
         "rowCount": 4
       },
-      "payloadSha256": "1569c79ba5dcf0f6b8d4aa866e9b4cf9dcef738b35c164b6f245658b8c927619",
+      "payloadSha256": "584d0c1d7b015bcd74a8568ef62735110788130395df9a1b2dd6505c526c10f1",
       "nightShift": {
         "rowCount": 4,
         "customerCount": 2
@@ -298,7 +298,7 @@
       "title": "Rear Guard Shack",
       "reportType": "bay4AutoAssign",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-18T14:24:47.857Z",
+      "refreshedAt": "2026-11-18T14:43:11.590Z",
       "metrics": [],
       "plannedOrders": {
         "supported": true,
@@ -308,13 +308,13 @@
         "supported": true,
         "rowCount": 0
       },
-      "payloadSha256": "131b3d0e689e84fe5ca324e340d180ffe37e7bb2c2a8222e56941fd6bcd34209"
+      "payloadSha256": "2cec6842589c68afab2898f30767ca84e79e5ba089cb75c231902a8661a5d9a2"
     },
     "frontGuardShack": {
       "title": "Front Guard Shack",
       "reportType": "frontGuardPaused",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-18T14:24:48.015Z",
+      "refreshedAt": "2026-11-18T14:43:11.707Z",
       "metrics": [],
       "plannedOrders": {
         "supported": true,
@@ -324,13 +324,13 @@
         "supported": true,
         "rowCount": 0
       },
-      "payloadSha256": "6a4dc20b25e697b87177846e78c799adcf1c05e719974bb53f7d5c448d663987"
+      "payloadSha256": "73c9e8f428cbe329436aa9bd4d3e0380cc0f9e7ac445b3df236d4738f2ec9be0"
     },
     "bay2AutoAssign": {
       "title": "Team 2 Auto Assign",
       "reportType": "bay2AutoAssign",
       "httpStatus": 200,
-      "refreshedAt": "2026-11-18T14:24:48.030Z",
+      "refreshedAt": "2026-11-18T14:43:11.722Z",
       "metrics": [],
       "plannedOrders": {
         "supported": true,
@@ -340,7 +340,7 @@
         "supported": true,
         "rowCount": 0
       },
-      "payloadSha256": "dddeec9401609745de45b6db50c5a5c85cc23f53011282d028c82f0caabd03ba"
+      "payloadSha256": "aa110ebde5baefe4b1a7d5a109b65749920cb46238ca943b12ac63a49e76c176"
     }
   }
 }
