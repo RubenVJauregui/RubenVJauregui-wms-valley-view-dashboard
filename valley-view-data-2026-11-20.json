@@ -1,0 +1,3226 @@
+{
+  "run": 48,
+  "pull_time": "2026-11-20T07:03:57-0800",
+  "timestamp": "2026-11-20T15:03:57.816Z",
+  "facility": "LT_F1 (Valley View)",
+  "tenant": "LT",
+  "timezone": "America/Los_Angeles",
+  "source": "WISE (WMS API)",
+  "pick_tasks": {
+    "total_active": 794,
+    "by_status": {
+      "NEW": 738,
+      "IN_PROGRESS": 56
+    },
+    "by_pick_type": {
+      "PIECE_PICK": 341,
+      "CASE_PICK": 314,
+      "PALLET_PICK": 139
+    },
+    "by_assignee_top15": {
+      "RUFINO MUNGUIA": 223,
+      "Orgain Outbound BP": 96,
+      "JUAN DUNNO IV": 76,
+      "LILIANA CURENO": 58,
+      "Ruany Preciado": 50,
+      "VitaCoco Outbound": 38,
+      "DIANA SORTO": 33,
+      "EVELYN AGUIRRE": 33,
+      "LUIS HINOJOSA": 18,
+      "ANGELICA HONESTO": 13,
+      "DEYSI SALVADOR": 11,
+      "GABRIEL MUNGUIA": 11,
+      "FABRICIO BARSALLO": 10,
+      "julian rios": 10,
+      "MARIA PEREZ": 9
+    },
+    "by_customer_top15": {
+      "ORG-655875": 235,
+      "ORG-655338": 118,
+      "ORG-685351": 79,
+      "ORG-723580": 61,
+      "ORG-714892": 42,
+      "ORG-34818": 39,
+      "ORG-34557": 37,
+      "ORG-738412": 29,
+      "ORG-646997": 19,
+      "ORG-214099": 18,
+      "ORG-658391": 13,
+      "ORG-616507": 12,
+      "ORG-585450": 9,
+      "ORG-780772": 9,
+      "ORG-368834": 7
+    },
+    "active_order_plans": [
+      {
+        "orderPlanId": "PLAN-5107416",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Ruany Preciado",
+        "taskCount": 42,
+        "orderCount": 42
+      },
+      {
+        "orderPlanId": "PLAN-5106850",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "MIXED",
+        "assignee": "Orgain Outbound BP",
+        "taskCount": 35,
+        "orderCount": 35
+      },
+      {
+        "orderPlanId": "PLAN-5106857",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "DIANA SORTO",
+        "taskCount": 32,
+        "orderCount": 32
+      },
+      {
+        "orderPlanId": "PLAN-5105678",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "JUAN DUNNO IV",
+        "taskCount": 29,
+        "orderCount": 29
+      },
+      {
+        "orderPlanId": "PLAN-5107084",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "JUAN DUNNO IV",
+        "taskCount": 29,
+        "orderCount": 29
+      },
+      {
+        "orderPlanId": "PLAN-5107817",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "MIXED",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 20,
+        "orderCount": 20
+      },
+      {
+        "orderPlanId": "PLAN-5107402",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 18,
+        "orderCount": 18
+      },
+      {
+        "orderPlanId": "PLAN-5107480",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 18,
+        "orderCount": 18
+      },
+      {
+        "orderPlanId": "PLAN-5106199",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 17,
+        "orderCount": 17
+      },
+      {
+        "orderPlanId": "PLAN-5107765",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "JUAN DUNNO IV",
+        "taskCount": 16,
+        "orderCount": 16
+      },
+      {
+        "orderPlanId": "PLAN-5107737",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 14,
+        "orderCount": 14
+      },
+      {
+        "orderPlanId": "PLAN-5107751",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Orgain Outbound BP",
+        "taskCount": 14,
+        "orderCount": 5
+      },
+      {
+        "orderPlanId": "PLAN-5107857",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 14,
+        "orderCount": 14
+      },
+      {
+        "orderPlanId": "PLAN-5104893",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LILIANA CURENO",
+        "taskCount": 13,
+        "orderCount": 13
+      },
+      {
+        "orderPlanId": "PLAN-5107496",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Orgain Outbound BP",
+        "taskCount": 13,
+        "orderCount": 5
+      },
+      {
+        "orderPlanId": "PLAN-5104270",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 9,
+        "orderCount": 9
+      },
+      {
+        "orderPlanId": "PLAN-5106524",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LILIANA CURENO",
+        "taskCount": 8,
+        "orderCount": 8
+      },
+      {
+        "orderPlanId": "PLAN-5105128",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 7,
+        "orderCount": 7
+      },
+      {
+        "orderPlanId": "PLAN-5105133",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 7,
+        "orderCount": 7
+      },
+      {
+        "orderPlanId": "PLAN-5105720",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 7,
+        "orderCount": 7
+      },
+      {
+        "orderPlanId": "PLAN-5105930",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Orgain Outbound BP",
+        "taskCount": 7,
+        "orderCount": 7
+      },
+      {
+        "orderPlanId": "PLAN-5107482",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 6,
+        "orderCount": 6
+      },
+      {
+        "orderPlanId": "PLAN-5107483",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 6,
+        "orderCount": 6
+      },
+      {
+        "orderPlanId": "PLAN-5107867",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 6,
+        "orderCount": 6
+      },
+      {
+        "orderPlanId": "PLAN-5104588",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LILIANA CURENO",
+        "taskCount": 5,
+        "orderCount": 5
+      },
+      {
+        "orderPlanId": "PLAN-5105091",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 5,
+        "orderCount": 5
+      },
+      {
+        "orderPlanId": "PLAN-5105129",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 5,
+        "orderCount": 5
+      },
+      {
+        "orderPlanId": "PLAN-5106086",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LILIANA CURENO",
+        "taskCount": 5,
+        "orderCount": 5
+      },
+      {
+        "orderPlanId": "PLAN-5106995",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "MIXED",
+        "assignee": "LUIS HINOJOSA",
+        "taskCount": 5,
+        "orderCount": 5
+      },
+      {
+        "orderPlanId": "PLAN-5107019",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Orgain Outbound BP",
+        "taskCount": 5,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107322",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LILIANA CURENO",
+        "taskCount": 5,
+        "orderCount": 5
+      },
+      {
+        "orderPlanId": "PLAN-5107485",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 5,
+        "orderCount": 5
+      },
+      {
+        "orderPlanId": "PLAN-5107775",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 5,
+        "orderCount": 5
+      },
+      {
+        "orderPlanId": "PLAN-5107803",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Orgain Outbound BP",
+        "taskCount": 5,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5107870",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Orgain Outbound BP",
+        "taskCount": 5,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5107919",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "julian rios",
+        "taskCount": 5,
+        "orderCount": 5
+      },
+      {
+        "orderPlanId": "PLAN-5105834",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "MIXED",
+        "assignee": "CLAUDIA CASTILLO",
+        "taskCount": 4,
+        "orderCount": 4
+      },
+      {
+        "orderPlanId": "PLAN-5107058",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "David Mendoza",
+        "taskCount": 4,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107428",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Orgain Outbound BP",
+        "taskCount": 4,
+        "orderCount": 4
+      },
+      {
+        "orderPlanId": "PLAN-5107692",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LILIANA CURENO",
+        "taskCount": 4,
+        "orderCount": 4
+      },
+      {
+        "orderPlanId": "PLAN-5107922",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "FABRICIO BARSALLO",
+        "taskCount": 4,
+        "orderCount": 4
+      },
+      {
+        "orderPlanId": "PLAN-5105498",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LUIS HINOJOSA",
+        "taskCount": 3,
+        "orderCount": 3
+      },
+      {
+        "orderPlanId": "PLAN-5105948",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 3,
+        "orderCount": 3
+      },
+      {
+        "orderPlanId": "PLAN-5106225",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 3,
+        "orderCount": 3
+      },
+      {
+        "orderPlanId": "PLAN-5106228",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 3,
+        "orderCount": 3
+      },
+      {
+        "orderPlanId": "PLAN-5106619",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LILIANA CURENO",
+        "taskCount": 3,
+        "orderCount": 3
+      },
+      {
+        "orderPlanId": "PLAN-5107082",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "MIXED",
+        "assignee": "ana valentin",
+        "taskCount": 3,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107299",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 3,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107301",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "MIXED",
+        "assignee": "FELIPE RIVERA",
+        "taskCount": 3,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107302",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 3,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107741",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LUIS HINOJOSA",
+        "taskCount": 3,
+        "orderCount": 3
+      },
+      {
+        "orderPlanId": "PLAN-5107792",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 3,
+        "orderCount": 3
+      },
+      {
+        "orderPlanId": "PLAN-5104046",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "MIXED",
+        "assignee": "ARNULFO MUNGUIA",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5104511",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LILIANA CURENO",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5104865",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LILIANA CURENO",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5105119",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5105343",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LILIANA CURENO",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5105690",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5105738",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5106203",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5106241",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Orgain Outbound BP",
+        "taskCount": 2,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106801",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5106964",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LILIANA CURENO",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5107255",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5107306",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 2,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107318",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Orgain Outbound BP",
+        "taskCount": 2,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107465",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "CLAUDIA AVILA",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5107489",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Nanci Viviana Rosas",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5107627",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "MARTIN MUNGUIA",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5107721",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Nanci Viviana Rosas",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5107763",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5107766",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5107845",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5107846",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5107850",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Nanci Viviana Rosas",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5107853",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5107858",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5107869",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "NEW",
+        "assignee": "MARIA PEREZ",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5107873",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "MIXED",
+        "assignee": "Abigail Garin",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5107920",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "NEW",
+        "assignee": "ANDRES MARTINEZ",
+        "taskCount": 2,
+        "orderCount": 13
+      },
+      {
+        "orderPlanId": "PLAN-5107927",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LUIS HINOJOSA",
+        "taskCount": 2,
+        "orderCount": 2
+      },
+      {
+        "orderPlanId": "PLAN-5101202",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "GABRIEL MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5101861",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5103031",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LUIS HINOJOSA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5104232",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LUIS HINOJOSA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5104421",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "Jose Vazquez",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5104450",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Ruany Preciado",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5104474",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "GABRIEL MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5104937",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "IN_PROGRESS",
+        "assignee": "VIELKA GUTIERREZ",
+        "taskCount": 1,
+        "orderCount": 0
+      },
+      {
+        "orderPlanId": "PLAN-5105090",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5105100",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5105123",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "CANDY MENDEZ",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5105195",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LILIANA CURENO",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5105259",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5105260",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "MARIA PEREZ",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5105386",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5105535",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LILIANA CURENO",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5105671",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5105773",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LILIANA CURENO",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5105774",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LUIS HINOJOSA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5105788",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LUIS HINOJOSA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5105856",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "MARTIN MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5105859",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LILIANA CURENO",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5105894",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "hanna gonzalez",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5105958",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "CANDY MENDEZ",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106033",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LILIANA CURENO",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106057",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "VIELKA GUTIERREZ",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106080",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106081",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106082",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106083",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106085",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106150",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106535",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "IN_PROGRESS",
+        "assignee": "jose amaya",
+        "taskCount": 1,
+        "orderCount": 0
+      },
+      {
+        "orderPlanId": "PLAN-5106599",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "JULIO CESAR Alvarado",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106607",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "MARTIN MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106612",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "MARTIN MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106654",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LILIANA CURENO",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106670",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106695",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106696",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106722",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "JUAN DUNNO IV",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106735",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106812",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "MARTHA OLVERA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106858",
+        "pickType": "CASE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Orgain Outbound BP",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106935",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LUIS HINOJOSA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106946",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Orgain Outbound BP",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106951",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "MARIA PEREZ",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106953",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "MARIA PEREZ",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106954",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "MARIA PEREZ",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106956",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106960",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106962",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "MARIA PEREZ",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5106965",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107020",
+        "pickType": "CASE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Orgain Outbound BP",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107040",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "DEYSI SALVADOR",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107041",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107056",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "DEYSI SALVADOR",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107059",
+        "pickType": "CASE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Orgain Outbound BP",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107086",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "JUAN DUNNO IV",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107088",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107098",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "Dora Alas",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107099",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "DEYSI SALVADOR",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107109",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107121",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "MARIA PEREZ",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107131",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107137",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107138",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "Ruany Preciado",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107139",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "JULIO CESAR Alvarado",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107143",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "IVON RUIZ",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107144",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "DEYSI SALVADOR",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107145",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "DEYSI SALVADOR",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107147",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Ruany Preciado",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107187",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "LILIANA CURENO",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107253",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "MARTIN MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107285",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "Angel Perez",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107300",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "MARIA PEREZ",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107304",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Ivonne sanchez",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107349",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107352",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "MARIA CARRION",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107353",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107354",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "Vidal Antonia",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107355",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107359",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Ruany Preciado",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107360",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "LUIS VELAZQUEZ",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107361",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "MARTIN MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107363",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "SILVANO SERTORIO HERNANDEZ",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107364",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RAMON SICAIROS MORALES",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107365",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "RENATO ROSALES GARCIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107385",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107401",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107417",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107420",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107429",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "DEYSI SALVADOR",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107433",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "julian rios",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107447",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RICARDO TAPIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107448",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "Luis alberto paredes",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107451",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107452",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107460",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107464",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "ERICK OLMEDO",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107469",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Ruany Preciado",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107474",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "Jose Vazquez",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107475",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "RICARDO TAPIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107484",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "Nielsen Alberto Rosales",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107488",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Nanci Viviana Rosas",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107491",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "CANDY MENDEZ",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107494",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107498",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "ERICK OLMEDO",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107521",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "GABRIEL MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107594",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107620",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": " GABRIEL RUIZ",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107621",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "CLAUDIA CASTILLO",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107630",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "DEYSI SALVADOR",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107631",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "DEYSI SALVADOR",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107641",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107646",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107647",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107649",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107650",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107652",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107653",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107654",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107655",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107656",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107657",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107658",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107666",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107668",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107669",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107670",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107671",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107672",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107694",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "ENRIQUE HIGAREDA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107704",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "JULIO CESAR Alvarado",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107725",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107728",
+        "pickType": "CASE_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "NEW",
+        "assignee": "Maria  Rico",
+        "taskCount": 1,
+        "orderCount": 5
+      },
+      {
+        "orderPlanId": "PLAN-5107734",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "IN_PROGRESS",
+        "assignee": "DIANA SORTO",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107736",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107743",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107744",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107746",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "ERICK OLMEDO",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107755",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107760",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107762",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107768",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107773",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107777",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107780",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107781",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107783",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107784",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107787",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "DEYSI SALVADOR",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107797",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Ruany Preciado",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107798",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "NAZARETH CASTILLO ISLAS",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107801",
+        "pickType": "CASE_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "NEW",
+        "assignee": "PATRICIA MARTINEZ",
+        "taskCount": 1,
+        "orderCount": 25
+      },
+      {
+        "orderPlanId": "PLAN-5107808",
+        "pickType": "CASE_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "NEW",
+        "assignee": "PATRICIA MARTINEZ",
+        "taskCount": 1,
+        "orderCount": 3
+      },
+      {
+        "orderPlanId": "PLAN-5107809",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "GABRIEL MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107813",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107816",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "SAMUEL MENDOZA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107818",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107819",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107821",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "GABRIEL MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107823",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "GABRIEL MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107825",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "GABRIEL MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107826",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "GABRIEL MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107827",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "GABRIEL MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107828",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "GABRIEL MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107830",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VIELKA GUTIERREZ",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107834",
+        "pickType": "CASE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Orgain Outbound BP",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107838",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Ruany Preciado",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107840",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "Norvin Ruiz",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107841",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Mike Mitchell",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107842",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "DEYSI SALVADOR",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107843",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "DEYSI SALVADOR",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107849",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Nanci Viviana Rosas",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107851",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "GABRIEL MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107852",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107854",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107855",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107856",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "RUFINO MUNGUIA",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107860",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Ruany Preciado",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107861",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107862",
+        "pickType": "CASE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Orgain Outbound BP",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107864",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107865",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107866",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "EVELYN AGUIRRE",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107871",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VitaCoco Outbound",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107872",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VIELKA GUTIERREZ",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107874",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Abigail Garin",
+        "taskCount": 1,
+        "orderCount": 24
+      },
+      {
+        "orderPlanId": "PLAN-5107875",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Abigail Garin",
+        "taskCount": 1,
+        "orderCount": 18
+      },
+      {
+        "orderPlanId": "PLAN-5107876",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "ERICK OLMEDO",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107877",
+        "pickType": "CASE_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "NEW",
+        "assignee": "Guillermo  Terrazas",
+        "taskCount": 1,
+        "orderCount": 5
+      },
+      {
+        "orderPlanId": "PLAN-5107878",
+        "pickType": "CASE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Guillermo  Terrazas",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107879",
+        "pickType": "CASE_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "NEW",
+        "assignee": "SEBASTIAN BOJORQUEZ",
+        "taskCount": 1,
+        "orderCount": 15
+      },
+      {
+        "orderPlanId": "PLAN-5107880",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "SEBASTIAN BOJORQUEZ",
+        "taskCount": 1,
+        "orderCount": 10
+      },
+      {
+        "orderPlanId": "PLAN-5107882",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "NEW",
+        "assignee": "FABRICIO BARSALLO",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107883",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "NEW",
+        "assignee": "LUCINA DIAZ",
+        "taskCount": 1,
+        "orderCount": 36
+      },
+      {
+        "orderPlanId": "PLAN-5107884",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "DIANA PINZON",
+        "taskCount": 1,
+        "orderCount": 28
+      },
+      {
+        "orderPlanId": "PLAN-5107885",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VANESSA SOTO",
+        "taskCount": 1,
+        "orderCount": 28
+      },
+      {
+        "orderPlanId": "PLAN-5107886",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VANESSA SOTO",
+        "taskCount": 1,
+        "orderCount": 28
+      },
+      {
+        "orderPlanId": "PLAN-5107887",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "VANESSA SOTO",
+        "taskCount": 1,
+        "orderCount": 28
+      },
+      {
+        "orderPlanId": "PLAN-5107888",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "DIANA PINZON",
+        "taskCount": 1,
+        "orderCount": 28
+      },
+      {
+        "orderPlanId": "PLAN-5107889",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "DIANA PINZON",
+        "taskCount": 1,
+        "orderCount": 10
+      },
+      {
+        "orderPlanId": "PLAN-5107891",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "FABRICIO BARSALLO",
+        "taskCount": 1,
+        "orderCount": 4
+      },
+      {
+        "orderPlanId": "PLAN-5107892",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "NEW",
+        "assignee": "FABRICIO BARSALLO",
+        "taskCount": 1,
+        "orderCount": 11
+      },
+      {
+        "orderPlanId": "PLAN-5107893",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "FABRICIO BARSALLO",
+        "taskCount": 1,
+        "orderCount": 5
+      },
+      {
+        "orderPlanId": "PLAN-5107894",
+        "pickType": "CASE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "PATRICIA MARTINEZ",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107898",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "JENNIFER RICO",
+        "taskCount": 1,
+        "orderCount": 7
+      },
+      {
+        "orderPlanId": "PLAN-5107899",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "NEW",
+        "assignee": "ANGELICA HONESTO",
+        "taskCount": 1,
+        "orderCount": 18
+      },
+      {
+        "orderPlanId": "PLAN-5107900",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "ANGELICA HONESTO",
+        "taskCount": 1,
+        "orderCount": 24
+      },
+      {
+        "orderPlanId": "PLAN-5107901",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "ANGELICA HONESTO",
+        "taskCount": 1,
+        "orderCount": 24
+      },
+      {
+        "orderPlanId": "PLAN-5107902",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "ANGELICA HONESTO",
+        "taskCount": 1,
+        "orderCount": 24
+      },
+      {
+        "orderPlanId": "PLAN-5107903",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "ANGELICA HONESTO",
+        "taskCount": 1,
+        "orderCount": 24
+      },
+      {
+        "orderPlanId": "PLAN-5107904",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "ANGELICA HONESTO",
+        "taskCount": 1,
+        "orderCount": 24
+      },
+      {
+        "orderPlanId": "PLAN-5107905",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "ANGELICA HONESTO",
+        "taskCount": 1,
+        "orderCount": 24
+      },
+      {
+        "orderPlanId": "PLAN-5107906",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "ANGELICA HONESTO",
+        "taskCount": 1,
+        "orderCount": 24
+      },
+      {
+        "orderPlanId": "PLAN-5107907",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "ANGELICA HONESTO",
+        "taskCount": 1,
+        "orderCount": 24
+      },
+      {
+        "orderPlanId": "PLAN-5107908",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "ANGELICA HONESTO",
+        "taskCount": 1,
+        "orderCount": 24
+      },
+      {
+        "orderPlanId": "PLAN-5107909",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "ANGELICA HONESTO",
+        "taskCount": 1,
+        "orderCount": 7
+      },
+      {
+        "orderPlanId": "PLAN-5107911",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "FABRICIO BARSALLO",
+        "taskCount": 1,
+        "orderCount": 12
+      },
+      {
+        "orderPlanId": "PLAN-5107912",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "IN_PROGRESS",
+        "assignee": "Martha Lopez Valdez",
+        "taskCount": 1,
+        "orderCount": 309
+      },
+      {
+        "orderPlanId": "PLAN-5107913",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "NEW",
+        "assignee": "julian rios",
+        "taskCount": 1,
+        "orderCount": 34
+      },
+      {
+        "orderPlanId": "PLAN-5107914",
+        "pickType": "CASE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "JENNIFER RICO",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107915",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "IN_PROGRESS",
+        "assignee": "ANGELICA HONESTO",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107916",
+        "pickType": "CASE_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "NEW",
+        "assignee": "Maria  Rico",
+        "taskCount": 1,
+        "orderCount": 24
+      },
+      {
+        "orderPlanId": "PLAN-5107917",
+        "pickType": "CASE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "Maria  Rico",
+        "taskCount": 1,
+        "orderCount": 5
+      },
+      {
+        "orderPlanId": "PLAN-5107918",
+        "pickType": "PALLET_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "julian rios",
+        "taskCount": 1,
+        "orderCount": 23
+      },
+      {
+        "orderPlanId": "PLAN-5107921",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "FABRICIO BARSALLO",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107923",
+        "pickType": "CASE_PICK",
+        "pickMethod": "BATCH_ORDER_PICK",
+        "status": "NEW",
+        "assignee": "SEBASTIAN BOJORQUEZ",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107925",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "NEW",
+        "assignee": "julian rios",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107926",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "NEW",
+        "assignee": "julian rios",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107929",
+        "pickType": "CASE_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "NEW",
+        "assignee": "PATRICIA MARTINEZ",
+        "taskCount": 1,
+        "orderCount": 50
+      },
+      {
+        "orderPlanId": "PLAN-5107930",
+        "pickType": "CASE_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "NEW",
+        "assignee": "PATRICIA MARTINEZ",
+        "taskCount": 1,
+        "orderCount": 21
+      },
+      {
+        "orderPlanId": "PLAN-5107933",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "WAVE_PICK_BY_ITEM",
+        "status": "NEW",
+        "assignee": "PATRICIA MARTINEZ",
+        "taskCount": 1,
+        "orderCount": 10
+      },
+      {
+        "orderPlanId": "PLAN-5107934",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "JENNIFER RICO",
+        "taskCount": 1,
+        "orderCount": 1
+      },
+      {
+        "orderPlanId": "PLAN-5107935",
+        "pickType": "PIECE_PICK",
+        "pickMethod": "ORDER_PICK",
+        "status": "NEW",
+        "assignee": "JENNIFER RICO",
+        "taskCount": 1,
+        "orderCount": 1
+      }
+    ]
+  },
+  "load_tasks": {
+    "total_active": 79,
+    "by_status": {
+      "IN_PROGRESS": 70,
+      "NEW": 9
+    }
+  },
+  "receive_tasks": {
+    "total_active": 88,
+    "by_status": {
+      "IN_PROGRESS": 54,
+      "NEW": 34
+    }
+  },
+  "orders": {
+    "total_committed_planned": 2186,
+    "by_status": {
+      "PLANNED": 1763,
+      "COMMITTED": 423
+    },
+    "by_type": {
+      "DS": 1481,
+      "RG": 705
+    },
+    "by_customer_top15": {
+      "ORG-738412": 375,
+      "ORG-616507": 355,
+      "ORG-658391": 250,
+      "ORG-655875": 229,
+      "ORG-368834": 186,
+      "ORG-798965": 103,
+      "ORG-655338": 90,
+      "ORG-685351": 89,
+      "ORG-723580": 86,
+      "ORG-780772": 64,
+      "ORG-34818": 48,
+      "ORG-714892": 42,
+      "ORG-585450": 41,
+      "ORG-34557": 38,
+      "ORG-614850": 35
+    }
+  },
+  "receipts": {
+    "total_open": 1325,
+    "open_definition": "receipts in status IMPORTED (not yet received/closed)",
+    "by_customer_top10": {
+      "ORG-7564": 464,
+      "ORG-34557": 432,
+      "ORG-655338": 79,
+      "ORG-655875": 45,
+      "ORG-780772": 27,
+      "ORG-34818": 24,
+      "ORG-313396": 23,
+      "ORG-536926": 20,
+      "ORG-685351": 20,
+      "ORG-585450": 19
+    }
+  },
+  "bay4_docks": {
+    "total": 23,
+    "occupied": 8,
+    "empty": 15,
+    "docks": [
+      {
+        "name": "DOCK50",
+        "id": "570",
+        "spaceStatus": "OCCUPIED",
+        "activeLoadTasks": 0,
+        "activeReceiveTasks": 1,
+        "occupiedCustomerIds": [
+          "ORG-655875"
+        ]
+      },
+      {
+        "name": "DOCK51",
+        "id": "554",
+        "spaceStatus": "OCCUPIED",
+        "activeLoadTasks": 1,
+        "activeReceiveTasks": 0,
+        "occupiedCustomerIds": [
+          "ORG-655875"
+        ]
+      },
+      {
+        "name": "DOCK52",
+        "id": "556",
+        "spaceStatus": "OCCUPIED",
+        "activeLoadTasks": 2,
+        "activeReceiveTasks": 0,
+        "occupiedCustomerIds": [
+          "ORG-655875"
+        ]
+      },
+      {
+        "name": "DOCK53",
+        "id": "552",
+        "spaceStatus": "OCCUPIED",
+        "activeLoadTasks": 0,
+        "activeReceiveTasks": 0,
+        "occupiedCustomerIds": []
+      },
+      {
+        "name": "DOCK54",
+        "id": "564",
+        "spaceStatus": "OCCUPIED",
+        "activeLoadTasks": 1,
+        "activeReceiveTasks": 1,
+        "occupiedCustomerIds": [
+          "ORG-585450",
+          "ORG-655875"
+        ]
+      },
+      {
+        "name": "DOCK55",
+        "id": "560",
+        "spaceStatus": "OCCUPIED",
+        "activeLoadTasks": 0,
+        "activeReceiveTasks": 3,
+        "occupiedCustomerIds": [
+          "ORG-585450",
+          "ORG-655875"
+        ]
+      },
+      {
+        "name": "DOCK56",
+        "id": "575",
+        "spaceStatus": "OCCUPIED",
+        "activeLoadTasks": 0,
+        "activeReceiveTasks": 0,
+        "occupiedCustomerIds": []
+      },
+      {
+        "name": "DOCK57",
+        "id": "563",
+        "spaceStatus": "EMPTY",
+        "activeLoadTasks": 0,
+        "activeReceiveTasks": 1,
+        "occupiedCustomerIds": [
+          "ORG-655875"
+        ]
+      },
+      {
+        "name": "DOCK58",
+        "id": "572",
+        "spaceStatus": "OCCUPIED",
+        "activeLoadTasks": 0,
+        "activeReceiveTasks": 1,
+        "occupiedCustomerIds": [
+          "ORG-655875"
+        ]
+      },
+      {
+        "name": "DOCK59",
+        "id": "571",
+        "spaceStatus": "EMPTY",
+        "activeLoadTasks": 0,
+        "activeReceiveTasks": 1,
+        "occupiedCustomerIds": [
+          "ORG-655875"
+        ]
+      },
+      {
+        "name": "DOCK60",
+        "id": "565",
+        "spaceStatus": "EMPTY",
+        "activeLoadTasks": 0,
+        "activeReceiveTasks": 0,
+        "occupiedCustomerIds": []
+      },
+      {
+        "name": "DOCK61",
+        "id": "567",
+        "spaceStatus": "EMPTY",
+        "activeLoadTasks": 0,
+        "activeReceiveTasks": 0,
+        "occupiedCustomerIds": []
+      },
+      {
+        "name": "DOCK62",
+        "id": "566",
+        "spaceStatus": "EMPTY",
+        "activeLoadTasks": 0,
+        "activeReceiveTasks": 1,
+        "occupiedCustomerIds": [
+          "ORG-655875"
+        ]
+      },
+      {
+        "name": "DOCK63",
+        "id": "568",
+        "spaceStatus": "EMPTY",
+        "activeLoadTasks": 0,
+        "activeReceiveTasks": 1,
+        "occupiedCustomerIds": [
+          "ORG-655875"
+        ]
+      },
+      {
+        "name": "DOCK64",
+        "id": "559",
+        "spaceStatus": "EMPTY",
+        "activeLoadTasks": 0,
+        "activeReceiveTasks": 0,
+        "occupiedCustomerIds": []
+      },
+      {
+        "name": "DOCK65",
+        "id": "573",
+        "spaceStatus": "EMPTY",
+        "activeLoadTasks": 0,
+        "activeReceiveTasks": 0,
+        "occupiedCustomerIds": []
+      },
+      {
+        "name": "DOCK66",
+        "id": "576",
+        "spaceStatus": "EMPTY",
+        "activeLoadTasks": 0,
+        "activeReceiveTasks": 1,
+        "occupiedCustomerIds": [
+          "ORG-655875"
+        ]
+      },
+      {
+        "name": "DOCK67",
+        "id": "577",
+        "spaceStatus": "EMPTY",
+        "activeLoadTasks": 0,
+        "activeReceiveTasks": 0,
+        "occupiedCustomerIds": []
+      },
+      {
+        "name": "DOCK68",
+        "id": "574",
+        "spaceStatus": "EMPTY",
+        "activeLoadTasks": 0,
+        "activeReceiveTasks": 0,
+        "occupiedCustomerIds": []
+      },
+      {
+        "name": "DOCK69",
+        "id": "578",
+        "spaceStatus": "EMPTY",
+        "activeLoadTasks": 0,
+        "activeReceiveTasks": 1,
+        "occupiedCustomerIds": [
+          "ORG-655875"
+        ]
+      },
+      {
+        "name": "DOCK70",
+        "id": "579",
+        "spaceStatus": "EMPTY",
+        "activeLoadTasks": 0,
+        "activeReceiveTasks": 0,
+        "occupiedCustomerIds": []
+      },
+      {
+        "name": "DOCK71",
+        "id": "580",
+        "spaceStatus": "EMPTY",
+        "activeLoadTasks": 0,
+        "activeReceiveTasks": 0,
+        "occupiedCustomerIds": []
+      },
+      {
+        "name": "DOCK72",
+        "id": "587",
+        "spaceStatus": "EMPTY",
+        "activeLoadTasks": 0,
+        "activeReceiveTasks": 0,
+        "occupiedCustomerIds": []
+      }
+    ]
+  },
+  "capture": {
+    "method": "Live WISE API pull on tenant LT, facility LT_F1, item-time-zone America/Los_Angeles. Active = statuses NEW + IN_PROGRESS. KPI totals are the API's own server-reported totalCount for each filtered query; top-N and order-plan breakdowns are computed over every record of the filtered population (paginated, retried, de-duplicated by task/order id).",
+    "endpoints": {
+      "pick_tasks": "POST /wms-bam/outbound/pick-task/search-by-paging",
+      "load_tasks": "POST /wms-bam/outbound/load-task/search-by-paging",
+      "receive_tasks": "POST /wms-bam/inbound/receive-task/search-by-paging",
+      "orders": "POST /wms/outbound/order/search-by-paging",
+      "receipts": "POST /wms-bam/inbound/receipt/search-by-paging",
+      "bay4_dock_master": "POST /wms-bam/wms-location/search-by-paging"
+    },
+    "record_coverage": {
+      "pick_tasks": {
+        "records": 794,
+        "api_total_at_start": 794,
+        "coverage": 1
+      },
+      "load_tasks": {
+        "records": 79,
+        "api_total_at_start": 79,
+        "coverage": 1
+      },
+      "receive_tasks": {
+        "records": 88,
+        "api_total_at_start": 88,
+        "coverage": 1
+      },
+      "orders": {
+        "records": 2186,
+        "api_total_at_start": 2186,
+        "coverage": 1
+      },
+      "receipts": {
+        "records": 1325,
+        "api_total_at_start": 1325,
+        "coverage": 1
+      }
+    },
+    "plan_notes": "active_order_plans groups the live active pick tasks by orderPlanId; status is MIXED when a plan's tasks span more than one status, and assignee is the plan's majority assignee.",
+    "bay4_note": "Bay 4 = DOCK50-DOCK72 (23 doors). spaceStatus is read from the live WMS location master for each door; activeLoadTasks / activeReceiveTasks count active (NEW + IN_PROGRESS) load and receive tasks reporting that dockName, and occupiedCustomerIds are those tasks' customers (falling back to the location master's occupiedCustomerIds when no active task is on the door).",
+    "operator": "rjauregui (Ruben Jauregui)"
+  }
+}
